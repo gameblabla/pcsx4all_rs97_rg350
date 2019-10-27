@@ -37,6 +37,9 @@
 #include "gpu/gpulib/gpu.h"
 #endif
 
+extern void gpulib_frameskip_prepare(void);
+extern void gpulib_set_config(const struct gpulib_config_t *config);
+
 static void pl_frameskip_prepare(void);
 static void pl_stats_update(void);
 

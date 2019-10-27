@@ -12,6 +12,7 @@
 #include "plugins.h"
 #include "cdrom.h"
 #include "cdriso.h"
+#include "cdrom_hacks.h"
 #include "cheat.h"
 
 #include <SDL.h>
@@ -46,6 +47,7 @@ enum  {
 	KEY_A=1<<12,	KEY_B=1<<13,		KEY_X=1<<14,	KEY_Y=1<<15,
 };
 
+#define _KEY_BACK   (KEY_SELECT|KEY_B)
 extern char sstatesdir[PATH_MAX];
 static int saveslot = -1;
 static uint16_t* sshot_img; // Ptr to active image in savestate menu
@@ -247,7 +249,7 @@ char *FileReq(char *dir, const char *ext, char *result)
 	for (;;) {
 		video_clear();
 
-		if (keys & KEY_SELECT) {
+		if (keys & _KEY_BACK) {
 			FREE_LIST();
 			key_reset();
 			return NULL;
@@ -1185,7 +1187,8 @@ static int AnalogArrow_alter(uint32_t keys)
 
 static void AnalogArrow_hint()
 {
-	port_printf(6 * 8, 10 * 8, "Analog Stick -> Arrow Keys");
+	port_printf(6 * 8, 10 * 7, "Sticks -> DPAD/Face buttons");
+	port_printf(6 * 8, 10 * 8, "Turn off for DualShock games");
 }
 
 static char* AnalogArrow_show()
@@ -1344,7 +1347,7 @@ static MENUITEM gui_SettingsItems[] = {
 	{(char *)"HLE emulated BIOS  ", NULL, &bios_alter, &bios_show, NULL},
 	{(char *)"Set BIOS file      ", &bios_set, NULL, &bios_file_show, NULL},
 	{(char *)"Skip BIOS logos    ", NULL, &SlowBoot_alter, &SlowBoot_show, &SlowBoot_hint},
-	{(char *)"Map L-stick to Dpad", NULL, &AnalogArrow_alter, &AnalogArrow_show, &AnalogArrow_hint},
+	{(char *)"Sticks > Dpad/Butns", NULL, &AnalogArrow_alter, &AnalogArrow_show, &AnalogArrow_hint},
 	{(char *)"Analog Mode        ", NULL, &Analog_Mode_alter, &Analog_Mode_show, &Analog_Mode_hint},
 	{(char *)"RCntFix            ", NULL, &RCntFix_alter, &RCntFix_show, &RCntFix_hint},
 	{(char *)"VSyncWA            ", NULL, &VSyncWA_alter, &VSyncWA_show, &VSyncWA_hint},
@@ -1355,7 +1358,7 @@ static MENUITEM gui_SettingsItems[] = {
 };
 
 #define SET_SIZE ((sizeof(gui_SettingsItems) / sizeof(MENUITEM)) - 1)
-static MENU gui_SettingsMenu = { SET_SIZE, 0, 56, 102, (MENUITEM *)&gui_SettingsItems };
+static MENU gui_SettingsMenu = { SET_SIZE, 0, 32, 102, (MENUITEM *)&gui_SettingsItems };
 
 static int fps_alter(uint32_t keys)
 {
@@ -1878,6 +1881,7 @@ static int gui_LoadIso()
 		//If a multi-CD Eboot .pbp is detected, cdriso.cpp's handlepbp() will
 		// call this function later to allow choosing which CD to boot
 		cdrIsoMultidiskCallback = gui_select_multicd_to_boot_from;
+		CheckforCDROMid_applyhacks();
 
 		return 1;
 	}

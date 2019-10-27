@@ -43,22 +43,6 @@
 
 /* Define types */
 
-/*
-typedef int8_t int8_t;
-typedef int16_t int16_t;
-typedef int32_t int32_t;
-typedef int64_t int64_t;
-typedef intptr_t intptr_t;
-
-typedef uint8_t uint8_t;
-typedef uint16_t uint16_t;
-typedef uint32_t uint32_t;
-typedef uint64_t uint64_t;
-typedef uintptr_t uintptr_t;
-
-typedef uint8_t uint_fast8_t;
-*/
-
 #ifndef TRUE
 #define TRUE 1
 #endif
@@ -176,6 +160,15 @@ typedef struct {
 	// Options for performance monitor
 	uint_fast8_t PerfmonConsoleOutput;
 	uint_fast8_t PerfmonDetailedStats;
+	
+	/* CodeName Takeda requires the player to remove one of the memory cards.
+	 * However, the use of such hack for going around this can actually break the behaviour of some games
+	 * like Digimon World. (which thinks a save is available, when it's in fact not)
+	 * But since this game does need it, let's add a setting for it.
+	 * In the future, we could simply allow the user to remove it themselves but an auto-hack
+	 * more preferable in this case. (Because it would be less conveniant)
+	*/
+	uint8_t      MemoryCardHack; 
 
 } PcsxConfig;
 

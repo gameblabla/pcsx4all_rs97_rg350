@@ -9,6 +9,7 @@
 #include "plugin_lib.h"
 #include "perfmon.h"
 #include "cheat.h"
+#include "cdrom_hacks.h"
 #include <SDL.h>
 
 /* PATH_MAX inclusion */
@@ -130,41 +131,48 @@ static void pcsx4all_exit(void)
 	}
 }
 
-static char *home = NULL;
-static char homedir[PATH_MAX] =		"./.pcsx4all";
-static char memcardsdir[PATH_MAX] =	"./.pcsx4all/memcards";
-static char biosdir[PATH_MAX] =		"./.pcsx4all/bios";
-static char patchesdir[PATH_MAX] =	"./.pcsx4all/patches";
-char sstatesdir[PATH_MAX] = "./.pcsx4all/sstates";
-char cheatsdir[PATH_MAX] = "./.pcsx4all/cheats";
-
 static char McdPath1[MAXPATHLEN] = "";
 static char McdPath2[MAXPATHLEN] = "";
 static char BiosFile[MAXPATHLEN] = "";
 
+static char home[PATH_MAX/2];
+static char homedir[PATH_MAX/2];
+static char memcardsdir[PATH_MAX];
+static char biosdir[PATH_MAX];
+static char patchesdir[PATH_MAX];
+char sstatesdir[PATH_MAX];
+char cheatsdir[PATH_MAX];
+
 #ifdef __WIN32__
 	#define MKDIR(A) mkdir(A)
+	#define HomeDirectory getcwd(buf, PATH_MAX)
 #else
-	#define MKDIR(A) mkdir(A, 0777)
+	#define MKDIR(A) if (access(A, F_OK ) != -1) mkdir(A, 0755)
+	#define HomeDirectory getenv("HOME")
 #endif
 
 static void setup_paths()
 {
 #ifndef __WIN32__
-	home = getenv("HOME");
+	snprintf(home, sizeof(home), "%s", getenv("HOME"));
 #else
-	char buf[PATH_MAX];
-	home = getcwd(buf, PATH_MAX);
+	static char buf[PATH_MAX];
+	snprintf(home, sizeof(home), "%s", getcwd(buf, PATH_MAX));
 #endif
-	if (home) {
-		sprintf(homedir, "%s/.pcsx4all", home);
-		sprintf(sstatesdir, "%s/sstates", homedir);
-		sprintf(memcardsdir, "%s/memcards", homedir);
-		sprintf(biosdir, "%s/bios", homedir);
-		sprintf(patchesdir, "%s/patches", homedir);
-		sprintf(cheatsdir, "%s/cheats", homedir);
-	}
 
+	snprintf(homedir, sizeof(homedir), "%s/.pcsx4all", home);
+	
+	/* 
+	 * If folder does not exists then create it 
+	 * This can speeds up startup if the folder already exists
+	*/
+
+	snprintf(sstatesdir, sizeof(sstatesdir), "%s/sstates", homedir);
+	snprintf(memcardsdir, sizeof(memcardsdir), "%s/memcards", homedir);
+	snprintf(biosdir, sizeof(biosdir), "%s/bios", homedir);
+	snprintf(patchesdir, sizeof(patchesdir), "%s/patches", homedir);
+	snprintf(cheatsdir, sizeof(cheatsdir), "%s/cheats", homedir);
+	
 	MKDIR(homedir);
 	MKDIR(sstatesdir);
 	MKDIR(memcardsdir);
@@ -611,6 +619,9 @@ void joy_init()
 	SDL_JoystickEventState(SDL_ENABLE);
 
 	player_controller[0].id = 0x41;
+	player_controller[0].pad_mode = 0;
+	player_controller[0].pad_controllertype = 0;
+	
 	player_controller[0].joy_left_ax0 = 127;
 	player_controller[0].joy_left_ax1 = 127;
 	player_controller[0].joy_right_ax0 = 127;
@@ -620,9 +631,6 @@ void joy_init()
 	player_controller[0].Vib[1] = 0;
 	player_controller[0].VibF[0] = 0;
 	player_controller[0].VibF[1] = 0;
-
-	player_controller[0].pad_mode = 0;
-	player_controller[0].pad_controllertype = 0;
 
 	player_controller[0].configmode = 0;
 
@@ -695,27 +703,27 @@ void pad_update()
 					player_controller[0].joy_left_ax1 = (axisval + 32768) / 256;
 				}
 				break;
-			case 2: /* X axis */
+			case 3: /* X axis */
 				axisval = event.jaxis.value;
-				/* if (Config.AnalogArrow == 1) {
+				if (Config.AnalogArrow == 1) {
 					if (axisval > joy_commit_range) {
 						pad1_buttons &= ~(1 << DKEY_CIRCLE);
 					} else if (axisval < -joy_commit_range) {
 						pad1_buttons &= ~(1 << DKEY_SQUARE);
 					}
-				} else */ {
+				} else {
 					player_controller[0].joy_right_ax0 = (axisval + 32768) / 256;
 				}
 				break;
-			case 3: /* Y axis */
+			case 4: /* Y axis */
 				axisval = event.jaxis.value;
-				/* if (Config.AnalogArrow == 1) {
+				if (Config.AnalogArrow == 1) {
 					if (axisval > joy_commit_range) {
 						pad1_buttons &= ~(1 << DKEY_CROSS);
 					} else if (axisval < -joy_commit_range) {
 						pad1_buttons &= ~(1 << DKEY_TRIANGLE);
 					}
-				} else */ {
+				} else {
 					player_controller[0].joy_right_ax1 = (axisval + 32768) / 256;
 				}
 				break;
@@ -1499,8 +1507,9 @@ int main (int argc, char **argv)
 		psxReset();
 	}
 
-	joy_init();
+	CheckforCDROMid_applyhacks();
 
+	joy_init();
 
 	if (filename[0] != '\0') {
 		if (Load(filename) == -1) {
