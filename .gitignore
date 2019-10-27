@@ -12,3 +12,7 @@ stdout.txt
 *.sh
 *.bat
 err.txt
+*.cue
+*.bin
+*.ipk
+*.opk
