@@ -4,7 +4,6 @@
 #include "misc.h"
 
 #include "port.h"
-
 #include "unzip.h"
 
 #include <stdlib.h>
@@ -16,8 +15,6 @@ static cheat_t* ct = NULL;
 static uint32_t run_interval = 200u;
 
 static uint32_t next_ticks = 0u;
-
-extern char cheatsdir[PATH_MAX];
 
 void cheat_load(void)
 {

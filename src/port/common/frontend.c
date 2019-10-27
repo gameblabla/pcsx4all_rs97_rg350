@@ -1174,6 +1174,33 @@ static int SlowBoot_alter(uint32_t keys)
 	return 0;
 }
 
+#ifndef NOJOYSTICK_AVAILABLE
+static int AnalogDigital_alter(uint32_t keys)
+{
+	if (keys & KEY_RIGHT) {
+		if (Config.AnalogDigital < 1) Config.AnalogDigital = 1;
+	} else if (keys & KEY_LEFT) {
+		if (Config.AnalogDigital > 0) Config.AnalogDigital = 0;
+	}
+
+	return 0;
+}
+
+static void AnalogDigital_hint()
+{
+	port_printf(6 * 8, 10 * 7, "Sticks -> Dpad/Buttons");
+	port_printf(6 * 8, 10 * 8, "Maps Sticks to DPAD/Buttons");
+}
+
+static char* AnalogDigital_show()
+{
+	static char buf[16] = "\0";
+	sprintf(buf, "%s", Config.AnalogDigital ? "on" : "off");
+	return buf;
+}
+#endif
+
+
 static int AnalogArrow_alter(uint32_t keys)
 {
 	if (keys & KEY_RIGHT) {
@@ -1187,8 +1214,8 @@ static int AnalogArrow_alter(uint32_t keys)
 
 static void AnalogArrow_hint()
 {
-	port_printf(6 * 8, 10 * 7, "Sticks -> DPAD/Face buttons");
-	port_printf(6 * 8, 10 * 8, "Turn off for DualShock games");
+	port_printf(6 * 8, 10 * 7, "DPAD -> Left Stick");
+	port_printf(6 * 8, 10 * 8, "Maps Dpad to Left stick");
 }
 
 static char* AnalogArrow_show()
@@ -1347,7 +1374,11 @@ static MENUITEM gui_SettingsItems[] = {
 	{(char *)"HLE emulated BIOS  ", NULL, &bios_alter, &bios_show, NULL},
 	{(char *)"Set BIOS file      ", &bios_set, NULL, &bios_file_show, NULL},
 	{(char *)"Skip BIOS logos    ", NULL, &SlowBoot_alter, &SlowBoot_show, &SlowBoot_hint},
-	{(char *)"Sticks > Dpad/Butns", NULL, &AnalogArrow_alter, &AnalogArrow_show, &AnalogArrow_hint},
+	
+#ifndef NOJOYSTICK_AVAILABLE
+	{(char *)"Sticks > Dpad/Butns", NULL, &AnalogDigital_alter, &AnalogDigital_show, &AnalogDigital_hint},
+#endif
+	{(char *)"Map DPAD to L-stick", NULL, &AnalogArrow_alter, &AnalogArrow_show, &AnalogArrow_hint},
 	{(char *)"Analog Mode        ", NULL, &Analog_Mode_alter, &Analog_Mode_show, &Analog_Mode_hint},
 	{(char *)"RCntFix            ", NULL, &RCntFix_alter, &RCntFix_show, &RCntFix_hint},
 	{(char *)"VSyncWA            ", NULL, &VSyncWA_alter, &VSyncWA_show, &VSyncWA_hint},
@@ -1435,6 +1466,7 @@ static char *frameskip_show()
 	return (char*)str[fs];
 }
 
+#ifndef NO_HWSCALE
 static int videoscaling_alter(uint32_t keys)
 {
 	int vs = Config.VideoScaling;
@@ -1465,6 +1497,8 @@ static void videoscaling_hint() {
 		break;
 	}
 }
+#endif
+
 #endif //USE_GPULIB
 
 #ifdef GPU_UNAI
@@ -1639,7 +1673,9 @@ static MENUITEM gui_GPUSettingsItems[] = {
 #ifdef USE_GPULIB
 	/* Only working with gpulib */
 	{(char *)"Frame skip           ", NULL, &frameskip_alter, &frameskip_show, NULL},
+	#ifndef NO_HWSCALE
 	{(char *)"Video Scaling        ", NULL, &videoscaling_alter, &videoscaling_show, videoscaling_hint},
+	#endif
 #endif
 #ifdef GPU_UNAI
 	{(char *)"NTSC Resolution Fix  ", NULL, &ntsc_fix_alter, &ntsc_fix_show, NULL},

@@ -449,7 +449,11 @@ void vout_update(void)
 	int y0 = gpu.screen.y;
 	int w0 = gpu.screen.hres;
 	int w1 = gpu.screen.w;
+	#ifdef NO_HWSCALE
 	int h0 = !gpu_unai_config_ext.ntsc_fix || Config.VideoScaling == 1 ? gpu.screen.vres : SCREEN_HEIGHT;
+	#else
+	int h0 = !gpu_unai_config_ext.ntsc_fix || Config.VideoScaling == 1 ? gpu.screen.vres : SCREEN_HEIGHT;
+	#endif
 	int h1 = gpu.screen.h;     // height of image displayed on screen
 
 	if (w0 == 0 || h0 == 0)
@@ -463,7 +467,12 @@ void vout_update(void)
 	unsigned int src16_offs_msk = 1024*512-1;
 	unsigned int src16_offs = (x0 + y0*1024u) & src16_offs_msk;
 
-	if (Config.VideoScaling == 1) {
+#ifndef NO_HWSCALE
+	if (Config.VideoScaling == 1)
+#else
+	if (1)
+#endif
+	{
 		//  Height centering
 		int sizeShift = 0;
 		if (h0 == 256) {
@@ -541,7 +550,10 @@ void vout_update(void)
 			}
 				break;
 		}
-	} else {
+	} 
+#ifndef NO_HWSCALE
+	else 
+	{
 		if (h1 > h0) {
 			src16_offs = (src16_offs + (((h1 - h0) >> 1) * 1024)) & src16_offs_msk;
 			h1 = h0;
@@ -561,6 +573,7 @@ void vout_update(void)
 			src16_offs = (src16_offs+1024) & src16_offs_msk;
 		}
 	}
+#endif
 	video_flip();
 }
 

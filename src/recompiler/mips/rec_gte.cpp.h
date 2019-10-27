@@ -364,7 +364,7 @@ static void gen_LWC2_SWC2()
 	//            by emitMFC2()/emitMTC2(), which we call here.
 	// TEMP_1, TEMP_2, TEMP_3
 
-	uint_fast8_t base_reg_converted = false;
+	uint8_t base_reg_converted = 0;
 	// Reg reserved for coverted base reg. *Cannot* be in above list.
 	uint32_t base_reg = TEMP_0;
 	// Temp reg overwritten during base reg conversion. Can be in above list.
@@ -385,9 +385,9 @@ static void gen_LWC2_SWC2()
 #endif
 
 #ifdef USE_GTE_DIRECT_MEM_ACCESS
-	const uint_fast8_t direct_mem = psx_mem_mapped;
+	const uint8_t direct_mem = psx_mem_mapped;
 #else
-	const uint_fast8_t direct_mem = false;
+	const uint8_t direct_mem = 0;
 #endif
 
 	if (direct_mem)
@@ -425,7 +425,7 @@ static void gen_LWC2_SWC2()
 		enum { LWC2_ENTRIES, SWC2_ENTRIES };
 		int queue_entry_type = LWC2_ENTRIES;  // Opcode type currently in queue (if any)
 
-		const int queue_capacity = 4;
+		#define queue_capacity 4
 		union {                   // Entries have info needed for 2nd half of each operation:
 		    uint8_t  gte_reg;          //  GTE reg (rt field) of entry's opcode (for LWC2 entries)
 		    int16_t imm;              //  Immediate mem offset of the entry's opcode (for SWC2 entries)
@@ -452,7 +452,7 @@ static void gen_LWC2_SWC2()
 					do {
 						if (!base_reg_converted) {
 							base_reg = emitAddressConversion(op_rs, rs, base_reg, conversion_temp_reg);
-							base_reg_converted = true;
+							base_reg_converted = 1;
 						}
 						const uint8_t  entry_reg = queue_regmap[queue_idx_beg];
 						const int16_t entry_imm = queue[queue_idx_beg].imm;
@@ -479,7 +479,7 @@ static void gen_LWC2_SWC2()
 					if (!base_reg_converted) {
 						// base_reg = converted 'rs' base reg, base_reg_temp used as temp reg
 						base_reg = emitAddressConversion(op_rs, rs, base_reg, conversion_temp_reg);
-						base_reg_converted = true;
+						base_reg_converted = 1;
 					}
 					const uint8_t entry_reg = queue_regmap[queue_idx_end];
 					queue[queue_idx_end].gte_reg = _fRt_(opcode);
@@ -523,7 +523,7 @@ static void gen_LWC2_SWC2()
 					if (!base_reg_converted) {
 						// base_reg = converted 'rs' base reg, base_reg_temp used as temp reg
 						base_reg = emitAddressConversion(op_rs, rs, base_reg, conversion_temp_reg);
-						base_reg_converted = true;
+						base_reg_converted = 1;
 					}
 					const uint8_t  entry_reg = queue_regmap[queue_idx_beg];
 					const int16_t entry_imm = queue[queue_idx_beg].imm;
@@ -552,7 +552,7 @@ static void gen_LWC2_SWC2()
 						if (!base_reg_converted) {
 							// base_reg = converted 'rs' base reg, base_reg_temp used as temp reg
 							base_reg = emitAddressConversion(op_rs, rs, base_reg, conversion_temp_reg);
-							base_reg_converted = true;
+							base_reg_converted = 1;
 						}
 						const uint8_t  entry_reg = queue_regmap[queue_idx_beg];
 						const int16_t entry_imm = queue[queue_idx_beg].imm;
@@ -572,7 +572,7 @@ static void gen_LWC2_SWC2()
 
 		if (!base_reg_converted) {
 			base_reg = emitAddressConversion(op_rs, rs, base_reg, conversion_temp_reg);
-			base_reg_converted = true;
+			base_reg_converted = 1;
 		}
 
 		// NOTE: Any NOPs that were included in count will be skipped

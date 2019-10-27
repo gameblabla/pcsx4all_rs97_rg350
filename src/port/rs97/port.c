@@ -31,14 +31,14 @@
 #include "gpu/gpu_unai/gpu.h"
 #endif
 
-#ifdef RUMBLE
-#include <shake.h>
-Shake_Device *device;
-Shake_Effect effect_big;
-Shake_Effect effect_small;
-int id_shake_small;
-int id_shake_big;
+#if defined(RUMBLE)
+#error "RS-97 has no rumble, please disable -DRUMBLE"
 #endif
+
+#if !defined(NO_HWSCALE)
+#error "RS-97 has no hardware scaler, please pass -DNO_HWSCALE"
+#endif
+
 
 enum {
 	DKEY_SELECT = 0,
@@ -68,36 +68,9 @@ int SCREEN_WIDTH = 640, SCREEN_HEIGHT = 480;
 static uint_fast8_t pcsx4all_initted = false;
 static uint_fast8_t emu_running = false;
 
-#ifdef GCW_ZERO
-static uint_fast8_t last_keep_aspect = false;
-#endif
-
 void config_load();
 void config_save();
 void update_window_size(int w, int h, uint_fast8_t ntsc_fix);
-
-static const char *KEEP_ASPECT_FILENAME = "/sys/devices/platform/jz-lcd.0/keep_aspect_ratio";
-
-#ifdef GCW_ZERO
-
-static inline uint_fast8_t get_keep_aspect_ratio() {
-	FILE *f = fopen(KEEP_ASPECT_FILENAME, "rb");
-	if (!f) return false;
-	char c;
-	fread(&c, 1, 1, f);
-	fclose(f);
-	return c == 'Y';
-}
-
-static inline void set_keep_aspect_ratio(uint_fast8_t n) {
-	FILE *f = fopen(KEEP_ASPECT_FILENAME, "wb");
-	if (!f) return;
-	char c = n ? 'Y' : 'N';
-	fwrite(&c, 1, 1, f);
-	fclose(f);
-}
-
-#endif
 
 static void pcsx4all_exit(void)
 {
@@ -107,23 +80,10 @@ static void pcsx4all_exit(void)
 	// Store config to file
 	config_save();
 
-#ifdef GCW_ZERO
-	set_keep_aspect_ratio(last_keep_aspect);
-#endif
-
 	if (SDL_MUSTLOCK(screen))
 		SDL_UnlockSurface(screen);
 
 	SDL_Quit();
-
-#ifdef RUMBLE
-	Shake_Stop(device, id_shake_small);
-	Shake_Stop(device, id_shake_big);
-	Shake_EraseEffect(device, id_shake_small);
-	Shake_EraseEffect(device, id_shake_big);
-	Shake_Close(device);
-	Shake_Quit();
-#endif
 
 	if (pcsx4all_initted == true) {
 		ReleasePlugins();
@@ -208,10 +168,6 @@ void config_load()
 	char config[MAXPATHLEN];
 	char line[MAXPATHLEN + 8 + 1];
 	int lineNum = 0;
-
-#ifdef GCW_ZERO
-	last_keep_aspect = get_keep_aspect_ratio();
-#endif
 
 	sprintf(config, "%s/pcsx4all_ng.cfg", homedir);
 	f = fopen(config, "r");
@@ -414,12 +370,6 @@ void config_load()
 			gpu_unai_config_ext.ntsc_fix = value;
 		}
 #endif
-#ifdef GCW_ZERO
-		else if (!strcmp(line, "keep_aspect_ratio")) {
-			sscanf(arg, "%d", &value);
-			set_keep_aspect_ratio(value != 0);
-		}
-#endif
 	}
 
 	fclose(f);
@@ -497,11 +447,6 @@ void config_save()
 		   gpu_unai_config_ext.ntsc_fix);
 #endif
 
-#ifdef GCW_ZERO
-	fprintf(f, "keep_aspect_ratio %d\n",
-		   get_keep_aspect_ratio() ? 1 : 0);
-#endif
-
 	if (Config.LastDir[0]) {
 		fprintf(f, "LastDir %s\n", Config.LastDir);
 	}
@@ -563,14 +508,8 @@ static struct {
 };
 
 static uint16_t pad1 = 0xFFFF;
-
 static uint16_t pad2 = 0xFFFF;
-
 static uint16_t pad1_buttons = 0xFFFF;
-
-static unsigned short analog1 = 0;
-
-SDL_Joystick* sdl_joy[2];
 
 #define joy_commit_range    8192
 enum {
@@ -605,11 +544,6 @@ void Set_Controller_Mode()
 
 void joy_init()
 {
-	sdl_joy[0] = SDL_JoystickOpen(0);
-	sdl_joy[1] = SDL_JoystickOpen(1);
-	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
-	SDL_JoystickEventState(SDL_ENABLE);
-
 	player_controller[0].id = 0x41;
 	player_controller[0].pad_mode = 0;
 	player_controller[0].pad_controllertype = 0;
@@ -631,7 +565,6 @@ void joy_init()
 
 void pad_update()
 {
-	int axisval;
 	SDL_Event event;
 	Uint8 *keys = SDL_GetKeyState(NULL);
 	uint_fast8_t popup_menu = false;
@@ -646,127 +579,121 @@ void pad_update()
 		k++;
 	}
 
-	while (SDL_PollEvent(&event)) {
-		switch (event.type) {
+	while (SDL_PollEvent(&event)) 
+	{
+		switch (event.type) 
+		{
 		case SDL_QUIT:
 			exit(0);
 			break;
 		case SDL_KEYDOWN:
 			switch (event.key.keysym.sym) 
 			{
-			case SDLK_HOME:
-			case SDLK_F10:
-				popup_menu = true;
-				break;
 			case SDLK_v: { Config.ShowFps=!Config.ShowFps; } break;
 				default: break;
 			}
 			break;
-		case SDL_JOYAXISMOTION:
-			switch (event.jaxis.axis) {
-			case 0: /* X axis */
-				axisval = event.jaxis.value;
-				if (Config.AnalogDigital == 1) {
-					analog1 &= ~(ANALOG_LEFT | ANALOG_RIGHT);
-					if (axisval > joy_commit_range) {
-						analog1 |= ANALOG_RIGHT;
-					} else if (axisval < -joy_commit_range) {
-						analog1 |= ANALOG_LEFT;
-					}
-				} else {
-					player_controller[0].joy_left_ax0 = (axisval + 32768) / 256;
-				}
-				break;
-			case 1: /* Y axis */
-				axisval = event.jaxis.value;
-				if (Config.AnalogDigital == 1) {
-					analog1 &= ~(ANALOG_UP | ANALOG_DOWN);
-					if (axisval > joy_commit_range) {
-						analog1 |= ANALOG_DOWN;
-					} else if (axisval < -joy_commit_range) {
-						analog1 |= ANALOG_UP;
-					}
-				} else {
-					player_controller[0].joy_left_ax1 = (axisval + 32768) / 256;
-				}
-				break;
-			case 3: /* X axis */
-				axisval = event.jaxis.value;
-				if (Config.AnalogDigital == 1) {
-					if (axisval > joy_commit_range) {
-						pad1_buttons &= ~(1 << DKEY_CIRCLE);
-					} else if (axisval < -joy_commit_range) {
-						pad1_buttons &= ~(1 << DKEY_SQUARE);
-					}
-				} else {
-					player_controller[0].joy_right_ax0 = (axisval + 32768) / 256;
-				}
-				break;
-			case 4: /* Y axis */
-				axisval = event.jaxis.value;
-				if (Config.AnalogDigital == 1) {
-					if (axisval > joy_commit_range) {
-						pad1_buttons &= ~(1 << DKEY_CROSS);
-					} else if (axisval < -joy_commit_range) {
-						pad1_buttons &= ~(1 << DKEY_TRIANGLE);
-					}
-				} else {
-					player_controller[0].joy_right_ax1 = (axisval + 32768) / 256;
-				}
-				break;
-			}
+			default:
 			break;
-		case SDL_JOYBUTTONDOWN:
-			if (event.jbutton.which == 0) {
-				pad1_buttons |= (1 << DKEY_L3);
-			} else if (event.jbutton.which == 1) {
-				pad1_buttons |= (1 << DKEY_R3);
-			}
-			break;
-		default: break;
 		}
 	}
-
-	if (Config.AnalogDigital == 1)
+	
+	if (keys[SDLK_END] && keys[SDLK_TAB])
 	{
-		if ((analog1 & ANALOG_UP)) {
+		popup_menu = true;
+	}
+
+	if (keys[SDLK_ESCAPE] && keys[SDLK_TAB])
+	{
+		pad1_buttons |= (1 << DKEY_SELECT);
+		pad1_buttons &= ~(1 << DKEY_L2);
+	}
+		
+	if (keys[SDLK_ESCAPE] && keys[SDLK_BACKSPACE])
+	{
+		pad1_buttons |= (1 << DKEY_SELECT);
+		pad1_buttons &= ~(1 << DKEY_R2);
+	}
+
+	if (Config.AnalogArrow == 1)
+	{
+		if (keys[SDLK_UP])
+		{
+			player_controller[0].joy_left_ax1 = 0;
 			pad1_buttons |= (1 << DKEY_UP);
 		}
-		else if ((analog1 & ANALOG_DOWN)) {
+		else if (keys[SDLK_DOWN])
+		{
+			player_controller[0].joy_left_ax1 = 255;
 			pad1_buttons |= (1 << DKEY_DOWN);
 		}
 		else
 		{
-			pad1_buttons &= ~(1 << DKEY_UP);
-			pad1_buttons &= ~(1 << DKEY_DOWN);
+			player_controller[0].joy_left_ax1 = 127;
 		}
 		
-		if ((analog1 & ANALOG_LEFT)) {
+		if (keys[SDLK_LEFT])
+		{
+			player_controller[0].joy_left_ax0 = 0;
 			pad1_buttons |= (1 << DKEY_LEFT);
 		}
-		else if ((analog1 & ANALOG_RIGHT)) {
+		else if (keys[SDLK_RIGHT])
+		{
+			player_controller[0].joy_left_ax0 = 255;
 			pad1_buttons |= (1 << DKEY_RIGHT);
 		}
 		else
 		{
-			pad1_buttons &= ~(1 << DKEY_LEFT);
-			pad1_buttons &= ~(1 << DKEY_RIGHT);
+			player_controller[0].joy_left_ax0 = 127;
 		}
-	}
-	else if (Config.AnalogArrow == 1) 
-	{
-		if ((pad1_buttons & (1 << DKEY_UP)) && (analog1 & ANALOG_UP)) {
-			pad1_buttons &= ~(1 << DKEY_UP);
+		
+		if (keys[SDLK_END])
+		{
+			if (keys[SDLK_BACKSPACE])
+			{
+				pad1_buttons &= ~(1 << DKEY_L3);
+			}
+			else if ((pad1_buttons & (1 << DKEY_L3)))
+			{
+				pad1_buttons |= (1 << DKEY_L3);
+				
+			}
+			
+			if (keys[SDLK_SPACE])
+			{
+				player_controller[0].joy_right_ax1 = 0;
+				pad1_buttons |= (1 << DKEY_TRIANGLE);
+			}
+			else if (keys[SDLK_LALT])
+			{
+				player_controller[0].joy_right_ax1 = 255;
+				pad1_buttons |= (1 << DKEY_CROSS);
+			}
+			else
+			{
+				player_controller[0].joy_right_ax1 = 127;
+			}
+			
+			if (keys[SDLK_LSHIFT])
+			{
+				player_controller[0].joy_right_ax0 = 0;
+				pad1_buttons |= (1 << DKEY_SQUARE);
+			}
+			else if (keys[SDLK_LCTRL])
+			{
+				player_controller[0].joy_right_ax0 = 255;
+				pad1_buttons |= (1 << DKEY_SQUARE);
+			}
+			else
+			{
+				player_controller[0].joy_right_ax0 = 127;
+			}
 		}
-		if ((pad1_buttons & (1 << DKEY_DOWN)) && (analog1 & ANALOG_DOWN)) {
-			pad1_buttons &= ~(1 << DKEY_DOWN);
-		}
-		if ((pad1_buttons & (1 << DKEY_LEFT)) && (analog1 & ANALOG_LEFT)) {
-			pad1_buttons &= ~(1 << DKEY_LEFT);
-		}
-		if ((pad1_buttons & (1 << DKEY_RIGHT)) && (analog1 & ANALOG_RIGHT)) {
-			pad1_buttons &= ~(1 << DKEY_RIGHT);
-		}
+		else
+		{
+			player_controller[0].joy_right_ax1 = 127;
+			player_controller[0].joy_right_ax0 = 127;
+		}	
 	}
 
 	// popup main menu
@@ -783,15 +710,13 @@ void pad_update()
 		emu_running = true;
 		pad1_buttons |= (1 << DKEY_SELECT) | (1 << DKEY_START) | (1 << DKEY_CROSS);
 		update_window_size(gpu.screen.hres, gpu.screen.vres, Config.PsxType == PSX_TYPE_NTSC);
-		if (Config.VideoScaling == 1) {
-			video_clear();
-			video_flip();
-			video_clear();
+		video_clear();
+		video_flip();
+		video_clear();
 #ifdef SDL_TRIPLEBUF
-			video_flip();
-			video_clear();
+		video_flip();
+		video_clear();
 #endif
-		}
 		emu_running = true;
 		pad1 |= (1 << DKEY_START);
 		pad1 |= (1 << DKEY_CROSS);
@@ -891,95 +816,9 @@ with mingw build. */
 #undef main
 #endif
 
-void Rumble_Init() {
-#ifdef RUMBLE
-	Shake_Init();
-
-	if (Shake_NumOfDevices() > 0) {
-		device = Shake_Open(0);
-
-		Shake_InitEffect(&effect_small, SHAKE_EFFECT_RUMBLE);
-		effect_small.u.rumble.strongMagnitude = SHAKE_RUMBLE_STRONG_MAGNITUDE_MAX * 0.85f;
-		effect_small.u.rumble.weakMagnitude = SHAKE_RUMBLE_WEAK_MAGNITUDE_MAX;
-		effect_small.length = 17;
-		effect_small.delay = 0;
-
-		Shake_InitEffect(&effect_big, SHAKE_EFFECT_RUMBLE);
-		effect_big.u.rumble.strongMagnitude = SHAKE_RUMBLE_STRONG_MAGNITUDE_MAX;
-		effect_big.u.rumble.weakMagnitude = SHAKE_RUMBLE_WEAK_MAGNITUDE_MAX;
-		effect_big.length = 17;
-		effect_big.delay = 0;
-
-		id_shake_small = Shake_UploadEffect(device, &effect_small);
-		id_shake_big = Shake_UploadEffect(device, &effect_big);
-
-		
-	}
-#endif
-}
-
 void update_window_size(int w, int h, uint_fast8_t ntsc_fix)
 {
-	if (Config.VideoScaling != 0) return;
-#ifdef SDL_TRIPLEBUF
-	int flags = SDL_TRIPLEBUF;
-#else
-	int flags = SDL_DOUBLEBUF;
-#endif
-    flags |= SDL_HWSURFACE
-#if defined(GCW_ZERO) && defined(USE_BGR15)
-        | SDL_SWIZZLEBGR
-#endif
-        ;
-	SCREEN_WIDTH = w;
-	if (gpu_unai_config_ext.ntsc_fix && ntsc_fix) {
-		switch (h) {
-		case 240:
-		case 256: h -= 16; break;
-		case 480: h -= 32; break;
-		}
-	}
-	SCREEN_HEIGHT = h;
-
-	if (screen && SDL_MUSTLOCK(screen))
-		SDL_UnlockSurface(screen);
-
-	screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT,
-#if !defined(GCW_ZERO) || !defined(USE_BGR15)
-			16,
-#else
-			15,
-#endif
-			flags);
-	if (!screen) {
-		puts("SDL_SetVideoMode error");
-		exit(0);
-	}
-
-	if (SDL_MUSTLOCK(screen))
-		SDL_LockSurface(screen);
-
-	SCREEN = (Uint16 *)screen->pixels;
-
-#if !defined(GCW_ZERO) && defined(USE_BGR15)
-	screen->format->Rshift = 0;
-	screen->format->Gshift = 5;
-	screen->format->Bshift = 10;
-	screen->format->Rmask = 0x1Fu;
-	screen->format->Gmask = 0x1Fu<<5u;
-	screen->format->Bmask = 0x1Fu<<10u;
-	screen->format->Amask = 0;
-	screen->format->Ashift = 0;
-	screen->format_version++;
-#endif
-
-	video_clear();
-	video_flip();
-	video_clear();
-#ifdef SDL_TRIPLEBUF
-	video_flip();
-	video_clear();
-#endif
+	return;
 }
 
 int main (int argc, char **argv)
@@ -1440,7 +1279,6 @@ int main (int argc, char **argv)
 
 	SDL_WM_SetCaption("pcsx4all - SDL Version", "pcsx4all");
 
-	if (Config.VideoScaling == 1) {
 #ifdef SDL_TRIPLEBUF
 	int flags = SDL_TRIPLEBUF;
 #else
@@ -1448,34 +1286,31 @@ int main (int argc, char **argv)
 #endif
     flags |= SDL_HWSURFACE
 #if defined(GCW_ZERO) && defined(USE_BGR15)
-        | SDL_SWIZZLEBGR
+	| SDL_SWIZZLEBGR
 #endif
         ;
-		SCREEN_WIDTH = 320;
-		SCREEN_HEIGHT = 240;
+	SCREEN_WIDTH = 320;
+	SCREEN_HEIGHT = 240;
 
-		if (screen && SDL_MUSTLOCK(screen))
-			SDL_UnlockSurface(screen);
+	if (screen && SDL_MUSTLOCK(screen))
+		SDL_UnlockSurface(screen);
 
-		screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT,
+	screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT,
 #if !defined(GCW_ZERO) || !defined(USE_BGR15)
-			16,
+		16,
 #else
-			15,
+		15,
 #endif
-		flags);
-		if (!screen) {
-			puts("NO Set VideoMode 320x240x16");
-			exit(0);
-		}
-
-		if (SDL_MUSTLOCK(screen))
-			SDL_LockSurface(screen);
-
-		SCREEN = (Uint16 *) screen->pixels;
-	} else {
-		update_window_size(320, 240, false);
+	flags);
+	if (!screen) {
+		puts("NO Set VideoMode 320x240x16");
+		exit(0);
 	}
+
+	if (SDL_MUSTLOCK(screen))
+		SDL_LockSurface(screen);
+
+	SCREEN = (Uint16 *) screen->pixels;
 
 	if (argc < 2 || cdrfilename[0] == '\0') {
 		// Enter frontend main-menu:
@@ -1495,7 +1330,6 @@ int main (int argc, char **argv)
 		printf("Failed loading plugins.\n");
 		exit(1);
 	}
-	Rumble_Init();
 
 	pcsx4all_initted = true;
 	emu_running = true;

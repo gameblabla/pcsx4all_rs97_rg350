@@ -34,11 +34,7 @@ SDL_LIBS    := $(shell $(SDL_CONFIG) --libs)
 
 LDFLAGS := $(SDL_LIBS) -lSDL_mixer -lSDL_image -lrt -lz -lshake
 
-ifdef A320
-	C_ARCH = -mips32 -msoft-float -DGCW_ZERO -DRG350 -DDYNAREC_SKIP_DCACHE_FLUSH -DTMPFS_MIRRORING -DTMPFS_DIR=\"/tmp\"
-else
-	C_ARCH = -mips32r2 -DGCW_ZERO -DRUMBLE -DRG350 -DSHMEM_MIRRORING
-endif
+C_ARCH = -mips32r2 -DGCW_ZERO -DRUMBLE -DRG350 -DSHMEM_MIRRORING
 
 ifeq ($(DEV),1)
 	# If DEV=1 is passed to 'make', don't mmap anything to virtual address 0.
@@ -63,13 +59,13 @@ else
 	C_ARCH  += -mno-check-zero-division
 endif
 
-CFLAGS := $(C_ARCH) -mplt -mno-shared -ggdb3 -O4 -fexpensive-optimizations -flto -DUSE_BGR15 -DTIME_IN_MSEC \
+CFLAGS := $(C_ARCH) -mplt -mno-shared -ggdb3 -Ofast -fexpensive-optimizations -flto -DTIME_IN_MSEC \
 	-Wall -Wunused -Wpointer-arith \
 	-Wno-sign-compare -Wno-cast-align \
 	-Isrc -Isrc/spu/$(SPU) -D$(SPU) -Isrc/gpu/$(GPU) \
 	-Isrc/port/$(PORT) \
 	-Isrc/plugin_lib \
-	-Isrc/external_lib \
+	-Isrc/external_lib -Isrc/port/common \
 	-DXA_HACK \
 	-DINLINE="static __inline__" -Dasm="__asm__ __volatile__" \
 	$(SDL_CFLAGS)
@@ -77,6 +73,7 @@ CFLAGS := $(C_ARCH) -mplt -mno-shared -ggdb3 -O4 -fexpensive-optimizations -flto
 # Convert plugin names to uppercase and make them CFLAG defines
 CFLAGS += -D$(shell echo $(GPU) | tr a-z A-Z)
 CFLAGS += -D$(shell echo $(SPU) | tr a-z A-Z)
+CFLAGS += -DUSE_BGR15
 
 ifdef RECOMPILER
 CFLAGS += -DPSXREC -D$(RECOMPILER)
@@ -98,7 +95,8 @@ OBJS = \
 	obj/mdec.o obj/decode_xa.o \
 	obj/cdriso.o obj/cdrom.o obj/ppf.o obj/cheat.o \
 	obj/sio.o obj/pad.o \
-	obj/external_lib/ioapi.o obj/external_lib/unzip.o
+	obj/external_lib/ioapi.o obj/external_lib/unzip.o \
+	obj/port/common/frontend.o obj/port/common/cdrom_hacks.o
 
 ifdef RECOMPILER
 OBJS += \
@@ -140,25 +138,15 @@ OBJS += obj/plugin_lib/perfmon.o
 # Use a non-default SPU update frequency for these slower devices
 #  to avoid audio dropouts. 0: once-per-frame (default)   5: 32-times-per-frame
 #
-#  On slower Dingoo A320, update 8 times per frame
-ifdef A320
-CFLAGS += -DSPU_UPDATE_FREQ_DEFAULT=3
-else
-#  On faster GCW Zero platform, update 4 times per frame
-CFLAGS += -DSPU_UPDATE_FREQ_DEFAULT=2
-endif
+#  On faster GCW Zero platform, update 2 times per frame
+CFLAGS += -DSPU_UPDATE_FREQ_DEFAULT=1
 ##########
 
 ##########
 # Similarly, set higher XA audio update frequency for slower devices
 #
-#  On slower Dingoo A320, force XA to update 8 times per frame (val 4)
-ifdef A320
-CFLAGS += -DFORCED_XA_UPDATES_DEFAULT=4
-else
 #  On faster GCW Zero platform, use auto-update
 CFLAGS += -DFORCED_XA_UPDATES_DEFAULT=1
-endif
 ##########
 
 ifeq ($(SPU),spu_pcsxrearmed)

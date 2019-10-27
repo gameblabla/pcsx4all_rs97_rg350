@@ -57,7 +57,7 @@ void rec_munmap_psx_mem();
  * Recompiler's code ptr tables are mapped into this virtual address region,
  * i.e. recRAM and recROM.
  */
-#define REC_RAM_PTR_SIZE sizeof(uptr)
+#define REC_RAM_PTR_SIZE sizeof(uintptr_t)
 #define REC_RAM_SIZE (0x200000 / 4 * REC_RAM_PTR_SIZE)
 #define REC_ROM_SIZE ( 0x80000 / 4 * REC_RAM_PTR_SIZE)
 

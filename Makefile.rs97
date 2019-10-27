@@ -1,47 +1,36 @@
 TARGET = pcsx4all
 PORT   = rs97
-
-# If V=1 was passed to 'make', don't hide commands:
-ifeq ($(V),1)
-	HIDECMD:=
-else
-	HIDECMD:=@
-endif
+RS97   = 1
 
 # Using 'gpulib' adapted from PCSX Rearmed is default, specify
-#  USE_GPULIB=0 as param to 'make' when building to disable it.
+# USE_GPULIB=0 as param to 'make' when building to disable it.
 USE_GPULIB ?= 1
 
-#GPU   = gpu_dfxvideo
-#GPU   = gpu_drhell
-#GPU    = gpu_null
-GPU    = gpu_unai
+GPU  = gpu_unai
+SPU  = spu_pcsxrearmed
 
-SPU    = spu_pcsxrearmed
+RECOMPILER = mips
 
-RM     = rm -f
-MD     = mkdir
-CC     = gcc
-CXX    = g++
-LD     = g++
+RM  = rm -f
+MD  = mkdir
+CC  = /opt/rs97-toolchain/bin/mipsel-linux-gcc
+CXX = /opt/rs97-toolchain/bin/mipsel-linux-g++
+LD  = /opt/rs97-toolchain/bin/mipsel-linux-g++
 
-SYSROOT     := $(shell $(CC) --print-sysroot)
-SDL_CONFIG  := $(SYSROOT)/usr/bin/sdl-config
-SDL_CFLAGS  := $(shell $(SDL_CONFIG) --cflags)
-SDL_LIBS    := $(shell $(SDL_CONFIG) --libs)
+SYSROOT    := $(shell $(CC) --print-sysroot)
+SDL_CONFIG := $(SYSROOT)/usr/bin/sdl-config
+SDL_CFLAGS := $(shell $(SDL_CONFIG) --cflags)
+SDL_LIBS   := $(shell $(SDL_CONFIG) --libs)
 
-LDFLAGS = $(SDL_LIBS) -lSDL_mixer -lSDL_image -lpthread -lz -lshake
+C_ARCH = -mips32 -DDYNAREC_SKIP_DCACHE_FLUSH -DTMPFS_MIRRORING -DTMPFS_DIR=\"/tmp\" -DRS97
+OPTS = -Ofast -mno-fp-exceptions -mframe-header-opt -mno-check-zero-division -fno-signed-zeros -fno-trapping-math -mno-interlink-compressed -fno-caller-saves -flto
 
-# We want the GCW Zero handheld's keybindings (for dev testing purposes)
-C_ARCH = -march=native -DGCW_ZERO -DNOJOYSTICK_AVAILABLE -DNO_HWSCALE
-
-CFLAGS = $(C_ARCH) -ggdb3 -O2 \
+CFLAGS = $(C_ARCH) -fno-common -mno-abicalls -fno-PIC -fdata-sections -ffunction-sections $(OPTS) -DGCW_ZERO \
 	-Wall -Wunused -Wpointer-arith \
 	-Wno-sign-compare -Wno-cast-align \
 	-Isrc -Isrc/spu/$(SPU) -D$(SPU) -Isrc/gpu/$(GPU) \
 	-Isrc/port/$(PORT) \
-	-Isrc/plugin_lib \
-	-Isrc/external_lib -Isrc/port/common \
+	-Isrc/plugin_lib -Isrc/port/common -Isrc/external_lib \
 	-DXA_HACK \
 	-DINLINE="static __inline__" -Dasm="__asm__ __volatile__" \
 	$(SDL_CFLAGS)
@@ -49,12 +38,21 @@ CFLAGS = $(C_ARCH) -ggdb3 -O2 \
 # Convert plugin names to uppercase and make them CFLAG defines
 CFLAGS += -D$(shell echo $(GPU) | tr a-z A-Z)
 CFLAGS += -D$(shell echo $(SPU) | tr a-z A-Z)
-CFLAGS += -std=gnu99
 
-OBJDIRS = \
-	obj obj/gpu obj/gpu/$(GPU) obj/spu obj/spu/$(SPU) \
-	obj/port obj/port/$(PORT) \
-	obj/plugin_lib obj/external_lib obj/port/common
+CFLAGS += -DUSE_MEMCPY32 -DNOJOYSTICK_AVAILABLE -DNO_HWSCALE
+
+ifdef RECOMPILER
+CFLAGS += -DPSXREC -D$(RECOMPILER)
+endif
+
+CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti -nostdinc++ 
+
+LDFLAGS = -nodefaultlibs -lc -lgcc -lSDL -lz -Wl,--as-needed -Wl,--gc-sections -flto -s
+
+OBJDIRS = obj obj/gpu obj/gpu/$(GPU) obj/spu obj/spu/$(SPU) \
+	  obj/recompiler obj/recompiler/$(RECOMPILER) \
+	  obj/port obj/port/$(PORT) \
+	  obj/plugin_lib obj/port/common obj/external_lib
 
 all: maketree $(TARGET)
 
@@ -65,10 +63,18 @@ OBJS = \
 	obj/plugin_lib/plugin_lib.o obj/plugin_lib/pl_sshot.o \
 	obj/psxinterpreter.o \
 	obj/mdec.o obj/decode_xa.o \
-	obj/cdriso.o obj/cdrom.o obj/ppf.o obj/cheat.o \
+	obj/cdriso.o obj/cdrom.o obj/ppf.o \
 	obj/sio.o obj/pad.o \
 	obj/external_lib/ioapi.o obj/external_lib/unzip.o \
 	obj/port/common/frontend.o obj/port/common/cdrom_hacks.o
+	
+ifdef RECOMPILER
+OBJS += \
+	obj/recompiler/mips/recompiler.o \
+	obj/recompiler/mips/mips_disasm.o \
+	obj/recompiler/mips/mem_mapping.o \
+	obj/recompiler/mips/mips_codegen.o
+endif
 
 ######################################################################
 #  GPULIB from PCSX Rearmed:
@@ -86,6 +92,7 @@ endif
 ######################################################################
 
 OBJS += obj/gte.o
+OBJS += obj/cheat.o
 OBJS += obj/spu/$(SPU)/spu.o
 
 OBJS += obj/port/$(PORT)/port.o
@@ -95,6 +102,22 @@ OBJS += obj/plugin_lib/perfmon.o
 #******************************************
 # spu_pcsxrearmed section BEGIN
 #******************************************
+
+##########
+# Use a non-default SPU update frequency for these slower devices
+#  to avoid audio dropouts. 0: once-per-frame (default)   5: 32-times-per-frame
+#
+#  On slower Dingoo A320, update 8 times per frame
+CFLAGS += -DSPU_UPDATE_FREQ_DEFAULT=3
+##########
+
+##########
+# Similarly, set higher XA audio update frequency for slower devices
+#
+#  On slower Dingoo A320, force XA to update 8 times per frame (val 4)
+CFLAGS += -DFORCED_XA_UPDATES_DEFAULT=4
+##########
+
 ifeq ($(SPU),spu_pcsxrearmed)
 # Specify which audio backend to use:
 SOUND_DRIVERS=sdl
@@ -141,7 +164,14 @@ endif
 # spu_pcsxrearmed END
 #******************************************
 
-CXXFLAGS := $(CFLAGS) -fno-rtti
+CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions
+
+#If V=1 was passed to 'make', do not hide commands:
+ifdef V
+	HIDECMD:=
+else
+	HIDECMD:=@
+endif
 
 $(TARGET): $(OBJS)
 	@echo Linking $(TARGET)...
@@ -149,19 +179,19 @@ $(TARGET): $(OBJS)
 
 obj/%.o: src/%.c
 	@echo Compiling $<...
-	$(HIDECMD)$(CC) $(CFLAGS) -c $< -o $@
+	$(HIDECMD)$(CC) -std=gnu99 $(CFLAGS) -c $< -o $@
 
 obj/%.o: src/%.cpp
 	@echo Compiling $<...
-	$(HIDECMD)$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(HIDECMD)$(CXX) -std=gnu++03 $(CXXFLAGS) -c $< -o $@
 
 obj/%.o: src/%.s
 	@echo Compiling $<...
-	$(HIDECMD)$(CXX) $(CFLAGS) -c $< -o $@
+	$(HIDECMD)$(CXX) -std=gnu99 $(CFLAGS) -c $< -o $@
 
 obj/%.o: src/%.S
 	@echo Compiling $<...
-	$(HIDECMD)$(CXX) $(CFLAGS) -c $< -o $@
+	$(HIDECMD)$(CXX) -std=gnu99 $(CFLAGS) -c $< -o $@
 
 $(sort $(OBJDIRS)):
 	$(HIDECMD)$(MD) $@

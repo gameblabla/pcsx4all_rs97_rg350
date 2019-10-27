@@ -41,7 +41,7 @@ static void recADDIU()
 {
 	// rt = rs + (int32_t)imm
 
-	const uint_fast8_t set_const = IsConst(_Rs_);
+	const uint8_t set_const = IsConst(_Rs_);
 
 	/* Catch ADDIU reg, $0, imm */
 	/* Exit if const already loaded */
@@ -59,7 +59,7 @@ static void recSLTI()
 {
 	// rt = (int32_t)rs < (int32_t)imm
 
-	const uint_fast8_t set_const = IsConst(_Rs_);
+	const uint8_t set_const = IsConst(_Rs_);
 
 	REC_ITYPE_RT_RS_I16(SLTI, _Rt_, _Rs_, _Imm_);
 
@@ -72,7 +72,7 @@ static void recSLTIU()
 	// rt = (uint32_t)rs < (uint32_t)((int32_t)imm)
 	// NOTE: SLTIU sign-extends its immediate before the unsigned comparison
 
-	const uint_fast8_t set_const = IsConst(_Rs_);
+	const uint8_t set_const = IsConst(_Rs_);
 
 	REC_ITYPE_RT_RS_I16(SLTIU, _Rt_, _Rs_, _Imm_);
 
@@ -106,7 +106,7 @@ static void recANDI()
 {
 	// rt = rs & (uint32_t)imm
 
-	const uint_fast8_t set_const = IsConst(_Rs_);
+	const uint8_t set_const = IsConst(_Rs_);
 
 	REC_ITYPE_RT_RS_U16(ANDI, _Rt_, _Rs_, _ImmU_);
 
@@ -118,7 +118,7 @@ static void recORI()
 {
 	// rt = rs | (uint32_t)imm
 
-	uint_fast8_t set_const = IsConst(_Rs_);
+	uint8_t set_const = IsConst(_Rs_);
 
 	/* Catch ORI reg, $0, imm */
 	/* Exit if const already loaded */
@@ -135,7 +135,7 @@ static void recXORI()
 {
 	// rt = rs ^ (uint32_t)imm
 
-	const uint_fast8_t set_const = IsConst(_Rs_);
+	const uint8_t set_const = IsConst(_Rs_);
 
 	REC_ITYPE_RT_RS_U16(XORI, _Rt_, _Rs_, _ImmU_);
 
@@ -205,29 +205,29 @@ static void recADDU()
 {
 	// rd = rs + rt
 
-	const uint_fast8_t rs_const = IsConst(_Rs_);
-	const uint_fast8_t rt_const = IsConst(_Rt_);
-	const uint_fast8_t set_const = rs_const && rt_const;
+	const uint8_t rs_const = IsConst(_Rs_);
+	const uint8_t rt_const = IsConst(_Rt_);
+	const uint8_t set_const = rs_const && rt_const;
 
 	//  When an ADDU adds an unknown val to a known-const val:
 	// Propagate information about the known-const val's range with respect to
 	// PS1 address regions. If the dest reg is later used as a load/store base
 	// reg, that emitter can optimize, despite not knowing the exact value.
 	// This optimizes static array accesses in original PS1 code.
-	uint_fast8_t fuzzy_ram_addr = false;
-	uint_fast8_t fuzzy_nonram_addr = false;
-	uint_fast8_t fuzzy_scratchpad_addr = false;
+	uint8_t fuzzy_ram_addr = 0;
+	uint8_t fuzzy_nonram_addr = 0;
+	uint8_t fuzzy_scratchpad_addr = 0;
 	if (!(rs_const && rt_const) && (rs_const || rt_const))
 	{
 		const uint32_t const_val = rs_const ? GetConst(_Rs_) : GetConst(_Rt_);
 
 		if (const_val >= 0x80000000 && const_val < 0x80800000)
-			fuzzy_ram_addr = true;
+			fuzzy_ram_addr = 1;
 
 		// Is address obviously scratchpad, I/O, or ROM?
 		if ((const_val >= 0x1f000000 && const_val < 0x1f810000) ||
 		    (const_val >= 0xbfc00000 && const_val < 0xbfc80000))
-			fuzzy_nonram_addr = true;
+			fuzzy_nonram_addr = 1;
 
 		// To identify scratchpad-only addresses, we are stricter:
 		//  1KB scratchpad range lies in very close proximity to I/O addresses
@@ -235,7 +235,7 @@ static void recADDU()
 		// address 0x1f80_0000 would result in a fuzzy scratchpad address.
 		// For range minimun, we instead use 0x1f80_0001.
 		if (const_val >= 0x1f800001 && const_val < 0x1f800400)
-			fuzzy_scratchpad_addr = true;
+			fuzzy_scratchpad_addr = 1;
 	}
 
 	REC_RTYPE_RD_RS_RT(ADDU, _Rd_, _Rs_, _Rt_);
@@ -256,7 +256,7 @@ static void recSUBU()
 {
 	// rd = rs - rt
 
-	const uint_fast8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
+	const uint8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
 
 	REC_RTYPE_RD_RS_RT(SUBU, _Rd_, _Rs_, _Rt_);
 
@@ -269,7 +269,7 @@ static void recAND()
 {
 	// rd = rs & rt
 
-	const uint_fast8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
+	const uint8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
 
 	REC_RTYPE_RD_RS_RT(AND, _Rd_, _Rs_, _Rt_);
 
@@ -281,7 +281,7 @@ static void recOR()
 {
 	// rd = rs | rt
 
-	const uint_fast8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
+	const uint8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
 
 	REC_RTYPE_RD_RS_RT(OR,  _Rd_, _Rs_, _Rt_);
 
@@ -293,7 +293,7 @@ static void recXOR()
 {
 	// rd = rs ^ rt
 
-	const uint_fast8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
+	const uint8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
 
 	REC_RTYPE_RD_RS_RT(XOR, _Rd_, _Rs_, _Rt_);
 
@@ -305,7 +305,7 @@ static void recNOR()
 {
 	// rd = ~(rs | rt)
 
-	const uint_fast8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
+	const uint8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
 
 	REC_RTYPE_RD_RS_RT(NOR, _Rd_, _Rs_, _Rt_);
 
@@ -317,7 +317,7 @@ static void recSLT()
 {
 	// rd = rs < rt (SIGNED)
 
-	const uint_fast8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
+	const uint8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
 
 	REC_RTYPE_RD_RS_RT(SLT,  _Rd_, _Rs_, _Rt_);
 
@@ -329,7 +329,7 @@ static void recSLTU()
 {
 	// rd = rs < rt (UNSIGNED)
 
-	const uint_fast8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
+	const uint8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
 
 	REC_RTYPE_RD_RS_RT(SLTU, _Rd_, _Rs_, _Rt_);
 
@@ -364,7 +364,7 @@ static void recSLL()
 {
 	// rd = rt << sa
 
-	const uint_fast8_t set_const = IsConst(_Rt_);
+	const uint8_t set_const = IsConst(_Rt_);
 
 #ifdef USE_MIPS32R2_ALU_OPCODE_CONVERSION
 	if (!branch)
@@ -473,7 +473,7 @@ static void recSRL()
 {
 	// rd = rt >> sa
 
-	const uint_fast8_t set_const = IsConst(_Rt_);
+	const uint8_t set_const = IsConst(_Rt_);
 
 #ifdef USE_MIPS32R2_ALU_OPCODE_CONVERSION
 	if (!branch)
@@ -592,7 +592,7 @@ static void recSRA()
 {
 	// rd = (int32_t)rt >> sa
 
-	const uint_fast8_t set_const = IsConst(_Rt_);
+	const uint8_t set_const = IsConst(_Rt_);
 
 #ifdef USE_MIPS32R2_ALU_OPCODE_CONVERSION
 	if (!branch)
@@ -685,7 +685,7 @@ static void recSLLV()
 {
 	// rd = rt << rs
 
-	const uint_fast8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
+	const uint8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
 
 	REC_RTYPE_RD_RT_RS(SLLV, _Rd_, _Rt_, _Rs_);
 
@@ -697,7 +697,7 @@ static void recSRLV()
 {
 	// rd = (uint32_t)rt >> rs
 
-	const uint_fast8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
+	const uint8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
 
 	REC_RTYPE_RD_RT_RS(SRLV, _Rd_, _Rt_, _Rs_);
 
@@ -709,7 +709,7 @@ static void recSRAV()
 {
 	// rd = (int32_t)rt >> rs
 
-	const uint_fast8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
+	const uint8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
 
 	REC_RTYPE_RD_RT_RS(SRAV, _Rd_, _Rt_, _Rs_);
 

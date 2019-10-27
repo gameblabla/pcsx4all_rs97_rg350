@@ -146,48 +146,48 @@ static uintptr_t psxRecLUT[0x10000];
 /* Const-propagation data and functions */
 typedef struct {
 	uint32_t  constval;
-	uint_fast8_t is_const;
+	uint8_t is_const;
 
-	uint_fast8_t is_fuzzy_ram_addr;        /* GPR is not known-const, but at least known
+	uint8_t is_fuzzy_ram_addr;        /* GPR is not known-const, but at least known
 	                                   to be address somewhere in RAM? */
-	uint_fast8_t is_fuzzy_nonram_addr;     /* GPR is not known-const, but at least known
+	uint8_t is_fuzzy_nonram_addr;     /* GPR is not known-const, but at least known
 	                                   to be address somewhere outside RAM? */
-	uint_fast8_t is_fuzzy_scratchpad_addr; /* GPR is not known-const, but at least known
+	uint8_t is_fuzzy_scratchpad_addr; /* GPR is not known-const, but at least known
 	                                   to be address somewhere in 1KB scratcpad? */
 } iRegisters;
 static iRegisters iRegs[32];
 static inline void ResetConsts()
 {
 	memset(&iRegs, 0, sizeof(iRegs));
-	iRegs[0].is_const = true;  // $r0 is always zero val
+	iRegs[0].is_const = 1;  // $r0 is always zero val
 }
-static inline uint_fast8_t IsConst(const uint32_t reg)  { return iRegs[reg].is_const; }
+static inline uint8_t IsConst(const uint32_t reg)  { return iRegs[reg].is_const; }
 static inline uint32_t  GetConst(const uint32_t reg) { return iRegs[reg].constval; }
 static inline void SetUndef(const uint32_t reg)
 {
 	if (reg) {
-		iRegs[reg].is_const = false;
-		iRegs[reg].is_fuzzy_ram_addr        = false;
-		iRegs[reg].is_fuzzy_nonram_addr     = false;
-		iRegs[reg].is_fuzzy_scratchpad_addr = false;
+		iRegs[reg].is_const = 0;
+		iRegs[reg].is_fuzzy_ram_addr        = 0;
+		iRegs[reg].is_fuzzy_nonram_addr     = 0;
+		iRegs[reg].is_fuzzy_scratchpad_addr = 0;
 	}
 }
 static inline void SetConst(const uint32_t reg, const uint32_t val)
 {
 	if (reg) {
 		iRegs[reg].constval = val;
-		iRegs[reg].is_const = true;
-		iRegs[reg].is_fuzzy_ram_addr        = false;
-		iRegs[reg].is_fuzzy_nonram_addr     = false;
-		iRegs[reg].is_fuzzy_scratchpad_addr = false;
+		iRegs[reg].is_const = 1;
+		iRegs[reg].is_fuzzy_ram_addr        = 0;
+		iRegs[reg].is_fuzzy_nonram_addr     = 0;
+		iRegs[reg].is_fuzzy_scratchpad_addr = 0;
 	}
 }
-static inline void SetFuzzyRamAddr(const uint32_t reg)        { iRegs[reg].is_fuzzy_ram_addr = true; }
-static inline uint_fast8_t IsFuzzyRamAddr(const uint32_t reg)         { return iRegs[reg].is_fuzzy_ram_addr; }
-static inline void SetFuzzyNonramAddr(const uint32_t reg)     { iRegs[reg].is_fuzzy_nonram_addr = true; }
-static inline uint_fast8_t IsFuzzyNonramAddr(const uint32_t reg)      { return iRegs[reg].is_fuzzy_nonram_addr; }
-static inline void SetFuzzyScratchpadAddr(const uint32_t reg) { iRegs[reg].is_fuzzy_scratchpad_addr = true; }
-static inline uint_fast8_t IsFuzzyScratchpadAddr(const uint32_t reg)  { return iRegs[reg].is_fuzzy_scratchpad_addr; }
+static inline void SetFuzzyRamAddr(const uint32_t reg)        { iRegs[reg].is_fuzzy_ram_addr = 1; }
+static inline uint8_t IsFuzzyRamAddr(const uint32_t reg)         { return iRegs[reg].is_fuzzy_ram_addr; }
+static inline void SetFuzzyNonramAddr(const uint32_t reg)     { iRegs[reg].is_fuzzy_nonram_addr = 1; }
+static inline uint8_t IsFuzzyNonramAddr(const uint32_t reg)      { return iRegs[reg].is_fuzzy_nonram_addr; }
+static inline void SetFuzzyScratchpadAddr(const uint32_t reg) { iRegs[reg].is_fuzzy_scratchpad_addr = 1; }
+static inline uint8_t IsFuzzyScratchpadAddr(const uint32_t reg)  { return iRegs[reg].is_fuzzy_scratchpad_addr; }
 
 
 /* Code cache buffer
@@ -213,21 +213,21 @@ static uintptr_t block_ret_addr;                /* Non-zero when blocks are usin
 static uintptr_t block_fast_ret_addr;           /* Non-zero when blocks are using direct return jumps &
                                               dispatch loop fastpath is enabled */
 
-static uint_fast8_t psx_mem_mapped;                /* PS1 RAM mmap'd+mirrored at fixed address? (psxM) */
-static uint_fast8_t rec_mem_mapped;                /* Code ptr arrays mmap'd+mirrored at fixed address? (recRAM,recROM) */
+static uint8_t psx_mem_mapped;                /* PS1 RAM mmap'd+mirrored at fixed address? (psxM) */
+static uint8_t rec_mem_mapped;                /* Code ptr arrays mmap'd+mirrored at fixed address? (recRAM,recROM) */
 
 /* Flags used during a recompilation phase */
-static uint_fast8_t branch;                        /* Current instruction lies in a BD slot? */
-static uint_fast8_t end_block;                     /* Has recompilation phase ended? */
-static uint_fast8_t skip_emitting_next_mflo;       /* Was a MULT/MULTU converted to 3-op MUL? See rec_mdu.cpp.h */
-static uint_fast8_t emit_code_invalidations;       /* Emit code invalidation for store instructions? */
-static uint_fast8_t flush_code_on_dma3_exe_load;   /* Flush code cache when psxDma3() detects EXE load? */
+static uint8_t branch;                        /* Current instruction lies in a BD slot? */
+static uint8_t end_block;                     /* Has recompilation phase ended? */
+static uint8_t skip_emitting_next_mflo;       /* Was a MULT/MULTU converted to 3-op MUL? See rec_mdu.cpp.h */
+static uint8_t emit_code_invalidations;       /* Emit code invalidation for store instructions? */
+static uint8_t flush_code_on_dma3_exe_load;   /* Flush code cache when psxDma3() detects EXE load? */
 
 /* Flags/vals used to cache common values in temp regs in emitted code */
-static uint_fast8_t lsu_tmp_cache_valid;           /* LSU vals are cached in $at,$v1. See rec_lsu.cpp.h */
-static uint_fast8_t host_v0_reg_is_const;          /* PCs are cached in $v0. See rec_bcu.cpp.h */
+static uint8_t lsu_tmp_cache_valid;           /* LSU vals are cached in $at,$v1. See rec_lsu.cpp.h */
+static uint8_t host_v0_reg_is_const;          /* PCs are cached in $v0. See rec_bcu.cpp.h */
 static uint32_t  host_v0_reg_constval;
-static uint_fast8_t host_ra_reg_has_block_retaddr; /* Indirect-return address is cached in $ra. */
+static uint8_t host_ra_reg_has_block_retaddr; /* Indirect-return address is cached in $ra. */
 
 
 #ifdef WITH_DISASM
@@ -402,8 +402,8 @@ static inline void clear_insn_cache(void *start, void *end, int flags)
 static void rec_set_options()
 {
 	// Default options
-	emit_code_invalidations = true;
-	flush_code_on_dma3_exe_load = false;
+	emit_code_invalidations = 1;
+	flush_code_on_dma3_exe_load = 0;
 
 	// Per-game options
 	// -> Use case-insensitive comparisons! Some CDs have lowercase CdromId.
@@ -419,8 +419,8 @@ static void rec_set_options()
 	    strncasecmp(CdromId, "SCES03423", 9) == 0)     // Formula 1 2001 PAL  Fr,G (fixes broken AI/controls)
 	{
 		REC_LOG("Using Icache workarounds for trouble games 'Formula One 99/2001/etc'.\n");
-		emit_code_invalidations = false;
-		flush_code_on_dma3_exe_load = true;
+		emit_code_invalidations = 0;
+		flush_code_on_dma3_exe_load = 1;
 	}
 }
 
@@ -457,17 +457,17 @@ static void recRecompile()
 	ResetConsts();
 
 	// Flag indicates when recompilation should stop
-	end_block = false;
+	end_block = 0;
 
 	// See convertMultiplyTo3Op() and recMFLO() in rec_mdu.cpp.h
-	skip_emitting_next_mflo = false;
+	skip_emitting_next_mflo = 0;
 
 	// Flag indicates when values are cached by load/store emitters in $at,$v1
-	lsu_tmp_cache_valid = false;
+	lsu_tmp_cache_valid = 0;
 
 	// Flag indicates when a PC value is cached in $v0. All dispatch loops set
 	//  $v0 to block start PC before entry. See rec_bcu.cpp.h
-	host_v0_reg_is_const = true;
+	host_v0_reg_is_const = 1;
 	host_v0_reg_constval = psxRegs.pc;
 
 	// Flag indicates when $ra holds block return address. This is only used
@@ -480,7 +480,7 @@ static void recRecompile()
 
 	do {
 		// Flag indicates if next instruction lies in a BD slot
-		branch = false;
+		branch = 0;
 
 		psxRegs.code = OPCODE_AT(pc);
 
@@ -544,7 +544,7 @@ static int recInit()
 #ifdef USE_VIRTUAL_RECRAM_MAPPING
 	if (!rec_mem_mapped && !recRAM && !recROM) {
 		if (rec_mmap_rec_mem() >= 0) {
-			rec_mem_mapped = true;
+			rec_mem_mapped = 1;
 			recRAM = (int8_t*)REC_RAM_VADDR;
 			recROM = (int8_t*)REC_ROM_VADDR;
 		}
@@ -598,7 +598,7 @@ static void recShutdown()
 		rec_munmap_psx_mem();
 	if (rec_mem_mapped)
 		rec_munmap_rec_mem();
-	psx_mem_mapped = rec_mem_mapped = false;
+	psx_mem_mapped = rec_mem_mapped = 0;
 }
 
 
@@ -799,7 +799,7 @@ __asm__ __volatile__ (
 // NOTE: We'd never reach this point because the block dispatch loop is
 //  currently infinite. This could change in the future.
 // TODO: Could add a way to reset a game or load a new game from within
-//  the running emulator by setting a global uint_fast8_t, resetting
+//  the running emulator by setting a global boolean, resetting
 //  psxRegs.io_cycle_counter to 0, and checking if it's been set before
 //  calling pxsBranchTest() here. If set, you must jump here to
 //  exit the loop, to ensure that stack frame is adjusted before return!
@@ -968,7 +968,7 @@ __asm__ __volatile__ (
 // NOTE: We'd never reach this point because the block dispatch loop is
 //  currently infinite. This could change in the future.
 // TODO: Could add a way to reset a game or load a new game from within
-//  the running emulator by setting a global uint_fast8_t, resetting
+//  the running emulator by setting a global boolean, resetting
 //  psxRegs.io_cycle_counter to 0, and checking if it's been set before
 //  calling pxsBranchTest() here. If set, you must jump here to
 //  exit the loop, to ensure that stack frame is adjusted before return!
@@ -1185,7 +1185,7 @@ __asm__ __volatile__ (
 // NOTE: During block executions, we'd never reach this point because the block
 //  dispatch loop is currently infinite. This could change in the future.
 // TODO: Could add a way to reset a game or load a new game from within
-//  the running emulator by setting a global uint_fast8_t, resetting
+//  the running emulator by setting a global boolean, resetting
 //  psxRegs.io_cycle_counter to 0, and checking if it's been set before
 //  calling pxsBranchTest() here. If set, you must jump here to
 //  exit the loop, to ensure that stack frame is adjusted before return!
@@ -1407,7 +1407,7 @@ __asm__ __volatile__ (
 // NOTE: During block executions, we'd never reach this point because the block
 //  dispatch loop is currently infinite. This could change in the future.
 // TODO: Could add a way to reset a game or load a new game from within
-//  the running emulator by setting a global uint_fast8_t, resetting
+//  the running emulator by setting a global boolean, resetting
 //  psxRegs.io_cycle_counter to 0, and checking if it's been set before
 //  calling pxsBranchTest() here. If set, you must jump here to
 //  exit the loop, to ensure that stack frame is adjusted before return!
@@ -1623,7 +1623,7 @@ static void recExecute()
 	//  under HLE BIOS cannot know at compile-time where to return to.
 	//
 	// To force indirect return code, set 'block_ret_addr' to 0 here.
-	uint_fast8_t use_indirect_return_dispatch_loop = true;
+	uint8_t use_indirect_return_dispatch_loop = 1;
 	block_ret_addr = block_fast_ret_addr = 0;
 
 #if defined(ASM_EXECUTE_LOOP) && defined(USE_DIRECT_BLOCK_RETURN_JUMPS)
@@ -1664,7 +1664,7 @@ static void recClear(uint32_t Addr, uint32_t Size)
 	//  occur when many games stream CD data in-game.
 	uint32_t page = masked_ram_addr/4096;
 	uint32_t end_page = ((masked_ram_addr + (Size-1)*4)/4096) + 1;
-	uint_fast8_t has_code = false;
+	uint8_t has_code = 0;
 	do {
 		uint32_t pflag = 1 << (page & 7);  // Each byte in code_pages[] represents 8 pages
 		has_code = code_pages[page/8] & pflag;

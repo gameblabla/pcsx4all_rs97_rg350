@@ -346,9 +346,9 @@ do { \
 #define JAL(addr)                                                              \
 do {                                                                           \
     /* Function call overwrites values in 'unsaved' regs */                    \
-	lsu_tmp_cache_valid = false;                                               \
-    host_v0_reg_is_const = false;                                              \
-    host_ra_reg_has_block_retaddr = false;                                     \
+	lsu_tmp_cache_valid = 0;                                               \
+    host_v0_reg_is_const = 0;                                              \
+    host_ra_reg_has_block_retaddr = 0;                                     \
     write32(0x0c000000 | (((uint32_t)(addr) & 0x0fffffff) >> 2));                   \
 } while (0)
 
@@ -492,28 +492,28 @@ do { \
 
 
 
-static inline uint_fast8_t opcodeIsStore(const uint32_t opcode)
+static inline uint8_t opcodeIsStore(const uint32_t opcode)
 {
 	return (_fOp_(opcode) >= 0x28 && _fOp_(opcode) <= 0x2b) // SB,SH,SWL,SW
 	       || _fOp_(opcode) == 0x2e;                        // SWR
 }
 
-static inline uint_fast8_t opcodeIsLoad(const uint32_t opcode)
+static inline uint8_t opcodeIsLoad(const uint32_t opcode)
 {
 	return _fOp_(opcode) >= 0x20 && _fOp_(opcode) <= 0x26; // LB,LH,LWL,LW,LBU,LHU,LWR
 }
 
-static inline uint_fast8_t opcodeIsStoreWordUnaligned(const uint32_t opcode)
+static inline uint8_t opcodeIsStoreWordUnaligned(const uint32_t opcode)
 {
 	return _fOp_(opcode) == 0x2a || _fOp_(opcode) == 0x2e; // SWL, SWR
 }
 
-static inline uint_fast8_t opcodeIsLoadWordUnaligned(const uint32_t opcode)
+static inline uint8_t opcodeIsLoadWordUnaligned(const uint32_t opcode)
 {
 	return _fOp_(opcode) == 0x22 || _fOp_(opcode) == 0x26; // LWL,LWR
 }
 
-static inline uint_fast8_t opcodeIsBranch(const uint32_t opcode)
+static inline uint8_t opcodeIsBranch(const uint32_t opcode)
 {
 	return (_fOp_(opcode) == 0x01 && (_fRt_(opcode) == 0x00 || // BLTZ
 	                                  _fRt_(opcode) == 0x01 || // BGEZ
@@ -523,23 +523,23 @@ static inline uint_fast8_t opcodeIsBranch(const uint32_t opcode)
 	       (_fOp_(opcode) >= 0x04 && _fOp_(opcode) <= 0x07);   // BEQ,BNE,BLEZ,BGTZ
 }
 
-static inline uint_fast8_t opcodeIsIndirectJump(const uint32_t opcode)
+static inline uint8_t opcodeIsIndirectJump(const uint32_t opcode)
 {
 	return _fOp_(opcode) == 0x00 && (_fFunct_(opcode) == 0x08 || // JR
 	                                 _fFunct_(opcode) == 0x09);  // JALR
 }
 
-static inline uint_fast8_t opcodeIsDirectJump(const uint32_t opcode)
+static inline uint8_t opcodeIsDirectJump(const uint32_t opcode)
 {
 	return _fOp_(opcode) == 0x02 || _fOp_(opcode) == 0x03;       // J,JAL
 }
 
-static inline uint_fast8_t opcodeIsJump(const uint32_t opcode)
+static inline uint8_t opcodeIsJump(const uint32_t opcode)
 {
 	return opcodeIsIndirectJump(opcode) || opcodeIsDirectJump(opcode);
 }
 
-static inline uint_fast8_t opcodeIsBranchOrJump(const uint32_t opcode)
+static inline uint8_t opcodeIsBranchOrJump(const uint32_t opcode)
 {
 	return opcodeIsBranch(opcode) || opcodeIsJump(opcode);
 }
@@ -560,11 +560,11 @@ static inline uint32_t opcodeGetBranchTargetAddr(const uint32_t branch_opcode,
 
 /* Opcode analysis functions */
 struct ALUOpInfo {
-	uint_fast8_t writes_rt;
-	uint_fast8_t reads_rs;
-	uint_fast8_t reads_rt;
+	uint8_t writes_rt;
+	uint8_t reads_rs;
+	uint8_t reads_rt;
 };
-uint_fast8_t opcodeIsALU(const uint32_t opcode, struct ALUOpInfo *info);
+uint8_t opcodeIsALU(const uint32_t opcode, struct ALUOpInfo *info);
 uint64_t opcodeGetReads(const uint32_t op);
 uint64_t opcodeGetWrites(const uint32_t op);
 

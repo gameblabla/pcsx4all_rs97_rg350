@@ -305,7 +305,11 @@ static inline uint_fast8_t ProgressiveInterlaceEnabled()
 //       running on higher-res device or a resampling downscaler is enabled.
 static inline uint_fast8_t PixelSkipEnabled()
 {
+#ifdef NO_HWSCALE
+	return gpu_unai.config.pixel_skip;
+#else
 	return Config.VideoScaling == 1 && gpu_unai.config.pixel_skip;
+#endif
 }
 
 static inline uint_fast8_t LineSkipEnabled()

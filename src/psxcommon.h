@@ -169,6 +169,8 @@ typedef struct {
 	 * more preferable in this case. (Because it would be less conveniant)
 	*/
 	uint8_t      MemoryCardHack; 
+	
+	uint_fast8_t AnalogDigital; /* 0=disable 1=use Map sticks to DPAD/Buttons */
 
 } PcsxConfig;
 
