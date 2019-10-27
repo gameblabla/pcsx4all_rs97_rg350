@@ -54,10 +54,10 @@
 	psxEvqueueAdd(PSXINT_CDRDMA, eCycle); \
 }
 
-void psxDma2(u32 madr, u32 bcr, u32 chcr);
-void psxDma3(u32 madr, u32 bcr, u32 chcr);
-void psxDma4(u32 madr, u32 bcr, u32 chcr);
-void psxDma6(u32 madr, u32 bcr, u32 chcr);
+void psxDma2(uint32_t madr, uint32_t bcr, uint32_t chcr);
+void psxDma3(uint32_t madr, uint32_t bcr, uint32_t chcr);
+void psxDma4(uint32_t madr, uint32_t bcr, uint32_t chcr);
+void psxDma6(uint32_t madr, uint32_t bcr, uint32_t chcr);
 void gpuInterrupt(void);
 void spuInterrupt(void);
 void gpuotcInterrupt();

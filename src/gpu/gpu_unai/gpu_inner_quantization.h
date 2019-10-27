@@ -34,7 +34,7 @@ static void SetupDitheringConstants()
 	// Shading colors are encoded in 4.5, and then are quantitized to 5.0,
 	// DitherMatrix constants reflect that.
 
-	static const u8 DitherMatrix[] = {
+	static const uint8_t DitherMatrix[] = {
 		 0, 32,  8, 40,  2, 34, 10, 42,
 		48, 16, 56, 24, 50, 18, 58, 26,
 		12, 44,  4, 36, 14, 46,  6, 38,
@@ -50,9 +50,9 @@ static void SetupDitheringConstants()
 	{
 		for (j = 0; j < 8; j++)
 		{
-			u16 offset = (i << 3) | j;
+			uint16_t offset = (i << 3) | j;
 
-			u32 component = ((DitherMatrix[offset] + 1) << 4) / 65; //[5.5] -> [5]
+			uint32_t component = ((DitherMatrix[offset] + 1) << 4) / 65; //[5.5] -> [5]
 
 			// XXX - senquack - hack Dec 2016
 			//  Until JohnnyF gets the time to work further on dithering,
@@ -71,7 +71,7 @@ static void SetupDitheringConstants()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// Convert padded u32 5.4:5.4:5.4 bgr fixed-pt triplet to final bgr555 color,
+// Convert padded uint32_t 5.4:5.4:5.4 bgr fixed-pt triplet to final bgr555 color,
 //  applying dithering if specified by template parameter.
 //
 // INPUT:
@@ -80,17 +80,17 @@ static void SetupDitheringConstants()
 //       'pDst' is a pointer to destination framebuffer pixel, used
 //         to determine which DitherMatrix[] entry to apply.
 // RETURNS:
-//         u16 output: 0bbbbbgggggrrrrr
+//         uint16_t output: 0bbbbbgggggrrrrr
 //                     ^ bit 16
 // Where 'X' are fixed-pt bits, '0' is zero-padding, and '-' is don't care
 ////////////////////////////////////////////////////////////////////////////////
 template <int DITHER>
-GPU_INLINE u16 gpuColorQuantization24(u32 uSrc24, const u16 *pDst)
+GPU_INLINE uint16_t gpuColorQuantization24(uint32_t uSrc24, const uint16_t *pDst)
 {
 	if (DITHER)
 	{
-		u16 fbpos  = (u32)(pDst - gpu_unai.vram);
-		u16 offset = ((fbpos & (0x7 << 10)) >> 7) | (fbpos & 0x7);
+		uint16_t fbpos  = (uint32_t)(pDst - gpu_unai.vram);
+		uint16_t offset = ((fbpos & (0x7 << 10)) >> 7) | (fbpos & 0x7);
 
 		//clean overflow flags and add
 		uSrc24 = (uSrc24 & 0x1FF7FDFF) + gpu_unai.DitherMatrix[offset];

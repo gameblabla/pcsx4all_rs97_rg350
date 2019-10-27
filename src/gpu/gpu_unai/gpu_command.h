@@ -20,9 +20,9 @@
 ***************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////////
-void gpuSetTexture(u16 tpage)
+void gpuSetTexture(uint16_t tpage)
 {
-	u32 tmode, tx, ty;
+	uint32_t tmode, tx, ty;
 	gpu_unai.GPU_GP1 = (gpu_unai.GPU_GP1 & ~0x1FF) | (tpage & 0x1FF);
 	gpu_unai.TextureWindow[0]&= ~gpu_unai.TextureWindow[2];
 	gpu_unai.TextureWindow[1]&= ~gpu_unai.TextureWindow[3];
@@ -42,13 +42,13 @@ void gpuSetTexture(u16 tpage)
 	
 	gpu_unai.BLEND_MODE  = ((tpage>>5) & 3) << 3;
 	gpu_unai.TEXT_MODE   = (tmode + 1) << 5; // gpu_unai.TEXT_MODE should be values 1..3, so add one
-	gpu_unai.TBA = &((u16*)gpu_unai.vram)[FRAME_OFFSET(tx, ty)];
+	gpu_unai.TBA = &((uint16_t*)gpu_unai.vram)[FRAME_OFFSET(tx, ty)];
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-INLINE void gpuSetCLUT(u16 clut)
+INLINE void gpuSetCLUT(uint16_t clut)
 {
-	gpu_unai.CBA = &((u16*)gpu_unai.vram)[(clut & 0x7FFF) << 4];
+	gpu_unai.CBA = &((uint16_t*)gpu_unai.vram)[(clut & 0x7FFF) << 4];
 }
 
 #ifdef  ENABLE_GPU_NULL_SUPPORT
@@ -77,16 +77,16 @@ INLINE void gpuSetCLUT(u16 clut)
 #ifndef USE_GPULIB
 
 // Handles GP0 draw settings commands 0xE1...0xE6
-static void gpuGP0Cmd_0xEx(gpu_unai_t &gpu_unai, u32 cmd_word)
+static void gpuGP0Cmd_0xEx(gpu_unai_t &gpu_unai, uint32_t cmd_word)
 {
 	// Assume incoming GP0 command is 0xE1..0xE6, convert to 1..6
-	u8 num = (cmd_word >> 24) & 7;
+	uint8_t num = (cmd_word >> 24) & 7;
 	switch (num) {
 		case 1: {
 			// GP0(E1h) - Draw Mode setting (aka "Texpage")
 			DO_LOG(("GP0(0xE1) DrawMode TexPage(0x%x)\n", cmd_word));
-			u32 cur_texpage = gpu_unai.GPU_GP1 & 0x7FF;
-			u32 new_texpage = cmd_word & 0x7FF;
+			uint32_t cur_texpage = gpu_unai.GPU_GP1 & 0x7FF;
+			uint32_t new_texpage = cmd_word & 0x7FF;
 			if (cur_texpage != new_texpage) {
 				gpu_unai.GPU_GP1 = (gpu_unai.GPU_GP1 & ~0x7FF) | new_texpage;
 				gpuSetTexture(gpu_unai.GPU_GP1);
@@ -97,7 +97,7 @@ static void gpuGP0Cmd_0xEx(gpu_unai_t &gpu_unai, u32 cmd_word)
 			// GP0(E2h) - Texture Window setting
 			DO_LOG(("GP0(0xE2) TextureWindow(0x%x)\n", cmd_word));
 			if (cmd_word != gpu_unai.TextureWindowCur) {
-				static const u8 TextureMask[32] = {
+				static const uint8_t TextureMask[32] = {
 					255, 7, 15, 7, 31, 7, 15, 7, 63, 7, 15, 7, 31, 7, 15, 7,
 					127, 7, 15, 7, 31, 7, 15, 7, 63, 7, 15, 7, 31, 7, 15, 7
 				};
@@ -110,9 +110,9 @@ static void gpuGP0Cmd_0xEx(gpu_unai_t &gpu_unai, u32 cmd_word)
 				gpu_unai.TextureWindow[1] &= ~gpu_unai.TextureWindow[3];
 
 				// Inner loop vars must be updated whenever texture window is changed:
-				const u32 fb = FIXED_BITS;  // # of fractional fixed-pt bits of u4/v4
-				gpu_unai.u_msk = (((u32)gpu_unai.TextureWindow[2]) << fb) | ((1 << fb) - 1);
-				gpu_unai.v_msk = (((u32)gpu_unai.TextureWindow[3]) << fb) | ((1 << fb) - 1);
+				const uint32_t fb = FIXED_BITS;  // # of fractional fixed-pt bits of u4/v4
+				gpu_unai.u_msk = (((uint32_t)gpu_unai.TextureWindow[2]) << fb) | ((1 << fb) - 1);
+				gpu_unai.v_msk = (((uint32_t)gpu_unai.TextureWindow[3]) << fb) | ((1 << fb) - 1);
 
 				gpuSetTexture(gpu_unai.GPU_GP1);
 			}
@@ -135,8 +135,8 @@ static void gpuGP0Cmd_0xEx(gpu_unai_t &gpu_unai, u32 cmd_word)
 		case 5: {
 			// GP0(E5h) - Set Drawing Offset (X,Y)
 			DO_LOG(("GP0(0xE5) DrawingOffset(0x%x)\n", cmd_word));
-			gpu_unai.DrawingOffset[0] = ((s32)cmd_word<<(32-11))>>(32-11);
-			gpu_unai.DrawingOffset[1] = ((s32)cmd_word<<(32-22))>>(32-11);
+			gpu_unai.DrawingOffset[0] = ((int32_t)cmd_word<<(32-11))>>(32-11);
+			gpu_unai.DrawingOffset[1] = ((int32_t)cmd_word<<(32-22))>>(32-11);
 		} break;
 
 		case 6: {
@@ -193,7 +193,7 @@ void gpuSendPacketFunction(const int PRIM)
 				gpuSetCLUT    (gpu_unai.PacketBuffer.U4[2] >> 16);
 				gpuSetTexture (gpu_unai.PacketBuffer.U4[4] >> 16);
 
-				u32 driver_idx =
+				uint32_t driver_idx =
 					(gpu_unai.blit_mask?1024:0) |
 					Dithering |
 					Blending_Mode | gpu_unai.TEXT_MODE |
@@ -241,7 +241,7 @@ void gpuSendPacketFunction(const int PRIM)
 				gpuSetCLUT    (gpu_unai.PacketBuffer.U4[2] >> 16);
 				gpuSetTexture (gpu_unai.PacketBuffer.U4[4] >> 16);
 
-				u32 driver_idx =
+				uint32_t driver_idx =
 					(gpu_unai.blit_mask?1024:0) |
 					Dithering |
 					Blending_Mode | gpu_unai.TEXT_MODE |
@@ -354,7 +354,7 @@ void gpuSendPacketFunction(const int PRIM)
 			{
 				NULL_GPU();
 				// Shift index right by one, as untextured prims don't use lighting
-				u32 driver_idx = (Blending_Mode | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>3)) >> 1;
+				uint32_t driver_idx = (Blending_Mode | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>3)) >> 1;
 				PSD driver = gpuPixelSpanDrivers[driver_idx];
 				gpuDrawLineF(packet, driver);
 				gpu_unai.fb_dirty = true;
@@ -374,7 +374,7 @@ void gpuSendPacketFunction(const int PRIM)
 			{
 				NULL_GPU();
 				// Shift index right by one, as untextured prims don't use lighting
-				u32 driver_idx = (Blending_Mode | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>3)) >> 1;
+				uint32_t driver_idx = (Blending_Mode | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>3)) >> 1;
 				PSD driver = gpuPixelSpanDrivers[driver_idx];
 				gpuDrawLineF(packet, driver);
 				gpu_unai.fb_dirty = true;
@@ -397,7 +397,7 @@ void gpuSendPacketFunction(const int PRIM)
 			{
 				NULL_GPU();
 				// Shift index right by one, as untextured prims don't use lighting
-				u32 driver_idx = (Blending_Mode | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>3)) >> 1;
+				uint32_t driver_idx = (Blending_Mode | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>3)) >> 1;
 				// Index MSB selects Gouraud-shaded PixelSpanDriver:
 				driver_idx |= (1 << 5);
 				PSD driver = gpuPixelSpanDrivers[driver_idx];
@@ -419,7 +419,7 @@ void gpuSendPacketFunction(const int PRIM)
 			{
 				NULL_GPU();
 				// Shift index right by one, as untextured prims don't use lighting
-				u32 driver_idx = (Blending_Mode | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>3)) >> 1;
+				uint32_t driver_idx = (Blending_Mode | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>3)) >> 1;
 				// Index MSB selects Gouraud-shaded PixelSpanDriver:
 				driver_idx |= (1 << 5);
 				PSD driver = gpuPixelSpanDrivers[driver_idx];
@@ -460,7 +460,7 @@ void gpuSendPacketFunction(const int PRIM)
 			{
 				NULL_GPU();
 				gpuSetCLUT    (gpu_unai.PacketBuffer.U4[2] >> 16);
-				u32 driver_idx = Blending_Mode | gpu_unai.TEXT_MODE | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>1);
+				uint32_t driver_idx = Blending_Mode | gpu_unai.TEXT_MODE | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>1);
 
 				// This fixes Silent Hill running animation on loading screens:
 				// (On PSX, color values 0x00-0x7F darken the source texture's color,
@@ -523,7 +523,7 @@ void gpuSendPacketFunction(const int PRIM)
 				NULL_GPU();
 				gpu_unai.PacketBuffer.U4[3] = 0x00080008;
 				gpuSetCLUT    (gpu_unai.PacketBuffer.U4[2] >> 16);
-				u32 driver_idx = Blending_Mode | gpu_unai.TEXT_MODE | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>1);
+				uint32_t driver_idx = Blending_Mode | gpu_unai.TEXT_MODE | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>1);
 
 				//senquack - Only color 808080h-878787h allows skipping lighting calculation:
 				//if ((gpu_unai.PacketBuffer.U1[0]>0x5F) && (gpu_unai.PacketBuffer.U1[1]>0x5F) && (gpu_unai.PacketBuffer.U1[2]>0x5F))
@@ -571,7 +571,7 @@ void gpuSendPacketFunction(const int PRIM)
 				NULL_GPU();
 				gpu_unai.PacketBuffer.U4[3] = 0x00100010;
 				gpuSetCLUT    (gpu_unai.PacketBuffer.U4[2] >> 16);
-				u32 driver_idx = Blending_Mode | gpu_unai.TEXT_MODE | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>1);
+				uint32_t driver_idx = Blending_Mode | gpu_unai.TEXT_MODE | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>1);
 
 				//senquack - Only color 808080h-878787h allows skipping lighting calculation:
 				//if ((gpu_unai.PacketBuffer.U1[0]>0x5F) && (gpu_unai.PacketBuffer.U1[1]>0x5F) && (gpu_unai.PacketBuffer.U1[2]>0x5F))

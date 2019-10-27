@@ -165,7 +165,7 @@ typedef struct
 typedef struct
 {
     zlib_filefunc64_32_def z_filefunc;
-    int is64bitOpenFunction;
+    int iint64_tbitOpenFunction;
     voidpf filestream;        /* io structore of the zipfile */
     unz_global_info64 gi;       /* public global information */
     ZPOS64_T byte_before_the_zipfile;/* byte before the zipfile, (>0 for sfx)*/
@@ -583,7 +583,7 @@ local ZPOS64_T unz64local_SearchCentralDir64(const zlib_filefunc64_32_def* pzlib
 */
 local unzFile unzOpenInternal (const void *path,
                                zlib_filefunc64_32_def* pzlib_filefunc64_32_def,
-                               int is64bitOpenFunction)
+                               int iint64_tbitOpenFunction)
 {
     unz64_s us;
     unz64_s *s;
@@ -609,7 +609,7 @@ local unzFile unzOpenInternal (const void *path,
         fill_fopen64_filefunc(&us.z_filefunc.zfile_func64);
     else
         us.z_filefunc = *pzlib_filefunc64_32_def;
-    us.is64bitOpenFunction = is64bitOpenFunction;
+    us.iint64_tbitOpenFunction = iint64_tbitOpenFunction;
 
 
 
@@ -1305,7 +1305,7 @@ typedef struct unz_file_pos_s
 } unz_file_pos;
 */
 
-extern int ZEXPORT unzGetFilePos64(unzFile file, unz64_file_pos*  file_pos)
+extern int ZEXPORT unzGetFilePoint64_t(unzFile file, unz64_file_pos*  file_pos)
 {
     unz64_s* s;
 
@@ -1325,17 +1325,17 @@ extern int ZEXPORT unzGetFilePos(
     unzFile file,
     unz_file_pos* file_pos)
 {
-    unz64_file_pos file_pos64;
-    int err = unzGetFilePos64(file,&file_pos64);
+    unz64_file_pos file_point64_t;
+    int err = unzGetFilePoint64_t(file,&file_point64_t);
     if (err==UNZ_OK)
     {
-        file_pos->pos_in_zip_directory = (uLong)file_pos64.pos_in_zip_directory;
-        file_pos->num_of_file = (uLong)file_pos64.num_of_file;
+        file_pos->pos_in_zip_directory = (uLong)file_point64_t.pos_in_zip_directory;
+        file_pos->num_of_file = (uLong)file_point64_t.num_of_file;
     }
     return err;
 }
 
-extern int ZEXPORT unzGoToFilePos64(unzFile file, const unz64_file_pos* file_pos)
+extern int ZEXPORT unzGoToFilePoint64_t(unzFile file, const unz64_file_pos* file_pos)
 {
     unz64_s* s;
     int err;
@@ -1361,13 +1361,13 @@ extern int ZEXPORT unzGoToFilePos(
     unzFile file,
     unz_file_pos* file_pos)
 {
-    unz64_file_pos file_pos64;
+    unz64_file_pos file_point64_t;
     if (file_pos == NULL)
         return UNZ_PARAMERROR;
 
-    file_pos64.pos_in_zip_directory = file_pos->pos_in_zip_directory;
-    file_pos64.num_of_file = file_pos->num_of_file;
-    return unzGoToFilePos64(file,&file_pos64);
+    file_point64_t.pos_in_zip_directory = file_pos->pos_in_zip_directory;
+    file_point64_t.num_of_file = file_pos->num_of_file;
+    return unzGoToFilePoint64_t(file,&file_point64_t);
 }
 
 /*
@@ -1655,7 +1655,7 @@ extern int ZEXPORT unzOpenCurrentFile2 (unzFile file, int* method, int* level, i
 
 /** Addition for GDAL : START */
 
-extern ZPOS64_T ZEXPORT unzGetCurrentFileZStreamPos64( unzFile file)
+extern ZPOS64_T ZEXPORT unzGetCurrentFileZStreamPoint64_t( unzFile file)
 {
     unz64_s* s;
     file_in_zip64_read_info_s* pfile_in_zip_read_info;

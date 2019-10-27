@@ -30,23 +30,23 @@
 
 typedef struct {
 	unsigned char id[8];
-    u32 text;                   
-    u32 data;                    
-    u32 pc0;
-    u32 gp0;                     
-    u32 t_addr;
-    u32 t_size;
-    u32 d_addr;                  
-    u32 d_size;                  
-    u32 b_addr;                  
-    u32 b_size;                  
-    u32 s_addr;
-    u32 s_size;
-    u32 SavedSP;
-    u32 SavedFP;
-    u32 SavedGP;
-    u32 SavedRA;
-    u32 SavedS0;
+    uint32_t text;                   
+    uint32_t data;                    
+    uint32_t pc0;
+    uint32_t gp0;                     
+    uint32_t t_addr;
+    uint32_t t_size;
+    uint32_t d_addr;                  
+    uint32_t d_size;                  
+    uint32_t b_addr;                  
+    uint32_t b_size;                  
+    uint32_t s_addr;
+    uint32_t s_size;
+    uint32_t SavedSP;
+    uint32_t SavedFP;
+    uint32_t SavedGP;
+    uint32_t SavedRA;
+    uint32_t SavedS0;
 } EXE_HEADER;
 
 struct external_filehdr {
@@ -71,7 +71,7 @@ int Load(const char *ExePath);
 
 int SaveState(const char *file);
 int LoadState(const char *file);
-int CheckState(const char *file, bool *uses_hle, bool get_sshot, u16 *sshot_image);
+int CheckState(const char *file, uint_fast8_t *uses_hle, uint_fast8_t get_sshot, uint16_t *sshot_image);
 
 enum {
 	CHECKSTATE_SUCCESS        = 0,
@@ -82,6 +82,6 @@ enum {
 	CHECKSTATE_ERR_READ       = -5
 };
 
-bool FileExists(const char* filename);
+uint_fast8_t FileExists(const char* filename);
 int FileDate(const char* filename, char *date_str, time_t *m_time);
 #endif /* __MISC_H__ */

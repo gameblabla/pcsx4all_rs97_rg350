@@ -18,12 +18,12 @@
          native zero reg on mips. */
 #define REC_ITYPE_RT_RS_I16(insn, _rt_, _rs_, _imm_) \
 do { \
-	u32 rt  = _rt_; \
-	u32 rs  = _rs_; \
-	s32 imm = _imm_; \
+	uint32_t rt  = _rt_; \
+	uint32_t rs  = _rs_; \
+	int32_t imm = _imm_; \
 	if (!rt) break; \
 	SetUndef(_rt_); \
-	u32 r1, r2; \
+	uint32_t r1, r2; \
 	if (rs == rt) { \
 		r1 = regMipsToHost(rt, REG_LOAD, REG_REGISTER); \
 		r2 = r1; \
@@ -39,56 +39,56 @@ do { \
 
 static void recADDIU()
 {
-	// rt = rs + (s32)imm
+	// rt = rs + (int32_t)imm
 
-	const bool set_const = IsConst(_Rs_);
+	const uint_fast8_t set_const = IsConst(_Rs_);
 
 	/* Catch ADDIU reg, $0, imm */
 	/* Exit if const already loaded */
-	if (!_Rs_ && IsConst(_Rt_) && GetConst(_Rt_) == (s32)_Imm_)
+	if (!_Rs_ && IsConst(_Rt_) && GetConst(_Rt_) == (int32_t)_Imm_)
 		return;
 
 	REC_ITYPE_RT_RS_I16(ADDIU,  _Rt_, _Rs_, _Imm_);
 
 	if (set_const)
-		SetConst(_Rt_, GetConst(_Rs_) + (s32)_Imm_);
+		SetConst(_Rt_, GetConst(_Rs_) + (int32_t)_Imm_);
 }
 static void recADDI() { recADDIU(); }
 
 static void recSLTI()
 {
-	// rt = (s32)rs < (s32)imm
+	// rt = (int32_t)rs < (int32_t)imm
 
-	const bool set_const = IsConst(_Rs_);
+	const uint_fast8_t set_const = IsConst(_Rs_);
 
 	REC_ITYPE_RT_RS_I16(SLTI, _Rt_, _Rs_, _Imm_);
 
 	if (set_const)
-		SetConst(_Rt_, (s32)GetConst(_Rs_) < (s32)_Imm_);
+		SetConst(_Rt_, (int32_t)GetConst(_Rs_) < (int32_t)_Imm_);
 }
 
 static void recSLTIU()
 {
-	// rt = (u32)rs < (u32)((s32)imm)
+	// rt = (uint32_t)rs < (uint32_t)((int32_t)imm)
 	// NOTE: SLTIU sign-extends its immediate before the unsigned comparison
 
-	const bool set_const = IsConst(_Rs_);
+	const uint_fast8_t set_const = IsConst(_Rs_);
 
 	REC_ITYPE_RT_RS_I16(SLTIU, _Rt_, _Rs_, _Imm_);
 
 	if (set_const)
-		SetConst(_Rt_, GetConst(_Rs_) < (u32)((s32)_Imm_));
+		SetConst(_Rt_, GetConst(_Rs_) < (uint32_t)((int32_t)_Imm_));
 }
 
 
 #define REC_ITYPE_RT_RS_U16(insn, _rt_, _rs_, _imm_) \
 do { \
-	u32 rt  = _rt_; \
-	u32 rs  = _rs_; \
-	u32 imm = _imm_; \
+	uint32_t rt  = _rt_; \
+	uint32_t rs  = _rs_; \
+	uint32_t imm = _imm_; \
 	if (!rt) break; \
 	SetUndef(_rt_); \
-	u32 r1, r2; \
+	uint32_t r1, r2; \
 	if (rs == rt) { \
 		r1 = regMipsToHost(rt, REG_LOAD, REG_REGISTER); \
 		r2 = r1; \
@@ -104,52 +104,52 @@ do { \
 
 static void recANDI()
 {
-	// rt = rs & (u32)imm
+	// rt = rs & (uint32_t)imm
 
-	const bool set_const = IsConst(_Rs_);
+	const uint_fast8_t set_const = IsConst(_Rs_);
 
 	REC_ITYPE_RT_RS_U16(ANDI, _Rt_, _Rs_, _ImmU_);
 
 	if (set_const)
-		SetConst(_Rt_, GetConst(_Rs_) & (u32)_ImmU_);
+		SetConst(_Rt_, GetConst(_Rs_) & (uint32_t)_ImmU_);
 }
 
 static void recORI()
 {
-	// rt = rs | (u32)imm
+	// rt = rs | (uint32_t)imm
 
-	bool set_const = IsConst(_Rs_);
+	uint_fast8_t set_const = IsConst(_Rs_);
 
 	/* Catch ORI reg, $0, imm */
 	/* Exit if const already loaded */
-	if (!_Rs_ && IsConst(_Rt_) && GetConst(_Rt_) == (u32)_ImmU_)
+	if (!_Rs_ && IsConst(_Rt_) && GetConst(_Rt_) == (uint32_t)_ImmU_)
 		return;
 
 	REC_ITYPE_RT_RS_U16(ORI,  _Rt_, _Rs_, _ImmU_);
 
 	if (set_const)
-		SetConst(_Rt_, GetConst(_Rs_) | (u32)(_ImmU_));
+		SetConst(_Rt_, GetConst(_Rs_) | (uint32_t)(_ImmU_));
 }
 
 static void recXORI()
 {
-	// rt = rs ^ (u32)imm
+	// rt = rs ^ (uint32_t)imm
 
-	const bool set_const = IsConst(_Rs_);
+	const uint_fast8_t set_const = IsConst(_Rs_);
 
 	REC_ITYPE_RT_RS_U16(XORI, _Rt_, _Rs_, _ImmU_);
 
 	if (set_const)
-		SetConst(_Rt_, GetConst(_Rs_) ^ (u32)(_ImmU_));
+		SetConst(_Rt_, GetConst(_Rs_) ^ (uint32_t)(_ImmU_));
 }
 
 
 #define REC_ITYPE_RT_U16(insn, _rt_, _imm_) \
 do { \
-	u32 rt  = _rt_; \
-	u32 imm = _imm_; \
+	uint32_t rt  = _rt_; \
+	uint32_t imm = _imm_; \
 	if (!rt) break; \
-	u32 r1 = regMipsToHost(rt, REG_FIND, REG_REGISTER); \
+	uint32_t r1 = regMipsToHost(rt, REG_FIND, REG_REGISTER); \
 	insn(r1, imm); \
 	regMipsChanged(rt); \
 	regUnlock(r1); \
@@ -157,29 +157,29 @@ do { \
 
 static void recLUI()
 {
-	// rt = (u32)imm << 16
+	// rt = (uint32_t)imm << 16
 
 	// Check for a LUI...LOAD sequence and emit an optimized one, if found.
 	if (!branch && emitOptimizedStaticLoad())
 		return;
 
 	/* Avoid loading the same constant more than once */
-	if (IsConst(_Rt_) && GetConst(_Rt_) == ((u32)_ImmU_ << 16))
+	if (IsConst(_Rt_) && GetConst(_Rt_) == ((uint32_t)_ImmU_ << 16))
 		return;
 
 	REC_ITYPE_RT_U16(LUI, _Rt_, _ImmU_);
 
-	SetConst(_Rt_, (u32)_ImmU_ << 16);
+	SetConst(_Rt_, (uint32_t)_ImmU_ << 16);
 }
 
 
 #define REC_RTYPE_RD_RS_RT(insn, _rd_, _rs_, _rt_) \
 do { \
-	u32 rd  = _rd_; \
-	u32 rt  = _rt_; \
-	u32 rs  = _rs_; \
+	uint32_t rd  = _rd_; \
+	uint32_t rt  = _rt_; \
+	uint32_t rs  = _rs_; \
 	if (!rd) break; \
-	u32 r1, r2, r3; \
+	uint32_t r1, r2, r3; \
 	SetUndef(_rd_); \
 	if (rs == rd) { \
 		r1 = regMipsToHost(rd, REG_LOAD, REG_REGISTER); \
@@ -205,21 +205,21 @@ static void recADDU()
 {
 	// rd = rs + rt
 
-	const bool rs_const = IsConst(_Rs_);
-	const bool rt_const = IsConst(_Rt_);
-	const bool set_const = rs_const && rt_const;
+	const uint_fast8_t rs_const = IsConst(_Rs_);
+	const uint_fast8_t rt_const = IsConst(_Rt_);
+	const uint_fast8_t set_const = rs_const && rt_const;
 
 	//  When an ADDU adds an unknown val to a known-const val:
 	// Propagate information about the known-const val's range with respect to
 	// PS1 address regions. If the dest reg is later used as a load/store base
 	// reg, that emitter can optimize, despite not knowing the exact value.
 	// This optimizes static array accesses in original PS1 code.
-	bool fuzzy_ram_addr = false;
-	bool fuzzy_nonram_addr = false;
-	bool fuzzy_scratchpad_addr = false;
+	uint_fast8_t fuzzy_ram_addr = false;
+	uint_fast8_t fuzzy_nonram_addr = false;
+	uint_fast8_t fuzzy_scratchpad_addr = false;
 	if (!(rs_const && rt_const) && (rs_const || rt_const))
 	{
-		const u32 const_val = rs_const ? GetConst(_Rs_) : GetConst(_Rt_);
+		const uint32_t const_val = rs_const ? GetConst(_Rs_) : GetConst(_Rt_);
 
 		if (const_val >= 0x80000000 && const_val < 0x80800000)
 			fuzzy_ram_addr = true;
@@ -256,7 +256,7 @@ static void recSUBU()
 {
 	// rd = rs - rt
 
-	const bool set_const = IsConst(_Rs_) && IsConst(_Rt_);
+	const uint_fast8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
 
 	REC_RTYPE_RD_RS_RT(SUBU, _Rd_, _Rs_, _Rt_);
 
@@ -269,7 +269,7 @@ static void recAND()
 {
 	// rd = rs & rt
 
-	const bool set_const = IsConst(_Rs_) && IsConst(_Rt_);
+	const uint_fast8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
 
 	REC_RTYPE_RD_RS_RT(AND, _Rd_, _Rs_, _Rt_);
 
@@ -281,7 +281,7 @@ static void recOR()
 {
 	// rd = rs | rt
 
-	const bool set_const = IsConst(_Rs_) && IsConst(_Rt_);
+	const uint_fast8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
 
 	REC_RTYPE_RD_RS_RT(OR,  _Rd_, _Rs_, _Rt_);
 
@@ -293,7 +293,7 @@ static void recXOR()
 {
 	// rd = rs ^ rt
 
-	const bool set_const = IsConst(_Rs_) && IsConst(_Rt_);
+	const uint_fast8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
 
 	REC_RTYPE_RD_RS_RT(XOR, _Rd_, _Rs_, _Rt_);
 
@@ -305,7 +305,7 @@ static void recNOR()
 {
 	// rd = ~(rs | rt)
 
-	const bool set_const = IsConst(_Rs_) && IsConst(_Rt_);
+	const uint_fast8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
 
 	REC_RTYPE_RD_RS_RT(NOR, _Rd_, _Rs_, _Rt_);
 
@@ -317,19 +317,19 @@ static void recSLT()
 {
 	// rd = rs < rt (SIGNED)
 
-	const bool set_const = IsConst(_Rs_) && IsConst(_Rt_);
+	const uint_fast8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
 
 	REC_RTYPE_RD_RS_RT(SLT,  _Rd_, _Rs_, _Rt_);
 
 	if (set_const)
-		SetConst(_Rd_, (s32)GetConst(_Rs_) < (s32)GetConst(_Rt_));
+		SetConst(_Rd_, (int32_t)GetConst(_Rs_) < (int32_t)GetConst(_Rt_));
 }
 
 static void recSLTU()
 {
 	// rd = rs < rt (UNSIGNED)
 
-	const bool set_const = IsConst(_Rs_) && IsConst(_Rt_);
+	const uint_fast8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
 
 	REC_RTYPE_RD_RS_RT(SLTU, _Rd_, _Rs_, _Rt_);
 
@@ -340,12 +340,12 @@ static void recSLTU()
 
 #define REC_RTYPE_RD_RT_SA(insn, _rd_, _rt_, _sa_) \
 do { \
-	u32 rd = _rd_; \
-	u32 rt = _rt_; \
-	u32 sa = _sa_; \
+	uint32_t rd = _rd_; \
+	uint32_t rt = _rt_; \
+	uint32_t sa = _sa_; \
 	if (!rd) break; \
 	SetUndef(_rd_); \
-	u32 r1, r2; \
+	uint32_t r1, r2; \
 	if (rd == rt) { \
 		if (!sa) break; \
 		r1 = regMipsToHost(rd, REG_LOAD, REG_REGISTER); \
@@ -364,12 +364,12 @@ static void recSLL()
 {
 	// rd = rt << sa
 
-	const bool set_const = IsConst(_Rt_);
+	const uint_fast8_t set_const = IsConst(_Rt_);
 
 #ifdef USE_MIPS32R2_ALU_OPCODE_CONVERSION
 	if (!branch)
 	{
-		const u32 next_opcode = OPCODE_AT(pc);
+		const uint32_t next_opcode = OPCODE_AT(pc);
 
 		// If next opcode is SRA, see if we can convert this SLL,SRA sequence
 		//  into a newer MIPS32r2 'SEB' or 'SEH' instruction instead.
@@ -383,7 +383,7 @@ static void recSLL()
 		    (_Sa_ == 24 || _Sa_ == 16) && _Sa_ == _fSa_(next_opcode) &&
 		    _Rd_ == _fRd_(next_opcode) && _Rd_ == _fRt_(next_opcode))
 		{
-			u32 r1, r2;
+			uint32_t r1, r2;
 			if (_Rd_ == _Rt_) {
 				r1 = regMipsToHost(_Rd_, REG_LOAD, REG_REGISTER);
 				r2 = r1;
@@ -404,7 +404,7 @@ static void recSLL()
 
 			// Propagate constness of result.
 			if (set_const)
-				SetConst(_Rd_, ((s32)(GetConst(_Rt_) << _Sa_) >> _Sa_));
+				SetConst(_Rd_, ((int32_t)(GetConst(_Rt_) << _Sa_) >> _Sa_));
 			else
 				SetUndef(_Rd_);
 
@@ -431,7 +431,7 @@ static void recSLL()
 		    _Rd_ == _fRd_(next_opcode)                                &&
 		    _Rd_ == _fRt_(next_opcode))
 		{
-			u32 r1, r2;
+			uint32_t r1, r2;
 			if (_Rd_ == _Rt_) {
 				r1 = regMipsToHost(_Rd_, REG_LOAD, REG_REGISTER);
 				r2 = r1;
@@ -448,7 +448,7 @@ static void recSLL()
 
 			// Propagate constness of result.
 			if (set_const)
-				SetConst(_Rd_, (((u32)GetConst(_Rt_) << _Sa_) >> _Sa_));
+				SetConst(_Rd_, (((uint32_t)GetConst(_Rt_) << _Sa_) >> _Sa_));
 			else
 				SetUndef(_Rd_);
 
@@ -473,12 +473,12 @@ static void recSRL()
 {
 	// rd = rt >> sa
 
-	const bool set_const = IsConst(_Rt_);
+	const uint_fast8_t set_const = IsConst(_Rt_);
 
 #ifdef USE_MIPS32R2_ALU_OPCODE_CONVERSION
 	if (!branch)
 	{
-		const u32 next_opcode = OPCODE_AT(pc);
+		const uint32_t next_opcode = OPCODE_AT(pc);
 
 		// If next opcode is ANDI, see if we can convert this SRL,ANDI sequence
 		//  into a newer MIPS32r2 'EXT' instruction instead.
@@ -495,16 +495,16 @@ static void recSRL()
 			//  i.e. it is 0x1,0x3,0x7,0xf, ... 0x3fff,0x7fff, 0xffff,
 			//  i.e., with no trailing or intervening 0s.
 			//  Note that we've already checked that imm is not 0.
-			const u32 imm = _fImmU_(next_opcode);
+			const uint32_t imm = _fImmU_(next_opcode);
 			if (((imm+1) & imm) == 0)
 			{
 				// Number of bits for 'ext' to extract: count trailing zeroes
 				//  of imm+1, starting at LSB.
-				const u32 num_bits = __builtin_ctz(imm+1);
+				const uint32_t num_bits = __builtin_ctz(imm+1);
 				// Position to start extracting from is the SRL's shift-amount
-				const u32 pos_to_extract = _Sa_;
+				const uint32_t pos_to_extract = _Sa_;
 
-				u32 r1, r2;
+				uint32_t r1, r2;
 				if (_Rd_ == _Rt_) {
 					r1 = regMipsToHost(_Rd_, REG_LOAD, REG_REGISTER);
 					r2 = r1;
@@ -521,7 +521,7 @@ static void recSRL()
 
 				// Propagate constness of result.
 				if (set_const)
-					SetConst(_Rd_, ((u32)GetConst(_Rt_) >> _Sa_) & _fImmU_(next_opcode));
+					SetConst(_Rd_, ((uint32_t)GetConst(_Rt_) >> _Sa_) & _fImmU_(next_opcode));
 				else
 					SetUndef(_Rd_);
 
@@ -549,7 +549,7 @@ static void recSRL()
 		    _Rd_ == _fRd_(next_opcode)                              &&
 		    _fRd_(next_opcode) == _fRt_(next_opcode))
 		{
-			u32 r1, r2;
+			uint32_t r1, r2;
 			if (_Rd_ == _Rt_) {
 				r1 = regMipsToHost(_Rd_, REG_LOAD, REG_REGISTER);
 				r2 = r1;
@@ -566,7 +566,7 @@ static void recSRL()
 
 			// Propagate constness of result.
 			if (set_const)
-				SetConst(_Rd_, ((u32)GetConst(_Rt_) >> _Sa_) << _Sa_);
+				SetConst(_Rd_, ((uint32_t)GetConst(_Rt_) >> _Sa_) << _Sa_);
 			else
 				SetUndef(_Rd_);
 
@@ -584,20 +584,20 @@ static void recSRL()
 	REC_RTYPE_RD_RT_SA(SRL, _Rd_, _Rt_, _Sa_);
 
 	if (set_const)
-		SetConst(_Rd_, (u32)GetConst(_Rt_) >> _Sa_);
+		SetConst(_Rd_, (uint32_t)GetConst(_Rt_) >> _Sa_);
 }
 
 
 static void recSRA()
 {
-	// rd = (s32)rt >> sa
+	// rd = (int32_t)rt >> sa
 
-	const bool set_const = IsConst(_Rt_);
+	const uint_fast8_t set_const = IsConst(_Rt_);
 
 #ifdef USE_MIPS32R2_ALU_OPCODE_CONVERSION
 	if (!branch)
 	{
-		const u32 next_opcode = OPCODE_AT(pc);
+		const uint32_t next_opcode = OPCODE_AT(pc);
 
 		// If next opcode is SLL, see if we can convert this SRA,SLL sequence
 		//  into a newer MIPS32r2 'INS' instruction instead (inserting 0s).
@@ -613,7 +613,7 @@ static void recSRA()
 		    _Rd_ == _fRd_(next_opcode)                              &&
 		    _fRd_(next_opcode) == _fRt_(next_opcode))
 		{
-			u32 r1, r2;
+			uint32_t r1, r2;
 			if (_Rd_ == _Rt_) {
 				r1 = regMipsToHost(_Rd_, REG_LOAD, REG_REGISTER);
 				r2 = r1;
@@ -630,7 +630,7 @@ static void recSRA()
 
 			// Propagate constness of result.
 			if (set_const)
-				SetConst(_Rd_, (((s32)GetConst(_Rt_) >> _Sa_) << _Sa_));
+				SetConst(_Rd_, (((int32_t)GetConst(_Rt_) >> _Sa_) << _Sa_));
 			else
 				SetUndef(_Rd_);
 
@@ -648,18 +648,18 @@ static void recSRA()
 	REC_RTYPE_RD_RT_SA(SRA, _Rd_, _Rt_, _Sa_);
 
 	if (set_const)
-		SetConst(_Rd_, (s32)GetConst(_Rt_) >> _Sa_);
+		SetConst(_Rd_, (int32_t)GetConst(_Rt_) >> _Sa_);
 }
 
 
 #define REC_RTYPE_RD_RT_RS(insn, _rd_, _rt_, _rs_) \
 do { \
-	u32 rd = _rd_; \
-	u32 rt = _rt_; \
-	u32 rs = _rs_; \
+	uint32_t rd = _rd_; \
+	uint32_t rt = _rt_; \
+	uint32_t rs = _rs_; \
 	if (!rd) break; \
 	SetUndef(_rd_); \
-	u32 r1, r2, r3; \
+	uint32_t r1, r2, r3; \
 	if (rd == rt) { \
 		if (!rs) break; \
 		r1 = regMipsToHost(rd, REG_LOAD, REG_REGISTER); \
@@ -685,7 +685,7 @@ static void recSLLV()
 {
 	// rd = rt << rs
 
-	const bool set_const = IsConst(_Rs_) && IsConst(_Rt_);
+	const uint_fast8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
 
 	REC_RTYPE_RD_RT_RS(SLLV, _Rd_, _Rt_, _Rs_);
 
@@ -695,9 +695,9 @@ static void recSLLV()
 
 static void recSRLV()
 {
-	// rd = (u32)rt >> rs
+	// rd = (uint32_t)rt >> rs
 
-	const bool set_const = IsConst(_Rs_) && IsConst(_Rt_);
+	const uint_fast8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
 
 	REC_RTYPE_RD_RT_RS(SRLV, _Rd_, _Rt_, _Rs_);
 
@@ -707,12 +707,12 @@ static void recSRLV()
 
 static void recSRAV()
 {
-	// rd = (s32)rt >> rs
+	// rd = (int32_t)rt >> rs
 
-	const bool set_const = IsConst(_Rs_) && IsConst(_Rt_);
+	const uint_fast8_t set_const = IsConst(_Rs_) && IsConst(_Rt_);
 
 	REC_RTYPE_RD_RT_RS(SRAV, _Rd_, _Rt_, _Rs_);
 
 	if (set_const)
-		SetConst(_Rd_, (s32)GetConst(_Rt_) >> GetConst(_Rs_));
+		SetConst(_Rd_, (int32_t)GetConst(_Rt_) >> GetConst(_Rs_));
 }

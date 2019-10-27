@@ -38,7 +38,7 @@ typedef struct {
 	void (*Reset)(void);
 	void (*Execute)(void);
 	void (*ExecuteBlock)(unsigned target_pc);
-	void (*Clear)(u32 Addr, u32 Size);
+	void (*Clear)(uint32_t Addr, uint32_t Size);
 	void (*Notify)(int note, void *data);
 	void (*Shutdown)(void);
 } R3000Acpu;
@@ -51,32 +51,32 @@ extern R3000Acpu psxRec;
 
 typedef union {
 #if defined(__BIGENDIAN__)
-	struct { u8 h3, h2, h, l; } b;
-	struct { s8 h3, h2, h, l; } sb;
-	struct { u16 h, l; } w;
-	struct { s16 h, l; } sw;
+	struct { uint8_t h3, h2, h, l; } b;
+	struct { int8_t h3, h2, h, l; } sb;
+	struct { uint16_t h, l; } w;
+	struct { int16_t h, l; } sw;
 #else
-	struct { u8 l, h, h2, h3; } b;
-	struct { u16 l, h; } w;
-	struct { s8 l, h, h2, h3; } sb;
-	struct { s16 l, h; } sw;
+	struct { uint8_t l, h, h2, h3; } b;
+	struct { uint16_t l, h; } w;
+	struct { int8_t l, h, h2, h3; } sb;
+	struct { int16_t l, h; } sw;
 #endif
 } PAIR;
 
 typedef union {
 	struct {
-		u32	r0, at, v0, v1, a0, a1, a2, a3,
+		uint32_t	r0, at, v0, v1, a0, a1, a2, a3,
 			t0, t1, t2, t3, t4, t5, t6, t7,
 			s0, s1, s2, s3, s4, s5, s6, s7,
-			t8, t9, k0, k1, gp, sp, s8, ra, lo, hi;
+			t8, t9, k0, k1, gp, sp, int8_t, ra, lo, hi;
 	} n;
-	u32 r[34]; /* Lo, Hi in r[32] and r[33] */
+	uint32_t r[34]; /* Lo, Hi in r[32] and r[33] */
 	PAIR p[34];
 } psxGPRRegs;
 
 typedef union {
 	struct {
-		u32	Index,     Random,    EntryLo0,  EntryLo1,
+		uint32_t	Index,     Random,    EntryLo0,  EntryLo1,
 			Context,   PageMask,  Wired,     Reserved0,
 			BadVAddr,  Count,     EntryHi,   Compare,
 			Status,    Cause,     EPC,       PRid,
@@ -85,7 +85,7 @@ typedef union {
 			Reserved4, Reserved5, ECC,       CacheErr,
 			TagLo,     TagHi,     ErrorEPC,  Reserved6;
 	} n;
-	u32 r[32];
+	uint32_t r[32];
 	PAIR p[32];
 } psxCP0Regs;
 
@@ -117,42 +117,42 @@ typedef union {
 	struct {
 		SVector3D     v0, v1, v2;
 		CBGR          rgb;
-		s32          otz;
-		s32          ir0, ir1, ir2, ir3;
+		int32_t          otz;
+		int32_t          ir0, ir1, ir2, ir3;
 		SVector2D     sxy0, sxy1, sxy2, sxyp;
 		SVector2Dz    sz0, sz1, sz2, sz3;
 		CBGR          rgb0, rgb1, rgb2;
-		s32          reserved;
-		s32          mac0, mac1, mac2, mac3;
-		u32 irgb, orgb;
-		s32          lzcs, lzcr;
+		int32_t          reserved;
+		int32_t          mac0, mac1, mac2, mac3;
+		uint32_t irgb, orgb;
+		int32_t          lzcs, lzcr;
 	} n;
-	u32 r[32];
+	uint32_t r[32];
 	PAIR p[32];
 } psxCP2Data;
 
 typedef union {
 	struct {
 		SMatrix3D rMatrix;
-		s32      trX, trY, trZ;
+		int32_t      trX, trY, trZ;
 		SMatrix3D lMatrix;
-		s32      rbk, gbk, bbk;
+		int32_t      rbk, gbk, bbk;
 		SMatrix3D cMatrix;
-		s32      rfc, gfc, bfc;
-		s32      ofx, ofy;
-		s32      h;
-		s32      dqa, dqb;
-		s32      zsf3, zsf4;
-		s32      flag;
+		int32_t      rfc, gfc, bfc;
+		int32_t      ofx, ofy;
+		int32_t      h;
+		int32_t      dqa, dqb;
+		int32_t      zsf3, zsf4;
+		int32_t      flag;
 	} n;
-	u32 r[32];
+	uint32_t r[32];
 	PAIR p[32];
 } psxCP2Ctrl;
 
 // Interrupt/event 'timestamp'
 struct intCycle_t {
-	u32 sCycle; // psxRegs.cycle value when event/interrupt was sheduled
-	u32 cycle;  // Number of cycles past sCycle above when event should occur
+	uint32_t sCycle; // psxRegs.cycle value when event/interrupt was sheduled
+	uint32_t cycle;  // Number of cycles past sCycle above when event should occur
 };
 
 typedef struct {
@@ -160,19 +160,19 @@ typedef struct {
 	psxCP0Regs CP0;		/* Coprocessor0 Registers */
 	psxCP2Data CP2D; 	/* Cop2 data registers */
 	psxCP2Ctrl CP2C; 	/* Cop2 control registers */
-	u32 pc;			/* Program counter */
-	u32 code;		/* The instruction */
-	u32 cycle;
-	u32 interrupt;
+	uint32_t pc;			/* Program counter */
+	uint32_t code;		/* The instruction */
+	uint32_t cycle;
+	uint32_t interrupt;
 
-	intCycle_t intCycle[32];
+	struct intCycle_t intCycle[32];
 
-	u32 io_cycle_counter;
+	uint32_t io_cycle_counter;
 
-	s8 *psxM;
-	s8 *psxP;
-	s8 *psxR;
-	s8 *psxH;
+	int8_t *psxM;
+	int8_t *psxP;
+	int8_t *psxR;
+	int8_t *psxH;
 
 	void *reserved;
 	int writeok;
@@ -182,25 +182,25 @@ extern psxRegisters psxRegs;
 
 #if defined(__BIGENDIAN__)
 
-#define _i32(x) *(s32 *)&x
-#define _u32(x) x
+#define _i32(x) *(int32_t *)&x
+#define _uint32_t(x) x
 
 #define _i16(x) (((short *)&x)[1])
-#define _u16(x) (((unsigned short *)&x)[1])
+#define _uint16_t(x) (((unsigned short *)&x)[1])
 
 #define _i8(x) (((char *)&x)[3])
-#define _u8(x) (((unsigned char *)&x)[3])
+#define _uint8_t(x) (((unsigned char *)&x)[3])
 
 #else
 
-#define _i32(x) *(s32 *)&x
-#define _u32(x) x
+#define _i32(x) *(int32_t *)&x
+#define _uint32_t(x) x
 
 #define _i16(x) *(short *)&x
-#define _u16(x) *(unsigned short *)&x
+#define _uint16_t(x) *(unsigned short *)&x
 
 #define _i8(x) *(char *)&x
-#define _u8(x) *(unsigned char *)&x
+#define _uint8_t(x) *(unsigned char *)&x
 
 #endif
 
@@ -213,10 +213,10 @@ extern psxRegisters psxRegs;
 #define _fRt_(code)		((code >> 16) & 0x1F)  // The rt part of the instruction register 
 #define _fRs_(code)		((code >> 21) & 0x1F)  // The rs part of the instruction register 
 #define _fSa_(code)		((code >>  6) & 0x1F)  // The sa part of the instruction register
-#define _fIm_(code)		((u16)code)            // The immediate part of the instruction register
+#define _fIm_(code)		((uint16_t)code)            // The immediate part of the instruction register
 #define _fTarget_(code)	(code & 0x03ffffff)    // The target part of the instruction register
 
-#define _fImm_(code)	((s16)code)            // sign-extended immediate
+#define _fImm_(code)	((int16_t)code)            // sign-extended immediate
 #define _fImmU_(code)	(code&0xffff)          // zero-extended immediate
 
 #define _Op_     _fOp_(psxRegs.code)
@@ -246,7 +246,7 @@ extern psxRegisters psxRegs;
 #define _rLo_   psxRegs.GPR.n.lo   // The LO register
 
 #define _JumpTarget_    ((_Target_ * 4) + (_PC_ & 0xf0000000))   // Calculates the target during a jump instruction
-#define _BranchTarget_  ((s16)_Im_ * 4 + _PC_)                 // Calculates the target during a branch instruction
+#define _BranchTarget_  ((int16_t)_Im_ * 4 + _PC_)                 // Calculates the target during a branch instruction
 
 #define _SetLink(x)     psxRegs.GPR.r[x] = _PC_ + 4;       // Sets the return address in the link register
 
@@ -255,11 +255,11 @@ extern psxRegisters psxRegs;
 int  psxInit(void);
 void psxReset(void);
 void psxShutdown(void);
-void psxException(u32 code, u32 bd);
+void psxException(uint32_t code, uint32_t bd);
 void psxBranchTest(void);
 void psxExecuteBios(void);
-int  psxTestLoadDelay(int reg, u32 tmp);
-void psxDelayTest(int reg, u32 bpc);
+int  psxTestLoadDelay(int reg, uint32_t tmp);
+void psxDelayTest(int reg, uint32_t bpc);
 void psxTestSWInts(void);
 
 #endif /* __R3000A_H__ */

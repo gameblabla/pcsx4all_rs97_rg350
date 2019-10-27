@@ -146,7 +146,7 @@ typedef enum {
 #error "Recompiler has not yet been ported to MIPS32r6+/MIPS64r6+ platforms."
 #endif
 
-extern u32 *recMem;
+extern uint32_t *recMem;
 
 /* Crazy macro to calculate offset of the field in the structure.
  *  (Can't use standard offsetof() with non-const expressions)
@@ -166,11 +166,11 @@ extern u32 *recMem;
 
 #define off(field)	OFFSET_OF(psxRegisters, field)
 
-/* Get u32 opcode val at location in PS1 code.
+/* Get uint32_t opcode val at location in PS1 code.
  * See notes in psxMemWrite32_CacheCtrlPort() regarding why it is best
  *  to read code here using PSXM*() macros, i.e. through psxMemRLUT[].
  */
-#define OPCODE_AT(loc) PSXMu32(loc)
+#define OPCODE_AT(loc) PSXMuint32_t(loc)
 
 /* ADR_HI, ADR_LO are the equivalents of MIPS GAS %hi(), %lo()
  * They are always used as a pair, and allow converting an address to an
@@ -178,14 +178,14 @@ extern u32 *recMem;
  * The upper half is adjusted when lower half of orig addr is > 0x7fff.
  */
 #define ADR_HI(adr) \
-	(((uptr)(adr) & 0x8000) ? (((uptr)(adr) + 0x10000) >> 16) : ((uptr)(adr) >> 16))
+	(((uintptr_t)(adr) & 0x8000) ? (((uintptr_t)(adr) + 0x10000) >> 16) : ((uintptr_t)(adr) >> 16))
 
 #define ADR_LO(adr) \
-	((uptr)(adr) & 0xffff)
+	((uintptr_t)(adr) & 0xffff)
 
 
 #define write32(i) \
-	do { *recMem++ = (u32)(i); } while (0)
+	do { *recMem++ = (uint32_t)(i); } while (0)
 
 #define PUSH(reg) \
 do { \
@@ -246,17 +246,17 @@ do { \
 
 #define LI32(reg, imm32) \
 do { \
-	if ((u32)(imm32) > 0xffff) { \
-		if ((s32)(imm32) < 0 && (s32)(imm32) >= -32768) { \
-			ADDIU(reg, 0, (s16)(imm32)); \
+	if ((uint32_t)(imm32) > 0xffff) { \
+		if ((int32_t)(imm32) < 0 && (int32_t)(imm32) >= -32768) { \
+			ADDIU(reg, 0, (int16_t)(imm32)); \
 		} else { \
-			LUI(reg, ((u32)(imm32) >> 16)); \
-			if ((u32)(imm32) & 0xffff) { \
-				ORI(reg, reg, (u16)(imm32)); \
+			LUI(reg, ((uint32_t)(imm32) >> 16)); \
+			if ((uint32_t)(imm32) & 0xffff) { \
+				ORI(reg, reg, (uint16_t)(imm32)); \
 			} \
 		} \
 	} else { \
-		LI16(reg, (u16)(imm32)); \
+		LI16(reg, (uint16_t)(imm32)); \
 	} \
 } while (0)
 
@@ -349,14 +349,14 @@ do {                                                                           \
 	lsu_tmp_cache_valid = false;                                               \
     host_v0_reg_is_const = false;                                              \
     host_ra_reg_has_block_retaddr = false;                                     \
-    write32(0x0c000000 | (((u32)(addr) & 0x0fffffff) >> 2));                   \
+    write32(0x0c000000 | (((uint32_t)(addr) & 0x0fffffff) >> 2));                   \
 } while (0)
 
 #define JR(rs) \
 	write32(0x00000008 | ((rs) << 21))
 
 #define J(addr) \
-    write32(0x08000000 | (((u32)(addr) & 0x0fffffff) >> 2))
+    write32(0x08000000 | (((uint32_t)(addr) & 0x0fffffff) >> 2))
 
 #define BEQ(rs, rt, offset) \
 	write32(0x10000000 | ((rs) << 21) | ((rt) << 16) | (((offset) >> 2) & 0xffff))
@@ -406,9 +406,9 @@ do {                                                                           \
 #define CLZ(rd, rs) \
 	write32(0x70000020 | ((rs) << 21) | ((rd) << 16) | ((rd) << 11))
 
-static inline u32 ADJUST_CLOCK(u32 cycles)
+static inline uint32_t ADJUST_CLOCK(uint32_t cycles)
 {
-	extern u32 cycle_multiplier;
+	extern uint32_t cycle_multiplier;
 	return (cycles * cycle_multiplier) >> 8;
 }
 
@@ -457,7 +457,7 @@ do {                                                                           \
 
 #define rec_recompile_end_part2(use_fastpath_return)                           \
 do {                                                                           \
-    const u32 cycles = ADJUST_CLOCK((pc-oldpc)/4);                             \
+    const uint32_t cycles = ADJUST_CLOCK((pc-oldpc)/4);                             \
     if (cycles <= 0xffff) {                                                    \
         if (block_ret_addr) {                                                  \
             if (use_fastpath_return)                                           \
@@ -483,37 +483,37 @@ do {                                                                           \
 } while (0)
 
 #define mips_relative_offset(source, offset, next) \
-	((((u32)(offset) - ((u32)(source) + (next))) >> 2) & 0xFFFF)
+	((((uint32_t)(offset) - ((uint32_t)(source) + (next))) >> 2) & 0xFFFF)
 
 #define fixup_branch(BACKPATCH) \
 do { \
-	*( u32*)(BACKPATCH) |= mips_relative_offset(BACKPATCH, (u32)recMem, 4); \
+	*( uint32_t*)(BACKPATCH) |= mips_relative_offset(BACKPATCH, (uint32_t)recMem, 4); \
 } while (0)
 
 
 
-static inline bool opcodeIsStore(const u32 opcode)
+static inline uint_fast8_t opcodeIsStore(const uint32_t opcode)
 {
 	return (_fOp_(opcode) >= 0x28 && _fOp_(opcode) <= 0x2b) // SB,SH,SWL,SW
 	       || _fOp_(opcode) == 0x2e;                        // SWR
 }
 
-static inline bool opcodeIsLoad(const u32 opcode)
+static inline uint_fast8_t opcodeIsLoad(const uint32_t opcode)
 {
 	return _fOp_(opcode) >= 0x20 && _fOp_(opcode) <= 0x26; // LB,LH,LWL,LW,LBU,LHU,LWR
 }
 
-static inline bool opcodeIsStoreWordUnaligned(const u32 opcode)
+static inline uint_fast8_t opcodeIsStoreWordUnaligned(const uint32_t opcode)
 {
 	return _fOp_(opcode) == 0x2a || _fOp_(opcode) == 0x2e; // SWL, SWR
 }
 
-static inline bool opcodeIsLoadWordUnaligned(const u32 opcode)
+static inline uint_fast8_t opcodeIsLoadWordUnaligned(const uint32_t opcode)
 {
 	return _fOp_(opcode) == 0x22 || _fOp_(opcode) == 0x26; // LWL,LWR
 }
 
-static inline bool opcodeIsBranch(const u32 opcode)
+static inline uint_fast8_t opcodeIsBranch(const uint32_t opcode)
 {
 	return (_fOp_(opcode) == 0x01 && (_fRt_(opcode) == 0x00 || // BLTZ
 	                                  _fRt_(opcode) == 0x01 || // BGEZ
@@ -523,36 +523,36 @@ static inline bool opcodeIsBranch(const u32 opcode)
 	       (_fOp_(opcode) >= 0x04 && _fOp_(opcode) <= 0x07);   // BEQ,BNE,BLEZ,BGTZ
 }
 
-static inline bool opcodeIsIndirectJump(const u32 opcode)
+static inline uint_fast8_t opcodeIsIndirectJump(const uint32_t opcode)
 {
 	return _fOp_(opcode) == 0x00 && (_fFunct_(opcode) == 0x08 || // JR
 	                                 _fFunct_(opcode) == 0x09);  // JALR
 }
 
-static inline bool opcodeIsDirectJump(const u32 opcode)
+static inline uint_fast8_t opcodeIsDirectJump(const uint32_t opcode)
 {
 	return _fOp_(opcode) == 0x02 || _fOp_(opcode) == 0x03;       // J,JAL
 }
 
-static inline bool opcodeIsJump(const u32 opcode)
+static inline uint_fast8_t opcodeIsJump(const uint32_t opcode)
 {
 	return opcodeIsIndirectJump(opcode) || opcodeIsDirectJump(opcode);
 }
 
-static inline bool opcodeIsBranchOrJump(const u32 opcode)
+static inline uint_fast8_t opcodeIsBranchOrJump(const uint32_t opcode)
 {
 	return opcodeIsBranch(opcode) || opcodeIsJump(opcode);
 }
 
-static inline u32 opcodeGetDirectJumpTargetAddr(const u32 jump_opcode)
+static inline uint32_t opcodeGetDirectJumpTargetAddr(const uint32_t jump_opcode)
 {
 	return (jump_opcode & 0xf0000000) + _fTarget_(jump_opcode)*4;
 }
 
-static inline u32 opcodeGetBranchTargetAddr(const u32 branch_opcode,
-                                            const u32 bd_slot_pc)
+static inline uint32_t opcodeGetBranchTargetAddr(const uint32_t branch_opcode,
+                                            const uint32_t bd_slot_pc)
 {
-	return bd_slot_pc + (s32)_fImm_(branch_opcode)*4;
+	return bd_slot_pc + (int32_t)_fImm_(branch_opcode)*4;
 }
 
 
@@ -560,17 +560,17 @@ static inline u32 opcodeGetBranchTargetAddr(const u32 branch_opcode,
 
 /* Opcode analysis functions */
 struct ALUOpInfo {
-	bool writes_rt;
-	bool reads_rs;
-	bool reads_rt;
+	uint_fast8_t writes_rt;
+	uint_fast8_t reads_rs;
+	uint_fast8_t reads_rt;
 };
-bool opcodeIsALU(const u32 opcode, struct ALUOpInfo *info);
-u64 opcodeGetReads(const u32 op);
-u64 opcodeGetWrites(const u32 op);
+uint_fast8_t opcodeIsALU(const uint32_t opcode, struct ALUOpInfo *info);
+uint64_t opcodeGetReads(const uint32_t op);
+uint64_t opcodeGetWrites(const uint32_t op);
 
-int rec_scan_for_div_by_zero_check_sequence(u32 code_loc);
-int rec_scan_for_MFHI_MFLO_sequence(u32 code_loc);
-int rec_discard_scan(u32 code_loc, int *discard_type);
+int rec_scan_for_div_by_zero_check_sequence(uint32_t code_loc);
+int rec_scan_for_MFHI_MFLO_sequence(uint32_t code_loc);
+int rec_discard_scan(uint32_t code_loc, int *discard_type);
 const char* rec_discard_type_str(int discard_type);
 
 #endif /* MIPS_CODEGEN_H */

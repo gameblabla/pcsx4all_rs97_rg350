@@ -34,7 +34,7 @@
 //	1.0 x Back + 1.0 x Forward
 #define gpuBlending01(uSrc,uDst) \
 { \
-	u16 st,dt,out; \
+	uint16_t st,dt,out; \
 	asm ("and    %[dt],  %[dst],   #0x7C00  " : [dt]  "=r" (dt)   :             [dst] "r" (uDst)                    ); \
 	asm ("and    %[st],  %[src],   #0x7C00  " : [st]  "=r" (st)   :             [src] "r" (uSrc)                    ); \
 	asm ("add    %[out], %[dt],    %[st]    " : [out] "=r" (out)  :             [dt]  "r" (dt),   [st]  "r" (st)    ); \
@@ -57,7 +57,7 @@
 //	1.0 x Back - 1.0 x Forward	*/
 #define gpuBlending02(uSrc,uDst) \
 { \
-	u16 st,dt,out; \
+	uint16_t st,dt,out; \
 	asm ("and    %[dt],  %[dst],   #0x7C00  " : [dt]  "=r" (dt)   :             [dst] "r" (uDst)                    ); \
 	asm ("and    %[st],  %[src],   #0x7C00  " : [st]  "=r" (st)   :             [src] "r" (uSrc)                    ); \
 	asm ("subs   %[out], %[dt],    %[st]    " : [out] "=r" (out)  : [dt]  "r" (dt),   [st]  "r" (st) : "cc"         ); \
@@ -76,7 +76,7 @@
 //	1.0 x Back + 0.25 x Forward	*/
 #define gpuBlending03(uSrc,uDst) \
 { \
-		u16 st,dt,out; \
+		uint16_t st,dt,out; \
 		asm ("mov    %[src], %[src],   lsr #2   " : [src] "=r" (uSrc) : "0" (uSrc)                                      ); \
 		asm ("and    %[dt],  %[dst],   #0x7C00  " : [dt]  "=r" (dt)   :             [dst] "r" (uDst)                    ); \
 		asm ("and    %[st],  %[src],   #0x1C00  " : [st]  "=r" (st)   :             [src] "r" (uSrc)                    ); \

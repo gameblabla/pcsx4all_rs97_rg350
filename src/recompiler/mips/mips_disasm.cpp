@@ -508,7 +508,7 @@ const char *mips_reg_names[] =
   "zero", "at", "v0", "v1", "a0", "a1", "a2", "a3",
   "t0",   "t1", "t2", "t3", "t4", "t5", "t6", "t7",
   "s0",   "s1", "s2", "s3", "s4", "s5", "s6", "s7",
-  "t8",   "t9", "k0", "k1", "gp", "sp", "s8", "ra",
+  "t8",   "t9", "k0", "k1", "gp", "sp", "int8_t", "ra",
 };
 
 
@@ -553,8 +553,8 @@ char *mips_reg_names[] =
   (unsigned int)((signed_offset() << 2) + (pc + 4))                                         \
 
 
-void disasm_mips_instruction(u32 opcode, char *buffer, u32 pc,
-  disasm_label *labels, u32 num_labels)
+void disasm_mips_instruction(uint32_t opcode, char *buffer, uint32_t pc,
+  disasm_label *labels, uint32_t num_labels)
 {
   int i;
   int opcode_type = opcode >> 26;
@@ -569,7 +569,7 @@ void disasm_mips_instruction(u32 opcode, char *buffer, u32 pc,
   {
     case MIPS_OPCODE_ALU_IMMS:
     {
-      u32 rs = op_bits(reg_rs, 0x1F);
+      uint32_t rs = op_bits(reg_rs, 0x1F);
 
       if((opcode_type == 0x9) && (rs == 0))
       {
@@ -603,12 +603,12 @@ void disasm_mips_instruction(u32 opcode, char *buffer, u32 pc,
 
     case MIPS_OPCODE_REGIMM:
     {
-      u32 function = op_bits(16, 0x1F);
+      uint32_t function = op_bits(16, 0x1F);
 
       for(i = 0; i < num_labels; i++)
       {
-        //DEBUGG("label 0x%x pcoff 0x%x\n", (u32)labels[i].address, pc_offset());
-        if((u32)labels[i].address == pc_offset())
+        //DEBUGG("label 0x%x pcoff 0x%x\n", (uint32_t)labels[i].address, pc_offset());
+        if((uint32_t)labels[i].address == pc_offset())
         {
           sprintf(buffer, "%s %s, %s", mips_function_regimm_names[function], reg_op(reg_rs),
            labels[i].name);
@@ -658,7 +658,7 @@ void disasm_mips_instruction(u32 opcode, char *buffer, u32 pc,
 
         case MIPS_SPECIAL_FUNCTION_JALR: 
         { 
-          u32 rd = op_bits(reg_rd, 0x1F); 
+          uint32_t rd = op_bits(reg_rd, 0x1F); 
  
           if(rd == 31) 
           { 
@@ -795,13 +795,13 @@ void disasm_mips_instruction(u32 opcode, char *buffer, u32 pc,
 
     case MIPS_OPCODE_BRANCH:
     {
-      u32 offset = op_bits(0, 0x3FFFFFF);
+      uint32_t offset = op_bits(0, 0x3FFFFFF);
       offset = (offset << 2) | ((pc + 4) & 0xFC000000);
 
       for(i = 0; i < num_labels; i++)
       {
-        //DEBUGG("label 0x%x pcoff 0x%x\n", (u32)labels[i].address, offset);
-        if((u32)labels[i].address == offset)
+        //DEBUGG("label 0x%x pcoff 0x%x\n", (uint32_t)labels[i].address, offset);
+        if((uint32_t)labels[i].address == offset)
         {
           sprintf(buffer, "%s %s", mips_opcode_names[opcode_type],
            labels[i].name);
@@ -818,8 +818,8 @@ void disasm_mips_instruction(u32 opcode, char *buffer, u32 pc,
     {
       for(i = 0; i < num_labels; i++)
       {
-        //DEBUGG("label 0x%x pcoff 0x%x\n", (u32)labels[i].address, pc_offset());
-        if((u32)labels[i].address == pc_offset())
+        //DEBUGG("label 0x%x pcoff 0x%x\n", (uint32_t)labels[i].address, pc_offset());
+        if((uint32_t)labels[i].address == pc_offset())
         {
           sprintf(buffer, "%s %s, %s", mips_opcode_names[opcode_type], reg_op(reg_rs),
            labels[i].name);
@@ -836,8 +836,8 @@ void disasm_mips_instruction(u32 opcode, char *buffer, u32 pc,
     {
       for(i = 0; i < num_labels; i++)
       {
-        //DEBUGG("label 0x%x pcoff 0x%x\n", (u32)labels[i].address, pc_offset());
-        if((u32)labels[i].address == pc_offset())
+        //DEBUGG("label 0x%x pcoff 0x%x\n", (uint32_t)labels[i].address, pc_offset());
+        if((uint32_t)labels[i].address == pc_offset())
         {
           sprintf(buffer, "%s %s, %s, %s", mips_opcode_names[opcode_type], reg_op(reg_rs),
            reg_op(reg_rt), labels[i].name);
@@ -853,7 +853,7 @@ void disasm_mips_instruction(u32 opcode, char *buffer, u32 pc,
 
     case MIPS_OPCODE_MEM:
     {
-      s32 offset = signed_offset();
+      int32_t offset = signed_offset();
 
       if(offset < 0)
       {
@@ -873,7 +873,7 @@ void disasm_mips_instruction(u32 opcode, char *buffer, u32 pc,
     case MIPS_OPCODE_LWC2:
     case MIPS_OPCODE_SWC2:
     {
-      s32 offset = signed_offset();
+      int32_t offset = signed_offset();
 
       if(offset < 0)
       {

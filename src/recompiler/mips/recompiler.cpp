@@ -118,23 +118,23 @@
 /* Bit vector indicating which PS1 RAM pages contain the start of blocks.
  *  Used to determine when code invalidation in recClear() can be skipped.
  */
-static u8 code_pages[0x200000/4096/8];
+static uint8_t code_pages[0x200000/4096/8];
 
 /* Pointers to the recompiled blocks go here. psxRecLUT[] uses upper 16 bits of
  *  a PC value as an index to lookup a block pointer stored in recRAM/recROM.
  */
-static s8 *recRAM;
-static s8 *recROM;
-static uptr psxRecLUT[0x10000];
+static int8_t *recRAM;
+static int8_t *recROM;
+static uintptr_t psxRecLUT[0x10000];
 
 #undef PC_REC
 #undef PC_REC8
 #undef PC_REC16
 #undef PC_REC32
-#define PC_REC(x)	((uptr)psxRecLUT[(x) >> 16] + (((x) & 0xffff) * (REC_RAM_PTR_SIZE / 4)))
-#define PC_REC8(x)	(*(u8 *)PC_REC(x))
-#define PC_REC16(x)	(*(u16*)PC_REC(x))
-#define PC_REC32(x)	(*(u32*)PC_REC(x))
+#define PC_REC(x)	((uintptr_t)psxRecLUT[(x) >> 16] + (((x) & 0xffff) * (REC_RAM_PTR_SIZE / 4)))
+#define PC_REC8(x)	(*(uint8_t *)PC_REC(x))
+#define PC_REC16(x)	(*(uint16_t*)PC_REC(x))
+#define PC_REC32(x)	(*(uint32_t*)PC_REC(x))
 /* Version of PC_REC() that uses faster virtual block ptr mapping */
 #define PC_REC_MMAP(x)	(REC_RAM_VADDR | (((x) & 0x00ffffff) * (REC_RAM_PTR_SIZE / 4)))
 
@@ -145,14 +145,14 @@ static uptr psxRecLUT[0x10000];
 
 /* Const-propagation data and functions */
 typedef struct {
-	u32  constval;
-	bool is_const;
+	uint32_t  constval;
+	uint_fast8_t is_const;
 
-	bool is_fuzzy_ram_addr;        /* GPR is not known-const, but at least known
+	uint_fast8_t is_fuzzy_ram_addr;        /* GPR is not known-const, but at least known
 	                                   to be address somewhere in RAM? */
-	bool is_fuzzy_nonram_addr;     /* GPR is not known-const, but at least known
+	uint_fast8_t is_fuzzy_nonram_addr;     /* GPR is not known-const, but at least known
 	                                   to be address somewhere outside RAM? */
-	bool is_fuzzy_scratchpad_addr; /* GPR is not known-const, but at least known
+	uint_fast8_t is_fuzzy_scratchpad_addr; /* GPR is not known-const, but at least known
 	                                   to be address somewhere in 1KB scratcpad? */
 } iRegisters;
 static iRegisters iRegs[32];
@@ -161,9 +161,9 @@ static inline void ResetConsts()
 	memset(&iRegs, 0, sizeof(iRegs));
 	iRegs[0].is_const = true;  // $r0 is always zero val
 }
-static inline bool IsConst(const u32 reg)  { return iRegs[reg].is_const; }
-static inline u32  GetConst(const u32 reg) { return iRegs[reg].constval; }
-static inline void SetUndef(const u32 reg)
+static inline uint_fast8_t IsConst(const uint32_t reg)  { return iRegs[reg].is_const; }
+static inline uint32_t  GetConst(const uint32_t reg) { return iRegs[reg].constval; }
+static inline void SetUndef(const uint32_t reg)
 {
 	if (reg) {
 		iRegs[reg].is_const = false;
@@ -172,7 +172,7 @@ static inline void SetUndef(const u32 reg)
 		iRegs[reg].is_fuzzy_scratchpad_addr = false;
 	}
 }
-static inline void SetConst(const u32 reg, const u32 val)
+static inline void SetConst(const uint32_t reg, const uint32_t val)
 {
 	if (reg) {
 		iRegs[reg].constval = val;
@@ -182,12 +182,12 @@ static inline void SetConst(const u32 reg, const u32 val)
 		iRegs[reg].is_fuzzy_scratchpad_addr = false;
 	}
 }
-static inline void SetFuzzyRamAddr(const u32 reg)        { iRegs[reg].is_fuzzy_ram_addr = true; }
-static inline bool IsFuzzyRamAddr(const u32 reg)         { return iRegs[reg].is_fuzzy_ram_addr; }
-static inline void SetFuzzyNonramAddr(const u32 reg)     { iRegs[reg].is_fuzzy_nonram_addr = true; }
-static inline bool IsFuzzyNonramAddr(const u32 reg)      { return iRegs[reg].is_fuzzy_nonram_addr; }
-static inline void SetFuzzyScratchpadAddr(const u32 reg) { iRegs[reg].is_fuzzy_scratchpad_addr = true; }
-static inline bool IsFuzzyScratchpadAddr(const u32 reg)  { return iRegs[reg].is_fuzzy_scratchpad_addr; }
+static inline void SetFuzzyRamAddr(const uint32_t reg)        { iRegs[reg].is_fuzzy_ram_addr = true; }
+static inline uint_fast8_t IsFuzzyRamAddr(const uint32_t reg)         { return iRegs[reg].is_fuzzy_ram_addr; }
+static inline void SetFuzzyNonramAddr(const uint32_t reg)     { iRegs[reg].is_fuzzy_nonram_addr = true; }
+static inline uint_fast8_t IsFuzzyNonramAddr(const uint32_t reg)      { return iRegs[reg].is_fuzzy_nonram_addr; }
+static inline void SetFuzzyScratchpadAddr(const uint32_t reg) { iRegs[reg].is_fuzzy_scratchpad_addr = true; }
+static inline uint_fast8_t IsFuzzyScratchpadAddr(const uint32_t reg)  { return iRegs[reg].is_fuzzy_scratchpad_addr; }
 
 
 /* Code cache buffer
@@ -199,35 +199,35 @@ static inline bool IsFuzzyScratchpadAddr(const u32 reg)  { return iRegs[reg].is_
  */
 #define RECMEM_SIZE         (12 * 1024 * 1024)
 #define RECMEM_SIZE_MAX     (RECMEM_SIZE-(512*1024))
-static u8 recMemBase[RECMEM_SIZE] __attribute__((aligned(4)));
+static uint8_t recMemBase[RECMEM_SIZE] __attribute__((aligned(4)));
 
-u32        *recMem;                /* Where does next emitted opcode in block go? */
-static u32 *recMemStart;           /* Where did first emitted opcode in block go? */
-static u32 pc;                     /* Recompiler pc */
-static u32 oldpc;                  /* Recompiler pc at start of block */
-u32 cycle_multiplier = 0x200;      /* Cycle advance per emulated instruction
+uint32_t        *recMem;                /* Where does next emitted opcode in block go? */
+static uint32_t *recMemStart;           /* Where did first emitted opcode in block go? */
+static uint32_t pc;                     /* Recompiler pc */
+static uint32_t oldpc;                  /* Recompiler pc at start of block */
+uint32_t cycle_multiplier = 0x200;      /* Cycle advance per emulated instruction
                                       Default is 0x200 == 2.00 (24.8 fixed-pt) */
 
 /* See comments in recExecute() regarding direct block returns */
-static uptr block_ret_addr;                /* Non-zero when blocks are using direct return jumps */
-static uptr block_fast_ret_addr;           /* Non-zero when blocks are using direct return jumps &
+static uintptr_t block_ret_addr;                /* Non-zero when blocks are using direct return jumps */
+static uintptr_t block_fast_ret_addr;           /* Non-zero when blocks are using direct return jumps &
                                               dispatch loop fastpath is enabled */
 
-static bool psx_mem_mapped;                /* PS1 RAM mmap'd+mirrored at fixed address? (psxM) */
-static bool rec_mem_mapped;                /* Code ptr arrays mmap'd+mirrored at fixed address? (recRAM,recROM) */
+static uint_fast8_t psx_mem_mapped;                /* PS1 RAM mmap'd+mirrored at fixed address? (psxM) */
+static uint_fast8_t rec_mem_mapped;                /* Code ptr arrays mmap'd+mirrored at fixed address? (recRAM,recROM) */
 
 /* Flags used during a recompilation phase */
-static bool branch;                        /* Current instruction lies in a BD slot? */
-static bool end_block;                     /* Has recompilation phase ended? */
-static bool skip_emitting_next_mflo;       /* Was a MULT/MULTU converted to 3-op MUL? See rec_mdu.cpp.h */
-static bool emit_code_invalidations;       /* Emit code invalidation for store instructions? */
-static bool flush_code_on_dma3_exe_load;   /* Flush code cache when psxDma3() detects EXE load? */
+static uint_fast8_t branch;                        /* Current instruction lies in a BD slot? */
+static uint_fast8_t end_block;                     /* Has recompilation phase ended? */
+static uint_fast8_t skip_emitting_next_mflo;       /* Was a MULT/MULTU converted to 3-op MUL? See rec_mdu.cpp.h */
+static uint_fast8_t emit_code_invalidations;       /* Emit code invalidation for store instructions? */
+static uint_fast8_t flush_code_on_dma3_exe_load;   /* Flush code cache when psxDma3() detects EXE load? */
 
 /* Flags/vals used to cache common values in temp regs in emitted code */
-static bool lsu_tmp_cache_valid;           /* LSU vals are cached in $at,$v1. See rec_lsu.cpp.h */
-static bool host_v0_reg_is_const;          /* PCs are cached in $v0. See rec_bcu.cpp.h */
-static u32  host_v0_reg_constval;
-static bool host_ra_reg_has_block_retaddr; /* Indirect-return address is cached in $ra. */
+static uint_fast8_t lsu_tmp_cache_valid;           /* LSU vals are cached in $at,$v1. See rec_lsu.cpp.h */
+static uint_fast8_t host_v0_reg_is_const;          /* PCs are cached in $v0. See rec_bcu.cpp.h */
+static uint32_t  host_v0_reg_constval;
+static uint_fast8_t host_ra_reg_has_block_retaddr; /* Indirect-return address is cached in $ra. */
 
 
 #ifdef WITH_DISASM
@@ -238,7 +238,7 @@ char	disasm_buffer[512];
 
 static void recReset();
 static void recRecompile();
-static void recClear(u32 Addr, u32 Size);
+static void recClear(uint32_t Addr, uint32_t Size);
 static void recNotify(int note, void *data);
 
 extern void (*recBSC[64])();
@@ -331,7 +331,7 @@ disasm_label stub_labels[] =
   make_stub_label(SPU_writeRegister),
 };
 
-const u32 num_stub_labels = sizeof(stub_labels) / sizeof(disasm_label);
+const uint32_t num_stub_labels = sizeof(stub_labels) / sizeof(disasm_label);
 
 #define DISASM_INIT() \
 do { \
@@ -340,7 +340,7 @@ do { \
 
 #define DISASM_PSX(_PC_) \
 do { \
-	u32 opcode = *(u32 *)((char *)PSXM(_PC_)); \
+	uint32_t opcode = *(uint32_t *)((char *)PSXM(_PC_)); \
 	disasm_mips_instruction(opcode, disasm_buffer, _PC_, 0, 0); \
 	printf("%08x: %08x %s\n", _PC_, opcode, disasm_buffer); \
 } while (0)
@@ -348,14 +348,14 @@ do { \
 #define DISASM_HOST() \
 do { \
 	printf("\n"); \
-	u8 *tr_ptr = (u8*)recMemStart; \
-	for (; (u32)tr_ptr < (u32)recMem; tr_ptr += 4) { \
-		u32 opcode = *(u32*)tr_ptr; \
+	uint8_t *tr_ptr = (uint8_t*)recMemStart; \
+	for (; (uint32_t)tr_ptr < (uint32_t)recMem; tr_ptr += 4) { \
+		uint32_t opcode = *(uint32_t*)tr_ptr; \
 		disasm_mips_instruction(opcode, disasm_buffer, \
-					(u32)tr_ptr, stub_labels, \
+					(uint32_t)tr_ptr, stub_labels, \
 					num_stub_labels); \
 		printf("%08x: %s\t(0x%08x)\n", \
-			(u32)tr_ptr, disasm_buffer, opcode); \
+			(uint32_t)tr_ptr, disasm_buffer, opcode); \
 	} \
 	printf("\n"); \
 } while (0)
@@ -430,7 +430,7 @@ static void recRecompile()
 	// Notify plugin_lib that we're recompiling (affects frameskip timing)
 	pl_dynarec_notify();
 
-	if (((uptr)recMem - (uptr)recMemBase) >= RECMEM_SIZE_MAX ) {
+	if (((uintptr_t)recMem - (uintptr_t)recMemBase) >= RECMEM_SIZE_MAX ) {
 		REC_LOG("Code cache size limit exceeded: flushing code cache.\n");
 		recReset();
 	}
@@ -439,13 +439,13 @@ static void recRecompile()
 
 	regReset();
 
-	PC_REC32(psxRegs.pc) = (u32)recMem;
+	PC_REC32(psxRegs.pc) = (uint32_t)recMem;
 	oldpc = pc = psxRegs.pc;
 
 	// If 'pc' is in PS1 RAM, mark the page of RAM as containing the start of
 	//  a block. For the range check, bit 27 is interpreted as a sign bit.
-	if ((s32)(pc << 4) >= 0) {
-		u32 masked_pc = pc & 0x1fffff;
+	if ((int32_t)(pc << 4) >= 0) {
+		uint32_t masked_pc = pc & 0x1fffff;
 		code_pages[masked_pc/4096/8] |= (1 << ((masked_pc/4096) & 7));
 	}
 
@@ -522,7 +522,7 @@ static int recInit()
 {
 	REC_LOG("Initializing\n");
 
-	recMem = (u32*)recMemBase;
+	recMem = (uint32_t*)recMemBase;
 
 	// Init code buffer, to allocate the RAM we need in advance. Filling with
 	//  all-1's should force an exception on any accidental non-code execution.
@@ -545,8 +545,8 @@ static int recInit()
 	if (!rec_mem_mapped && !recRAM && !recROM) {
 		if (rec_mmap_rec_mem() >= 0) {
 			rec_mem_mapped = true;
-			recRAM = (s8*)REC_RAM_VADDR;
-			recROM = (s8*)REC_ROM_VADDR;
+			recRAM = (int8_t*)REC_RAM_VADDR;
+			recROM = (int8_t*)REC_ROM_VADDR;
 		}
 	}
 #endif
@@ -555,8 +555,8 @@ static int recInit()
 		// Oops, somehow the virtual mapping/mirroring failed. We'll allocate
 		//  recRAM/recROM here and use slower versions of recExecute*() that
 		//  use psxRecLUT[] to indirectly access recRAM/recROM.
-		recRAM = (s8*)malloc(REC_RAM_SIZE);
-		recROM = (s8*)malloc(REC_ROM_SIZE);
+		recRAM = (int8_t*)malloc(REC_RAM_SIZE);
+		recROM = (int8_t*)malloc(REC_ROM_SIZE);
 		printf("WARNING: Recompiler is using slower non-virtual block ptr lookups.\n");
 	}
 
@@ -567,13 +567,13 @@ static int recInit()
 	}
 
 	for (int i = 0; i < 0x80; i++)
-		psxRecLUT[i + 0x0000] = (uptr)recRAM + (((i & 0x1f) << 16) * (REC_RAM_PTR_SIZE/4));
+		psxRecLUT[i + 0x0000] = (uintptr_t)recRAM + (((i & 0x1f) << 16) * (REC_RAM_PTR_SIZE/4));
 
 	memcpy(&psxRecLUT[0x8000], psxRecLUT, 0x80 * sizeof(psxRecLUT[0]));
 	memcpy(&psxRecLUT[0xa000], psxRecLUT, 0x80 * sizeof(psxRecLUT[0]));
 
 	for (int i = 0; i < 0x08; i++)
-		psxRecLUT[i + 0xbfc0] = (uptr)recROM + ((i << 16) * (REC_RAM_PTR_SIZE/4));
+		psxRecLUT[i + 0xbfc0] = (uintptr_t)recROM + ((i << 16) * (REC_RAM_PTR_SIZE/4));
 
 	// Map/mirror PSX RAM, other regions, i.e. psxM, psxP, psxH
 	// NOTE: if mapping fails or isn't enabled at compile-time, PSX mem will be
@@ -673,7 +673,7 @@ __attribute__((noinline)) void recExecute_indirect_return_lut()
 
 #ifndef ASM_EXECUTE_LOOP
 	for (;;) {
-		u32 *p = (u32*)PC_REC(psxRegs.pc);
+		uint32_t *p = (uint32_t*)PC_REC(psxRegs.pc);
 		if (*p == 0)
 			recRecompile();
 
@@ -688,7 +688,7 @@ __asm__ __volatile__ (
 ".set push                                    \n"
 ".set noreorder                               \n"
 
-// $fp/$s8 remains set to &psxRegs across all calls to blocks
+// $fp/$int8_t remains set to &psxRegs across all calls to blocks
 "la    $fp, %[psxRegs]                        \n"
 
 // Set up our own stack frame. Should have 8-byte alignment, and have 16 bytes
@@ -799,7 +799,7 @@ __asm__ __volatile__ (
 // NOTE: We'd never reach this point because the block dispatch loop is
 //  currently infinite. This could change in the future.
 // TODO: Could add a way to reset a game or load a new game from within
-//  the running emulator by setting a global boolean, resetting
+//  the running emulator by setting a global uint_fast8_t, resetting
 //  psxRegs.io_cycle_counter to 0, and checking if it's been set before
 //  calling pxsBranchTest() here. If set, you must jump here to
 //  exit the loop, to ensure that stack frame is adjusted before return!
@@ -838,7 +838,7 @@ __attribute__((noinline)) static void recExecute_indirect_return_mmap()
 
 #ifndef ASM_EXECUTE_LOOP
 	for (;;) {
-		u32 *p = (u32*)PC_REC(psxRegs.pc);
+		uint32_t *p = (uint32_t*)PC_REC(psxRegs.pc);
 		if (*p == 0)
 			recRecompile();
 
@@ -853,7 +853,7 @@ __asm__ __volatile__ (
 ".set push                                    \n"
 ".set noreorder                               \n"
 
-// $fp/$s8 remains set to &psxRegs across all calls to blocks
+// $fp/$int8_t remains set to &psxRegs across all calls to blocks
 "la    $fp, %[psxRegs]                        \n"
 
 // Set up our own stack frame. Should have 8-byte alignment, and have 16 bytes
@@ -968,7 +968,7 @@ __asm__ __volatile__ (
 // NOTE: We'd never reach this point because the block dispatch loop is
 //  currently infinite. This could change in the future.
 // TODO: Could add a way to reset a game or load a new game from within
-//  the running emulator by setting a global boolean, resetting
+//  the running emulator by setting a global uint_fast8_t, resetting
 //  psxRegs.io_cycle_counter to 0, and checking if it's been set before
 //  calling pxsBranchTest() here. If set, you must jump here to
 //  exit the loop, to ensure that stack frame is adjusted before return!
@@ -1032,7 +1032,7 @@ __asm__ __volatile__ (
 "lui   $t1, %%hi(%[block_ret_addr])           \n"
 "sw    $t0, %%lo(%[block_ret_addr])($t1)      \n"
 
-// $fp/$s8 remains set to &psxRegs across all calls to blocks
+// $fp/$int8_t remains set to &psxRegs across all calls to blocks
 "la    $fp, %[psxRegs]                        \n"
 
 // Load $v0 once with psxRegs.pc, blocks will assign new value when returning
@@ -1185,7 +1185,7 @@ __asm__ __volatile__ (
 // NOTE: During block executions, we'd never reach this point because the block
 //  dispatch loop is currently infinite. This could change in the future.
 // TODO: Could add a way to reset a game or load a new game from within
-//  the running emulator by setting a global boolean, resetting
+//  the running emulator by setting a global uint_fast8_t, resetting
 //  psxRegs.io_cycle_counter to 0, and checking if it's been set before
 //  calling pxsBranchTest() here. If set, you must jump here to
 //  exit the loop, to ensure that stack frame is adjusted before return!
@@ -1250,7 +1250,7 @@ __asm__ __volatile__ (
 "lui   $t1, %%hi(%[block_ret_addr])           \n"
 "sw    $t0, %%lo(%[block_ret_addr])($t1)      \n"
 
-// $fp/$s8 remains set to &psxRegs across all calls to blocks
+// $fp/$int8_t remains set to &psxRegs across all calls to blocks
 "la    $fp, %[psxRegs]                        \n"
 
 // Load $v0 once with psxRegs.pc, blocks will assign new value when returning
@@ -1407,7 +1407,7 @@ __asm__ __volatile__ (
 // NOTE: During block executions, we'd never reach this point because the block
 //  dispatch loop is currently infinite. This could change in the future.
 // TODO: Could add a way to reset a game or load a new game from within
-//  the running emulator by setting a global boolean, resetting
+//  the running emulator by setting a global uint_fast8_t, resetting
 //  psxRegs.io_cycle_counter to 0, and checking if it's been set before
 //  calling pxsBranchTest() here. If set, you must jump here to
 //  exit the loop, to ensure that stack frame is adjusted before return!
@@ -1445,7 +1445,7 @@ __attribute__((noinline)) static void recExecuteBlock(unsigned target_pc)
 
 #ifndef ASM_EXECUTE_LOOP
 	do {
-		u32 *p = (u32*)PC_REC(psxRegs.pc);
+		uint32_t *p = (uint32_t*)PC_REC(psxRegs.pc);
 		if (*p == 0)
 			recRecompile();
 
@@ -1460,7 +1460,7 @@ __asm__ __volatile__ (
 ".set push                                    \n"
 ".set noreorder                               \n"
 
-// $fp/$s8 remains set to &psxRegs across all calls to blocks
+// $fp/$int8_t remains set to &psxRegs across all calls to blocks
 "la     $fp, %[psxRegs]                       \n"
 
 // Set up our own stack frame. Should have 8-byte alignment, and have 16 bytes
@@ -1623,7 +1623,7 @@ static void recExecute()
 	//  under HLE BIOS cannot know at compile-time where to return to.
 	//
 	// To force indirect return code, set 'block_ret_addr' to 0 here.
-	bool use_indirect_return_dispatch_loop = true;
+	uint_fast8_t use_indirect_return_dispatch_loop = true;
 	block_ret_addr = block_fast_ret_addr = 0;
 
 #if defined(ASM_EXECUTE_LOOP) && defined(USE_DIRECT_BLOCK_RETURN_JUMPS)
@@ -1654,25 +1654,25 @@ static void recExecute()
 
 
 /* Invalidate 'Size' code block pointers at word-aligned PS1 address 'Addr'. */
-static void recClear(u32 Addr, u32 Size)
+static void recClear(uint32_t Addr, uint32_t Size)
 {
-	const u32 masked_ram_addr = Addr & 0x1ffffc;
+	const uint32_t masked_ram_addr = Addr & 0x1ffffc;
 
 	// Check if the page(s) of PS1 RAM that 'Addr','Size' target contain the
 	//  start of any blocks. If not, invalidation would have no effect and is
 	//  skipped. This eliminates 99% of large unnecessary invalidations that
 	//  occur when many games stream CD data in-game.
-	u32 page = masked_ram_addr/4096;
-	u32 end_page = ((masked_ram_addr + (Size-1)*4)/4096) + 1;
-	bool has_code = false;
+	uint32_t page = masked_ram_addr/4096;
+	uint32_t end_page = ((masked_ram_addr + (Size-1)*4)/4096) + 1;
+	uint_fast8_t has_code = false;
 	do {
-		u32 pflag = 1 << (page & 7);  // Each byte in code_pages[] represents 8 pages
+		uint32_t pflag = 1 << (page & 7);  // Each byte in code_pages[] represents 8 pages
 		has_code = code_pages[page/8] & pflag;
 	} while ((++page != end_page) && !has_code);
 
 	// NOTE: If PS1 mem is mapped/mirrored, make PC_REC_MMAP use the same virtual
 	//       mirror region the game is already using, reducing TLB pressure.
-	uptr dst_base = !rec_mem_mapped ? (uptr)recRAM : (uptr)PC_REC_MMAP(Addr & ~0x1fffff);
+	uintptr_t dst_base = !rec_mem_mapped ? (uintptr_t)recRAM : (uintptr_t)PC_REC_MMAP(Addr & ~0x1fffff);
 
 	if (has_code) {
 		void *dst = (void*)(dst_base + (masked_ram_addr * REC_RAM_PTR_SIZE/4));
@@ -1756,7 +1756,7 @@ static void recReset()
 	memset(recRAM, 0, REC_RAM_SIZE);
 	memset(recROM, 0, REC_ROM_SIZE);
 
-	recMem = (u32*)recMemBase;
+	recMem = (uint32_t*)recMemBase;
 
 	regReset();
 

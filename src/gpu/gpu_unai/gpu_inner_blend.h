@@ -31,20 +31,20 @@
 //  'uSrc','uDst' input: -bbbbbgggggrrrrr
 //                       ^ bit 16
 // OUTPUT:
-//           u16 output: 0bbbbbgggggrrrrr
+//           uint16_t output: 0bbbbbgggggrrrrr
 //                       ^ bit 16
 // RETURNS:
 // Where '0' is zero-padding, and '-' is don't care
 ////////////////////////////////////////////////////////////////////////////////
-template <int BLENDMODE, bool SKIP_USRC_MSB_MASK>
-GPU_INLINE u16 gpuBlending(u16 uSrc, u16 uDst)
+template <int BLENDMODE, uint_fast8_t SKIP_USRC_MSB_MASK>
+GPU_INLINE uint16_t gpuBlending(uint16_t uSrc, uint16_t uDst)
 {
 	// These use Blargg's bitwise modulo-clamping:
 	//  http://blargg.8bitalley.com/info/rgb_mixing.html
 	//  http://blargg.8bitalley.com/info/rgb_clamped_add.html
 	//  http://blargg.8bitalley.com/info/rgb_clamped_sub.html
 
-	u16 mix;
+	uint16_t mix;
 
 	// 0.5 x Back + 0.5 x Forward
 	if (BLENDMODE==0) {
@@ -64,11 +64,11 @@ GPU_INLINE u16 gpuBlending(u16 uSrc, u16 uDst)
 		uDst &= 0x7fff;
 		if (!SKIP_USRC_MSB_MASK)
 			uSrc &= 0x7fff;
-		u32 sum      = uSrc + uDst;
-		u32 low_bits = (uSrc ^ uDst) & 0x0421;
-		u32 carries  = (sum - low_bits) & 0x8420;
-		u32 modulo   = sum - carries;
-		u32 clamp    = carries - (carries >> 5);
+		uint32_t sum      = uSrc + uDst;
+		uint32_t low_bits = (uSrc ^ uDst) & 0x0421;
+		uint32_t carries  = (sum - low_bits) & 0x8420;
+		uint32_t modulo   = sum - carries;
+		uint32_t clamp    = carries - (carries >> 5);
 		mix = modulo | clamp;
 	}
 
@@ -77,11 +77,11 @@ GPU_INLINE u16 gpuBlending(u16 uSrc, u16 uDst)
 		uDst &= 0x7fff;
 		if (!SKIP_USRC_MSB_MASK)
 			uSrc &= 0x7fff;
-		u32 diff     = uDst - uSrc + 0x8420;
-		u32 low_bits = (uDst ^ uSrc) & 0x8420;
-		u32 borrows  = (diff - low_bits) & 0x8420;
-		u32 modulo   = diff - borrows;
-		u32 clamp    = borrows - (borrows >> 5);
+		uint32_t diff     = uDst - uSrc + 0x8420;
+		uint32_t low_bits = (uDst ^ uSrc) & 0x8420;
+		uint32_t borrows  = (diff - low_bits) & 0x8420;
+		uint32_t modulo   = diff - borrows;
+		uint32_t clamp    = borrows - (borrows >> 5);
 		mix = modulo & clamp;
 	}
 
@@ -89,11 +89,11 @@ GPU_INLINE u16 gpuBlending(u16 uSrc, u16 uDst)
 	if (BLENDMODE==3) {
 		uDst &= 0x7fff;
 		uSrc = ((uSrc >> 2) & 0x1ce7);
-		u32 sum      = uSrc + uDst;
-		u32 low_bits = (uSrc ^ uDst) & 0x0421;
-		u32 carries  = (sum - low_bits) & 0x8420;
-		u32 modulo   = sum - carries;
-		u32 clamp    = carries - (carries >> 5);
+		uint32_t sum      = uSrc + uDst;
+		uint32_t low_bits = (uSrc ^ uDst) & 0x0421;
+		uint32_t carries  = (sum - low_bits) & 0x8420;
+		uint32_t modulo   = sum - carries;
+		uint32_t clamp    = carries - (carries >> 5);
 		mix = modulo | clamp;
 	}
 
@@ -102,18 +102,18 @@ GPU_INLINE u16 gpuBlending(u16 uSrc, u16 uDst)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// Convert bgr555 color in uSrc to padded u32 5.4:5.4:5.4 bgr fixed-pt
+// Convert bgr555 color in uSrc to padded uint32_t 5.4:5.4:5.4 bgr fixed-pt
 //  color triplet suitable for use with HQ 24-bit quantization.
 //
 // INPUT:
 //       'uDst' input: -bbbbbgggggrrrrr
 //                     ^ bit 16
 // RETURNS:
-//         u32 output: 000bbbbbXXXX0gggggXXXX0rrrrrXXXX
+//         uint32_t output: 000bbbbbXXXX0gggggXXXX0rrrrrXXXX
 //                     ^ bit 31
 // Where 'X' are fixed-pt bits, '0' is zero-padding, and '-' is don't care
 ////////////////////////////////////////////////////////////////////////////////
-GPU_INLINE u32 gpuGetRGB24(u16 uSrc)
+GPU_INLINE uint32_t gpuGetRGB24(uint16_t uSrc)
 {
 	return ((uSrc & 0x7C00)<<14)
 	     | ((uSrc & 0x03E0)<< 9)
@@ -122,9 +122,9 @@ GPU_INLINE u32 gpuGetRGB24(u16 uSrc)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// Blend padded u32 5.4:5.4:5.4 bgr fixed-pt color triplet in 'uSrc24'
+// Blend padded uint32_t 5.4:5.4:5.4 bgr fixed-pt color triplet in 'uSrc24'
 //  (foreground color) with bgr555 color in 'uDst' (background color),
-//  returning the resulting u32 5.4:5.4:5.4 color.
+//  returning the resulting uint32_t 5.4:5.4:5.4 color.
 //
 // INPUT:
 //     'uSrc24' input: 000bbbbbXXXX0gggggXXXX0rrrrrXXXX
@@ -132,33 +132,33 @@ GPU_INLINE u32 gpuGetRGB24(u16 uSrc)
 //       'uDst' input: -bbbbbgggggrrrrr
 //                     ^ bit 16
 // RETURNS:
-//         u32 output: 000bbbbbXXXX0gggggXXXX0rrrrrXXXX
+//         uint32_t output: 000bbbbbXXXX0gggggXXXX0rrrrrXXXX
 //                     ^ bit 31
 // Where 'X' are fixed-pt bits, '0' is zero-padding, and '-' is don't care
 ////////////////////////////////////////////////////////////////////////////////
 template <int BLENDMODE>
-GPU_INLINE u32 gpuBlending24(u32 uSrc24, u16 uDst)
+GPU_INLINE uint32_t gpuBlending24(uint32_t uSrc24, uint16_t uDst)
 {
 	// These use techniques adapted from Blargg's techniques mentioned in
 	//  in gpuBlending() comments above. Not as much bitwise trickery is
 	//  necessary because of presence of 0 padding in uSrc24 format.
 
-	u32 uDst24 = gpuGetRGB24(uDst);
-	u32 mix;
+	uint32_t uDst24 = gpuGetRGB24(uDst);
+	uint32_t mix;
 
 	// 0.5 x Back + 0.5 x Forward
 	if (BLENDMODE==0) {
-		const u32 uMsk = 0x1FE7F9FE;
+		const uint32_t uMsk = 0x1FE7F9FE;
 		// Only need to mask LSBs of uSrc24, uDst24's LSBs are 0 already
 		mix = (uDst24 + (uSrc24 & uMsk)) >> 1;
 	}
 
 	// 1.0 x Back + 1.0 x Forward
 	if (BLENDMODE==1) {
-		u32 sum     = uSrc24 + uDst24;
-		u32 carries = sum & 0x20080200;
-		u32 modulo  = sum - carries;
-		u32 clamp   = carries - (carries >> 9);
+		uint32_t sum     = uSrc24 + uDst24;
+		uint32_t carries = sum & 0x20080200;
+		uint32_t modulo  = sum - carries;
+		uint32_t clamp   = carries - (carries >> 9);
 		mix = modulo | clamp;
 	}
 
@@ -166,19 +166,19 @@ GPU_INLINE u32 gpuBlending24(u32 uSrc24, u16 uDst)
 	if (BLENDMODE==2) {
 		// Insert ones in 0-padded borrow slot of color to be subtracted from
 		uDst24 |= 0x20080200;
-		u32 diff    = uDst24 - uSrc24;
-		u32 borrows = diff & 0x20080200;
-		u32 clamp   = borrows - (borrows >> 9);
+		uint32_t diff    = uDst24 - uSrc24;
+		uint32_t borrows = diff & 0x20080200;
+		uint32_t clamp   = borrows - (borrows >> 9);
 		mix = diff & clamp;
 	}
 
 	// 1.0 x Back + 0.25 x Forward
 	if (BLENDMODE==3) {
 		uSrc24 = (uSrc24 & 0x1FC7F1FC) >> 2;
-		u32 sum     = uSrc24 + uDst24;
-		u32 carries = sum & 0x20080200;
-		u32 modulo  = sum - carries;
-		u32 clamp   = carries - (carries >> 9);
+		uint32_t sum     = uSrc24 + uDst24;
+		uint32_t carries = sum & 0x20080200;
+		uint32_t modulo  = sum - carries;
+		uint32_t clamp   = carries - (carries >> 9);
 		mix = modulo | clamp;
 	}
 

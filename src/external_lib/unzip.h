@@ -275,11 +275,11 @@ typedef struct unz64_file_pos_s
     ZPOS64_T num_of_file;            /* # of file */
 } unz64_file_pos;
 
-extern int ZEXPORT unzGetFilePos64(
+extern int ZEXPORT unzGetFilePoint64_t(
     unzFile file,
     unz64_file_pos* file_pos);
 
-extern int ZEXPORT unzGoToFilePos64(
+extern int ZEXPORT unzGoToFilePoint64_t(
     unzFile file,
     const unz64_file_pos* file_pos);
 
@@ -318,7 +318,7 @@ extern int ZEXPORT unzGetCurrentFileInfo OF((unzFile file,
 
 /** Addition for GDAL : START */
 
-extern ZPOS64_T ZEXPORT unzGetCurrentFileZStreamPos64 OF((unzFile file));
+extern ZPOS64_T ZEXPORT unzGetCurrentFileZStreamPoint64_t OF((unzFile file));
 
 /** Addition for GDAL : END */
 

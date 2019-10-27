@@ -37,11 +37,11 @@ void rec##f() \
  *  16 of the LSBs of the argument are used, so it can be passed with LI16.
  */
 #define CP2_FUNC_1(f) \
-extern void gte##f(u32 gteop); \
+extern void gte##f(uint32_t gteop); \
 void rec##f() \
 { \
 	JAL(gte##f); \
-	LI16(MIPSREG_A0, (u16)(psxRegs.code >> 10)); /* <BD slot> */ \
+	LI16(MIPSREG_A0, (uint16_t)(psxRegs.code >> 10)); /* <BD slot> */ \
 }
 
 CP2_FUNC_0(RTPS)
@@ -72,14 +72,14 @@ static void recCFC2()
 	if (!_Rt_) return;
 
 	SetUndef(_Rt_);
-	u32 rt = regMipsToHost(_Rt_, REG_FIND, REG_REGISTER);
+	uint32_t rt = regMipsToHost(_Rt_, REG_FIND, REG_REGISTER);
 
 	LW(rt, PERM_REG_1, offCP2C(_Rd_));
 	regMipsChanged(_Rt_);
 	regUnlock(rt);
 }
 
-static void emitCTC2(u32 rt, u32 reg)
+static void emitCTC2(uint32_t rt, uint32_t reg)
 {
 	switch (reg) {
 	case 4: case 12: case 20: case 26: case 27: case 29: case 30:
@@ -114,13 +114,13 @@ static void emitCTC2(u32 rt, u32 reg)
 
 static void recCTC2()
 {
-	u32 rt = regMipsToHost(_Rt_, REG_LOAD, REG_REGISTER);
+	uint32_t rt = regMipsToHost(_Rt_, REG_LOAD, REG_REGISTER);
 	emitCTC2(rt, _Rd_);
 	regUnlock(rt);
 }
 
 /* Limit rt to [min_reg .. max_reg], tmp_reg is overwritten  */
-static void emitLIM(u32 rt, u32 min_reg, u32 max_reg, u32 tmp_reg)
+static void emitLIM(uint32_t rt, uint32_t min_reg, uint32_t max_reg, uint32_t tmp_reg)
 {
 	SLT(tmp_reg, rt, min_reg);    // tmp_reg = (rt < min_reg ? 1 : 0)
 	MOVN(rt, min_reg, tmp_reg);   // if (tmp_reg) rt = min_reg
@@ -129,7 +129,7 @@ static void emitLIM(u32 rt, u32 min_reg, u32 max_reg, u32 tmp_reg)
 }
 
 /* move from cp2 reg to host rt */
-static void emitMFC2(u32 rt, u32 reg)
+static void emitMFC2(uint32_t rt, uint32_t reg)
 {
 	// IMPORTANT: Don't use these regs in this function, as they are
 	//            reserved for use by LWC2/SWC2 emitter which calls here.
@@ -173,8 +173,8 @@ static void emitMFC2(u32 rt, u32 reg)
 			//       and eliminate a load stall or two here. gteIR3 could be
 			//       loaded up-front after gteIR1,2.
 
-			const u32 lim_temp_reg = TEMP_2;
-			const u32 lim_max_reg  = TEMP_3;
+			const uint32_t lim_temp_reg = TEMP_2;
+			const uint32_t lim_max_reg  = TEMP_3;
 
 			LH(rt,     PERM_REG_1, off(CP2D.p[9].sw.l));  // gteIR1
 			LH(TEMP_1, PERM_REG_1, off(CP2D.p[10].sw.l)); // gteIR2
@@ -221,7 +221,7 @@ static void emitMFC2(u32 rt, u32 reg)
 }
 
 /* move from host rt to cp2 reg */
-static void emitMTC2(u32 rt, u32 reg)
+static void emitMTC2(uint32_t rt, uint32_t reg)
 {
 	// IMPORTANT: Don't use these regs in this function, as they are
 	//            reserved for use by LWC2/SWC2 emitter which calls here.
@@ -293,7 +293,7 @@ static void recMFC2()
 			printf("%s(): WARNING: Unhandled MFC2 load-delay abuse by branch at PC %08x\n", __func__, pc);
 		} else {
 			// Emit the op *after* the MFC2 *before* emitting the MFC2 itself.
-			const u32 code_tmp = psxRegs.code;
+			const uint32_t code_tmp = psxRegs.code;
 			psxRegs.code = OPCODE_AT(pc);
 			DISASM_PSX(pc);
 			DISASM_MSG("%s(): Applying MFC2 load-delay abuse fix at PC %08x\n", __func__, pc);
@@ -305,7 +305,7 @@ static void recMFC2()
 	// XXX - End of 'Front Mission 3' fix
 
 	SetUndef(_Rt_);
-	u32 rt = regMipsToHost(_Rt_, REG_FIND, REG_REGISTER);
+	uint32_t rt = regMipsToHost(_Rt_, REG_FIND, REG_REGISTER);
 
 	emitMFC2(rt, _Rd_);
 
@@ -315,7 +315,7 @@ static void recMFC2()
 
 static void recMTC2()
 {
-	u32 rt = regMipsToHost(_Rt_, REG_LOAD, REG_REGISTER);
+	uint32_t rt = regMipsToHost(_Rt_, REG_LOAD, REG_REGISTER);
 
 	emitMTC2(rt, _Rd_);
 
@@ -328,10 +328,10 @@ static void recMTC2()
 static int count_LWC2_SWC2()
 {
 	int count = 0;
-	u32 PC = pc;
-	u32 nops_at_end = 0;
-	u32 opcode = psxRegs.code;
-	u32 rs = _Rs_;
+	uint32_t PC = pc;
+	uint32_t nops_at_end = 0;
+	uint32_t opcode = psxRegs.code;
+	uint32_t rs = _Rs_;
 
 	/* If in delay slot, set count to 1 */
 	if (branch)
@@ -346,7 +346,7 @@ static int count_LWC2_SWC2()
 		else
 			nops_at_end = 0;
 
-		opcode = *(u32 *)((char *)PSXM(PC));
+		opcode = *(uint32_t *)((char *)PSXM(PC));
 		PC += 4;
 		count++;
 	}
@@ -364,20 +364,20 @@ static void gen_LWC2_SWC2()
 	//            by emitMFC2()/emitMTC2(), which we call here.
 	// TEMP_1, TEMP_2, TEMP_3
 
-	bool base_reg_converted = false;
+	uint_fast8_t base_reg_converted = false;
 	// Reg reserved for coverted base reg. *Cannot* be in above list.
-	u32 base_reg = TEMP_0;
+	uint32_t base_reg = TEMP_0;
 	// Temp reg overwritten during base reg conversion. Can be in above list.
-	const u32 conversion_temp_reg = TEMP_1;
+	const uint32_t conversion_temp_reg = TEMP_1;
 
 	// Get a count of the number of sequential LWC2 and/or SWC2 ops that all
 	//  share the same base register. We can handle mixed LWC2s and SWC2s.
 	int count = count_LWC2_SWC2();
 
-	const u32 op_rs = _Rs_;
-	const u32 rs = regMipsToHost(op_rs, REG_LOAD, REG_REGISTER);
+	const uint32_t op_rs = _Rs_;
+	const uint32_t rs = regMipsToHost(op_rs, REG_LOAD, REG_REGISTER);
 
-	u32 PC = pc - 4;
+	uint32_t PC = pc - 4;
 
 #ifdef WITH_DISASM
 	for (int i = 0; i < count-1; i++)
@@ -385,9 +385,9 @@ static void gen_LWC2_SWC2()
 #endif
 
 #ifdef USE_GTE_DIRECT_MEM_ACCESS
-	const bool direct_mem = psx_mem_mapped;
+	const uint_fast8_t direct_mem = psx_mem_mapped;
 #else
-	const bool direct_mem = false;
+	const uint_fast8_t direct_mem = false;
 #endif
 
 	if (direct_mem)
@@ -427,20 +427,20 @@ static void gen_LWC2_SWC2()
 
 		const int queue_capacity = 4;
 		union {                   // Entries have info needed for 2nd half of each operation:
-		    u8  gte_reg;          //  GTE reg (rt field) of entry's opcode (for LWC2 entries)
-		    s16 imm;              //  Immediate mem offset of the entry's opcode (for SWC2 entries)
+		    uint8_t  gte_reg;          //  GTE reg (rt field) of entry's opcode (for LWC2 entries)
+		    int16_t imm;              //  Immediate mem offset of the entry's opcode (for SWC2 entries)
 		} queue[queue_capacity];
 
 		// The index of an entry maps directly to a fixed host reg
 		//  that holds the 32-bit value waiting to be used later.
-		const u8 queue_regmap[queue_capacity] = { MIPSREG_A0, MIPSREG_A1,
+		const uint8_t queue_regmap[queue_capacity] = { MIPSREG_A0, MIPSREG_A1,
 		                                          MIPSREG_A2, MIPSREG_A3 };
 
 		// NOTE: Any NOPs that were included in count will be skipped
 		int icount = count;
 		do
 		{
-			const u32 opcode = OPCODE_AT(PC);
+			const uint32_t opcode = OPCODE_AT(PC);
 			PC += 4;
 
 			if (_fOp_(opcode) == 0x32)
@@ -454,8 +454,8 @@ static void gen_LWC2_SWC2()
 							base_reg = emitAddressConversion(op_rs, rs, base_reg, conversion_temp_reg);
 							base_reg_converted = true;
 						}
-						const u8  entry_reg = queue_regmap[queue_idx_beg];
-						const s16 entry_imm = queue[queue_idx_beg].imm;
+						const uint8_t  entry_reg = queue_regmap[queue_idx_beg];
+						const int16_t entry_imm = queue[queue_idx_beg].imm;
 						queue_idx_beg = (queue_idx_beg + 1) % queue_capacity;
 
 						// Second half of a SWC2 code sequence
@@ -465,8 +465,8 @@ static void gen_LWC2_SWC2()
 
 				// Evict earliest queue entry if it is full
 				if (queue_entries == queue_capacity) {
-					const u8 entry_reg = queue_regmap[queue_idx_beg];
-					const u8 gte_reg   = queue[queue_idx_beg].gte_reg;
+					const uint8_t entry_reg = queue_regmap[queue_idx_beg];
+					const uint8_t gte_reg   = queue[queue_idx_beg].gte_reg;
 					queue_idx_beg = (queue_idx_beg + 1) % queue_capacity;
 					queue_entries--;
 
@@ -481,7 +481,7 @@ static void gen_LWC2_SWC2()
 						base_reg = emitAddressConversion(op_rs, rs, base_reg, conversion_temp_reg);
 						base_reg_converted = true;
 					}
-					const u8 entry_reg = queue_regmap[queue_idx_end];
+					const uint8_t entry_reg = queue_regmap[queue_idx_end];
 					queue[queue_idx_end].gte_reg = _fRt_(opcode);
 					queue_idx_end = (queue_idx_end + 1) % queue_capacity;
 					queue_entry_type = LWC2_ENTRIES;
@@ -494,8 +494,8 @@ static void gen_LWC2_SWC2()
 				// Flush queue if this is the last opcode in the series
 				if (icount == 1) {
 					do {
-						const u8 entry_reg = queue_regmap[queue_idx_beg];
-						const u8 gte_reg   = queue[queue_idx_beg].gte_reg;
+						const uint8_t entry_reg = queue_regmap[queue_idx_beg];
+						const uint8_t gte_reg   = queue[queue_idx_beg].gte_reg;
 						queue_idx_beg = (queue_idx_beg + 1) % queue_capacity;
 
 						// Second half of a LWC2 code sequence
@@ -509,8 +509,8 @@ static void gen_LWC2_SWC2()
 				// Flush queue if it holds LWC2 entries
 				if (queue_entries > 0 && queue_entry_type == LWC2_ENTRIES) {
 					do {
-						const u8 entry_reg = queue_regmap[queue_idx_beg];
-						const u8 gte_reg   = queue[queue_idx_beg].gte_reg;
+						const uint8_t entry_reg = queue_regmap[queue_idx_beg];
+						const uint8_t gte_reg   = queue[queue_idx_beg].gte_reg;
 						queue_idx_beg = (queue_idx_beg + 1) % queue_capacity;
 
 						// Second half of a LWC2 code sequence
@@ -525,8 +525,8 @@ static void gen_LWC2_SWC2()
 						base_reg = emitAddressConversion(op_rs, rs, base_reg, conversion_temp_reg);
 						base_reg_converted = true;
 					}
-					const u8  entry_reg = queue_regmap[queue_idx_beg];
-					const s16 entry_imm = queue[queue_idx_beg].imm;
+					const uint8_t  entry_reg = queue_regmap[queue_idx_beg];
+					const int16_t entry_imm = queue[queue_idx_beg].imm;
 					queue_idx_beg = (queue_idx_beg + 1) % queue_capacity;
 					queue_entries--;
 
@@ -536,7 +536,7 @@ static void gen_LWC2_SWC2()
 
 				// Add this SWC2 to the queue
 				{
-					const u8 entry_reg = queue_regmap[queue_idx_end];
+					const uint8_t entry_reg = queue_regmap[queue_idx_end];
 					queue[queue_idx_end].imm = _fImm_(opcode);
 					queue_idx_end = (queue_idx_end + 1) % queue_capacity;
 					queue_entry_type = SWC2_ENTRIES;
@@ -554,8 +554,8 @@ static void gen_LWC2_SWC2()
 							base_reg = emitAddressConversion(op_rs, rs, base_reg, conversion_temp_reg);
 							base_reg_converted = true;
 						}
-						const u8  entry_reg = queue_regmap[queue_idx_beg];
-						const s16 entry_imm = queue[queue_idx_beg].imm;
+						const uint8_t  entry_reg = queue_regmap[queue_idx_beg];
+						const int16_t entry_imm = queue[queue_idx_beg].imm;
 						queue_idx_beg = (queue_idx_beg + 1) % queue_capacity;
 
 						// Second half of a SWC2 code sequence
@@ -577,7 +577,7 @@ static void gen_LWC2_SWC2()
 
 		// NOTE: Any NOPs that were included in count will be skipped
 		do {
-			const u32 opcode = OPCODE_AT(PC);
+			const uint32_t opcode = OPCODE_AT(PC);
 			PC += 4;
 
 			// Any NOPs that were included in count will be skipped
@@ -601,7 +601,7 @@ static void gen_LWC2_SWC2()
 
 		// NOTE: Any NOPs that were included in count will be skipped
 		do {
-			const u32 opcode = OPCODE_AT(PC);
+			const uint32_t opcode = OPCODE_AT(PC);
 			PC += 4;
 
 			if (_fOp_(opcode) == 0x32) {

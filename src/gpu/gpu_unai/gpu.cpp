@@ -44,8 +44,8 @@
 // TODO: Determine cause of out-of-bounds write/reads. <-- Note: this is largely
 //  solved by adoption of PCSX Rearmed's 'gpulib' in gpulib_if.cpp, which
 //  replaces this file (gpu.cpp)
-//u16   GPU_FrameBuffer[(FRAME_BUFFER_SIZE+512*1024)/2] __attribute__((aligned(32)));
-static u16 GPU_FrameBuffer[(FRAME_BUFFER_SIZE*2 + 4096)/2] __attribute__((aligned(32)));
+//uint16_t   GPU_FrameBuffer[(FRAME_BUFFER_SIZE+512*1024)/2] __attribute__((aligned(32)));
+static uint16_t GPU_FrameBuffer[(FRAME_BUFFER_SIZE*2 + 4096)/2] __attribute__((aligned(32)));
 
 ///////////////////////////////////////////////////////////////////////////////
 // GPU fixed point math
@@ -79,7 +79,7 @@ static u16 GPU_FrameBuffer[(FRAME_BUFFER_SIZE*2 + 4096)/2] __attribute__((aligne
 static void gpuReset(void)
 {
 	memset((void*)&gpu_unai, 0, sizeof(gpu_unai));
-	gpu_unai.vram = (u16*)GPU_FrameBuffer + (4096/2); //4kb guard room in front
+	gpu_unai.vram = (uint16_t*)GPU_FrameBuffer + (4096/2); //4kb guard room in front
 	gpu_unai.GPU_GP1 = 0x14802000;
 	gpu_unai.DrawingArea[2] = 256;
 	gpu_unai.DrawingArea[3] = 240;
@@ -92,9 +92,9 @@ static void gpuReset(void)
 	gpu_unai.TextureWindow[3] = 255;
 	//senquack - new vars must be updated whenever texture window is changed:
 	//           (used for polygon-drawing in gpu_inner.h, gpu_raster_polygon.h)
-	const u32 fb = FIXED_BITS;  // # of fractional fixed-pt bits of u4/v4
-	gpu_unai.u_msk = (((u32)gpu_unai.TextureWindow[2]) << fb) | ((1 << fb) - 1);
-	gpu_unai.v_msk = (((u32)gpu_unai.TextureWindow[3]) << fb) | ((1 << fb) - 1);
+	const uint32_t fb = FIXED_BITS;  // # of fractional fixed-pt bits of u4/v4
+	gpu_unai.u_msk = (((uint32_t)gpu_unai.TextureWindow[2]) << fb) | ((1 << fb) - 1);
+	gpu_unai.v_msk = (((uint32_t)gpu_unai.TextureWindow[3]) << fb) | ((1 << fb) - 1);
 
 	// Configuration options
 	gpu_unai.config = gpu_unai_config_ext;
@@ -130,7 +130,7 @@ long GPU_shutdown(void)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-long GPU_freeze(u32 bWrite, GPUFreeze_t* p2)
+long GPU_freeze(uint32_t bWrite, GPUFreeze_t* p2)
 {
 	if (!p2) return (0);
 	if (p2->ulFreezeVersion != 1) return (0);
@@ -151,7 +151,7 @@ long GPU_freeze(u32 bWrite, GPUFreeze_t* p2)
 	}
 	else
 	{
-		extern void GPU_writeStatus(u32 data);
+		extern void GPU_writeStatus(uint32_t data);
 		gpu_unai.GPU_GP1 = p2->ulStatus;
 		memcpy((void*)gpu_unai.vram, (void*)p2->psxVRam, FRAME_BUFFER_SIZE);
 		GPU_writeStatus((5 << 24) | p2->ulControl[5]);
@@ -167,7 +167,7 @@ long GPU_freeze(u32 bWrite, GPUFreeze_t* p2)
 //  GPU DMA comunication
 
 ///////////////////////////////////////////////////////////////////////////////
-u8 PacketSize[256] =
+uint8_t PacketSize[256] =
 {
 	0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	//		0-15
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	//		16-31
@@ -194,7 +194,7 @@ INLINE void gpuSendPacket()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-INLINE void gpuCheckPacket(u32 uData)
+INLINE void gpuCheckPacket(uint32_t uData)
 {
 	if (gpu_unai.PacketCount)
 	{
@@ -211,13 +211,13 @@ INLINE void gpuCheckPacket(u32 uData)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void GPU_writeDataMem(u32* dmaAddress, int dmaCount)
+void GPU_writeDataMem(uint32_t* dmaAddress, int dmaCount)
 {
 	#ifdef ENABLE_GPU_LOG_SUPPORT
 		fprintf(stdout,"GPU_writeDataMem(%d)\n",dmaCount);
 	#endif
-	u32 data;
-	const u16 *VIDEO_END = (u16*)gpu_unai.vram+(FRAME_BUFFER_SIZE/2)-1;
+	uint32_t data;
+	const uint16_t *VIDEO_END = (uint16_t*)gpu_unai.vram+(FRAME_BUFFER_SIZE/2)-1;
 	gpu_unai.GPU_GP1 &= ~0x14000000;
 
 	while (dmaCount) 
@@ -269,14 +269,14 @@ void GPU_writeDataMem(u32* dmaAddress, int dmaCount)
 	gpu_unai.GPU_GP1 = (gpu_unai.GPU_GP1 | 0x14000000) & ~0x60000000;
 }
 
-long GPU_dmaChain(u32 *rambase, u32 start_addr)
+long GPU_dmaChain(uint32_t *rambase, uint32_t start_addr)
 {
 	#ifdef ENABLE_GPU_LOG_SUPPORT
 		fprintf(stdout,"GPU_dmaChain(0x%x)\n",start_addr);
 	#endif
 
-	u32 addr, *list;
-	u32 len, count;
+	uint32_t addr, *list;
+	uint32_t len, count;
 	long dma_words = 0;
 
 	if (gpu_unai.dma.last_dma) *gpu_unai.dma.last_dma |= 0x800000;
@@ -324,9 +324,9 @@ long GPU_dmaChain(u32 *rambase, u32 start_addr)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void GPU_writeData(u32 data)
+void GPU_writeData(uint32_t data)
 {
-	const u16 *VIDEO_END = (u16*)gpu_unai.vram+(FRAME_BUFFER_SIZE/2)-1;
+	const uint16_t *VIDEO_END = (uint16_t*)gpu_unai.vram+(FRAME_BUFFER_SIZE/2)-1;
 	#ifdef ENABLE_GPU_LOG_SUPPORT
 		fprintf(stdout,"GPU_writeData()\n");
 	#endif
@@ -335,7 +335,7 @@ void GPU_writeData(u32 data)
 	if (gpu_unai.dma.FrameToWrite)
 	{
 		if ((&gpu_unai.dma.pvram[gpu_unai.dma.px])>(VIDEO_END)) gpu_unai.dma.pvram-=512*1024;
-		gpu_unai.dma.pvram[gpu_unai.dma.px]=(u16)data;
+		gpu_unai.dma.pvram[gpu_unai.dma.px]=(uint16_t)data;
 		if (++gpu_unai.dma.px >= gpu_unai.dma.x_end)
 		{
 			gpu_unai.dma.px = 0;
@@ -373,9 +373,9 @@ void GPU_writeData(u32 data)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void GPU_readDataMem(u32* dmaAddress, int dmaCount)
+void GPU_readDataMem(uint32_t* dmaAddress, int dmaCount)
 {
-	const u16 *VIDEO_END = (u16*)gpu_unai.vram+(FRAME_BUFFER_SIZE/2)-1;
+	const uint16_t *VIDEO_END = (uint16_t*)gpu_unai.vram+(FRAME_BUFFER_SIZE/2)-1;
 	#ifdef ENABLE_GPU_LOG_SUPPORT
 		fprintf(stdout,"GPU_readDataMem(%d)\n",dmaCount);
 	#endif
@@ -387,8 +387,8 @@ void GPU_readDataMem(u32* dmaAddress, int dmaCount)
 		if ((&gpu_unai.dma.pvram[gpu_unai.dma.px])>(VIDEO_END)) gpu_unai.dma.pvram-=512*1024;
 		// lower 16 bit
 		//senquack - 64-bit fix (from notaz)
-		//u32 data = (unsigned long)gpu_unai.dma.pvram[gpu_unai.dma.px];
-		u32 data = (u32)gpu_unai.dma.pvram[gpu_unai.dma.px];
+		//uint32_t data = (unsigned long)gpu_unai.dma.pvram[gpu_unai.dma.px];
+		uint32_t data = (uint32_t)gpu_unai.dma.pvram[gpu_unai.dma.px];
 
 		if (++gpu_unai.dma.px >= gpu_unai.dma.x_end)
 		{
@@ -400,7 +400,7 @@ void GPU_readDataMem(u32* dmaAddress, int dmaCount)
 		// higher 16 bit (always, even if it's an odd width)
 		//senquack - 64-bit fix (from notaz)
 		//data |= (unsigned long)(gpu_unai.dma.pvram[gpu_unai.dma.px])<<16;
-		data |= (u32)(gpu_unai.dma.pvram[gpu_unai.dma.px])<<16;
+		data |= (uint32_t)(gpu_unai.dma.pvram[gpu_unai.dma.px])<<16;
 		
 		*dmaAddress++ = data;
 
@@ -423,9 +423,9 @@ void GPU_readDataMem(u32* dmaAddress, int dmaCount)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-u32 GPU_readData(void)
+uint32_t GPU_readData(void)
 {
-	const u16 *VIDEO_END = (u16*)gpu_unai.vram+(FRAME_BUFFER_SIZE/2)-1;
+	const uint16_t *VIDEO_END = (uint16_t*)gpu_unai.vram+(FRAME_BUFFER_SIZE/2)-1;
 	#ifdef ENABLE_GPU_LOG_SUPPORT
 		fprintf(stdout,"GPU_readData()\n");
 	#endif
@@ -464,7 +464,7 @@ u32 GPU_readData(void)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-u32 GPU_readStatus(void)
+uint32_t GPU_readStatus(void)
 {
 	return gpu_unai.GPU_GP1;
 }
@@ -488,7 +488,7 @@ INLINE void GPU_NoSkip(void)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void  GPU_writeStatus(u32 data)
+void  GPU_writeStatus(uint32_t data)
 {
 	#ifdef ENABLE_GPU_LOG_SUPPORT
 		fprintf(stdout,"GPU_writeStatus(%d,%d)\n",data>>24,data & 0xff);
@@ -538,8 +538,8 @@ void  GPU_writeStatus(u32 data)
 		// 10-19 Y2 (NTSC=88h+(224/2), (PAL=A3h+(264/2))  ;/relative to VSYNC
 		// 20-23 Not used (zero)
 		{
-			u32 v1=data & 0x000003FF; //(short)(data & 0x3ff);
-			u32 v2=(data & 0x000FFC00) >> 10; //(short)((data>>10) & 0x3ff);
+			uint32_t v1=data & 0x000003FF; //(short)(data & 0x3ff);
+			uint32_t v2=(data & 0x000FFC00) >> 10; //(short)((data>>10) & 0x3ff);
 			if ((gpu_unai.DisplayArea[4]!=v1)||(gpu_unai.DisplayArea[5]!=v2))
 			{
 				gpu_unai.DisplayArea[4] = v1;
@@ -553,16 +553,16 @@ void  GPU_writeStatus(u32 data)
 		break;
 	case 0x08:
 		{
-			static const u32 HorizontalResolution[8] = { 256, 368, 320, 384, 512, 512, 640, 640 };
-			static const u32 VerticalResolution[4] = { 240, 480, 256, 480 };
+			static const uint32_t HorizontalResolution[8] = { 256, 368, 320, 384, 512, 512, 640, 640 };
+			static const uint32_t VerticalResolution[4] = { 240, 480, 256, 480 };
 			gpu_unai.GPU_GP1 = (gpu_unai.GPU_GP1 & ~0x007F0000) | ((data & 0x3F) << 17) | ((data & 0x40) << 10);
 			#ifdef ENABLE_GPU_LOG_SUPPORT
 				fprintf(stdout,"GPU_writeStatus(RES=%dx%d,BITS=%d,PAL=%d)\n",HorizontalResolution[(gpu_unai.GPU_GP1 >> 16) & 7],
 						VerticalResolution[(gpu_unai.GPU_GP1 >> 19) & 3],(gpu_unai.GPU_GP1&0x00200000?24:15),(IS_PAL?1:0));
 			#endif
 			// Video mode change
-			u32 new_width = HorizontalResolution[(gpu_unai.GPU_GP1 >> 16) & 7];
-			u32 new_height = VerticalResolution[(gpu_unai.GPU_GP1 >> 19) & 3];
+			uint32_t new_width = HorizontalResolution[(gpu_unai.GPU_GP1 >> 16) & 7];
+			uint32_t new_height = VerticalResolution[(gpu_unai.GPU_GP1 >> 19) & 3];
 
 			if (gpu_unai.DisplayArea[2] != new_width || gpu_unai.DisplayArea[3] != new_height)
 			{
@@ -618,7 +618,7 @@ void  GPU_writeStatus(u32 data)
 			case 2: gpu_unai.GPU_GP0 = gpu_unai.tex_window; break;
 			case 3: gpu_unai.GPU_GP0 = (gpu_unai.DrawingArea[1] << 10) | gpu_unai.DrawingArea[0]; break;
 			case 4: gpu_unai.GPU_GP0 = ((gpu_unai.DrawingArea[3]-1) << 10) | (gpu_unai.DrawingArea[2]-1); break;
-			case 5: case 6:	gpu_unai.GPU_GP0 = (((u32)gpu_unai.DrawingOffset[1] & 0x7ff) << 11) | ((u32)gpu_unai.DrawingOffset[0] & 0x7ff); break;
+			case 5: case 6:	gpu_unai.GPU_GP0 = (((uint32_t)gpu_unai.DrawingOffset[1] & 0x7ff) << 11) | ((uint32_t)gpu_unai.DrawingOffset[0] & 0x7ff); break;
 			case 7: gpu_unai.GPU_GP0 = 2; break;
 			case 8: case 15: gpu_unai.GPU_GP0 = 0xBFC03720; break;
 		}
@@ -642,9 +642,9 @@ static void gpuVideoOutput(void)
 	h1 = gpu_unai.DisplayArea[5] - gpu_unai.DisplayArea[4]; // display needed
 	if (h0 == 480) h1 = Min2(h1*2,480);
 
-	bool isRGB24 = (gpu_unai.GPU_GP1 & 0x00200000 ? true : false);
-	u16* dst16 = SCREEN;
-	u16* src16 = (u16*)gpu_unai.vram;
+	uint_fast8_t isRGB24 = (gpu_unai.GPU_GP1 & 0x00200000 ? true : false);
+	uint16_t* dst16 = SCREEN;
+	uint16_t* src16 = (uint16_t*)gpu_unai.vram;
 
 	// PS1 fb read wraps around (fixes black screen in 'Tobal no. 1')
 	unsigned int src16_offs_msk = 1024*512-1;
@@ -671,8 +671,8 @@ static void gpuVideoOutput(void)
 
 	{
 		const int li=gpu_unai.ilace_mask;
-		bool pi = ProgressiveInterlaceEnabled();
-		bool pif = gpu_unai.prog_ilace_flag;
+		uint_fast8_t pi = ProgressiveInterlaceEnabled();
+		uint_fast8_t pif = gpu_unai.prog_ilace_flag;
 		switch ( w0 )
 		{
 			case 256:
@@ -740,9 +740,9 @@ static void gpuVideoOutput(void)
 // Update frames-skip each second>>3 (8 times per second)
 #define GPU_FRAMESKIP_UPDATE 3
 
-static void GPU_frameskip (bool show)
+static void GPU_frameskip (uint_fast8_t show)
 {
-	u32 now=get_ticks(); // current frame
+	uint32_t now=get_ticks(); // current frame
 
 	// Update frameskip
 	if (gpu_unai.frameskip.skipCount==0) gpu_unai.frameskip.skipFrame=false; // frameskip off
@@ -750,9 +750,9 @@ static void GPU_frameskip (bool show)
 	else if (gpu_unai.frameskip.skipCount==8) gpu_unai.frameskip.skipFrame=true; // frameskip maximum
 	else
 	{
-		static u32 spd=100; // speed %
-		static u32 frames=0; // frames counter
-		static u32 prev=now; // previous fps calculation
+		static uint32_t spd=100; // speed %
+		static uint32_t frames=0; // frames counter
+		static uint32_t prev=now; // previous fps calculation
 		frames++;
 		if ((now-prev)>=(TPS>>GPU_FRAMESKIP_UPDATE))
 		{
@@ -809,7 +809,7 @@ void GPU_requestScreenRedraw()
 
 void GPU_getScreenInfo(GPUScreenInfo_t *sinfo)
 {
-	bool depth24 = (gpu_unai.GPU_GP1 & 0x00200000 ? true : false);
+	uint_fast8_t depth24 = (gpu_unai.GPU_GP1 & 0x00200000 ? true : false);
 	int16_t hres = (uint16_t)gpu_unai.DisplayArea[2];
 	int16_t vres = (uint16_t)gpu_unai.DisplayArea[3];
 	int16_t w = hres; // Original gpu_unai doesn't support width < 100%

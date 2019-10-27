@@ -23,8 +23,8 @@
 
 void gpuDrawS(PtrUnion packet, const PS gpuSpriteSpanDriver)
 {
-	s32 x0, x1, y0, y1;
-	u32 u0, v0;
+	int32_t x0, x1, y0, y1;
+	uint32_t u0, v0;
 
 	//NOTE: Must 11-bit sign-extend the whole sum here, not just packet X/Y,
 	// or sprites in 1st level of SkullMonkeys disappear when walking right.
@@ -32,19 +32,19 @@ void gpuDrawS(PtrUnion packet, const PS gpuSpriteSpanDriver)
 	x0 = GPU_EXPANDSIGN(packet.S2[2] + gpu_unai.DrawingOffset[0]);
 	y0 = GPU_EXPANDSIGN(packet.S2[3] + gpu_unai.DrawingOffset[1]);
 
-	u32 w = packet.U2[6] & 0x3ff; // Max width is 1023
-	u32 h = packet.U2[7] & 0x1ff; // Max height is 511
+	uint32_t w = packet.U2[6] & 0x3ff; // Max width is 1023
+	uint32_t h = packet.U2[7] & 0x1ff; // Max height is 511
 	x1 = x0 + w;
 	y1 = y0 + h;
 
-	s32 xmin, xmax, ymin, ymax;
+	int32_t xmin, xmax, ymin, ymax;
 	xmin = gpu_unai.DrawingArea[0];	xmax = gpu_unai.DrawingArea[2];
 	ymin = gpu_unai.DrawingArea[1];	ymax = gpu_unai.DrawingArea[3];
 
 	u0 = packet.U1[8];
 	v0 = packet.U1[9];
 
-	s32 temp;
+	int32_t temp;
 	temp = ymin - y0;
 	if (temp > 0) { y0 = ymin; v0 += temp; }
 	if (y1 > ymax) y1 = ymax;
@@ -60,19 +60,19 @@ void gpuDrawS(PtrUnion packet, const PS gpuSpriteSpanDriver)
 	gpu_unai.g5 = packet.U1[1] >> 3;
 	gpu_unai.b5 = packet.U1[2] >> 3;
 
-	u16 *Pixel = &((u16*)gpu_unai.vram)[FRAME_OFFSET(x0, y0)];
+	uint16_t *Pixel = &((uint16_t*)gpu_unai.vram)[FRAME_OFFSET(x0, y0)];
 	const int li=gpu_unai.ilace_mask;
 	const int pi=(ProgressiveInterlaceEnabled()?(gpu_unai.ilace_mask+1):0);
 	const int pif=(ProgressiveInterlaceEnabled()?(gpu_unai.prog_ilace_flag?(gpu_unai.ilace_mask+1):0):1);
 	unsigned int tmode = gpu_unai.TEXT_MODE >> 5;
-	const u32 v0_mask = gpu_unai.TextureWindow[3];
-	u8* pTxt_base = (u8*)gpu_unai.TBA;
+	const uint32_t v0_mask = gpu_unai.TextureWindow[3];
+	uint8_t* pTxt_base = (uint8_t*)gpu_unai.TBA;
 
 	// Texture is accessed byte-wise, so adjust idx if 16bpp
 	if (tmode == 3) u0 <<= 1;
 
 	for (; y0<y1; ++y0) {
-		u8* pTxt = pTxt_base + ((v0 & v0_mask) * 2048);
+		uint8_t* pTxt = pTxt_base + ((v0 & v0_mask) * 2048);
 		if (!(y0&li) && (y0&pi)!=pif)
 			gpuSpriteSpanDriver(Pixel, x1, pTxt, u0);
 		Pixel += FRAME_WIDTH;
@@ -86,11 +86,11 @@ void gpuDrawS(PtrUnion packet, const PS gpuSpriteSpanDriver)
 /* Notaz 4bit sprites optimization */
 void gpuDrawS16(PtrUnion packet)
 {
-	s32 x0, y0;
-	s32 u0, v0;
-	s32 xmin, xmax;
-	s32 ymin, ymax;
-	u32 h = 16;
+	int32_t x0, y0;
+	int32_t u0, v0;
+	int32_t xmin, xmax;
+	int32_t ymin, ymax;
+	uint32_t h = 16;
 
 	//NOTE: Must 11-bit sign-extend the whole sum here, not just packet X/Y,
 	// or sprites in 1st level of SkullMonkeys disappear when walking right.
@@ -127,18 +127,18 @@ void gpuDrawS16(PtrUnion packet)
 
 void gpuDrawT(PtrUnion packet, const PT gpuTileSpanDriver)
 {
-	s32 x0, x1, y0, y1;
+	int32_t x0, x1, y0, y1;
 
 	// This now matches behavior of Mednafen and PCSX Rearmed's gpu_neon:
 	x0 = GPU_EXPANDSIGN(packet.S2[2] + gpu_unai.DrawingOffset[0]);
 	y0 = GPU_EXPANDSIGN(packet.S2[3] + gpu_unai.DrawingOffset[1]);
 
-	u32 w = packet.U2[4] & 0x3ff; // Max width is 1023
-	u32 h = packet.U2[5] & 0x1ff; // Max height is 511
+	uint32_t w = packet.U2[4] & 0x3ff; // Max width is 1023
+	uint32_t h = packet.U2[5] & 0x1ff; // Max height is 511
 	x1 = x0 + w;
 	y1 = y0 + h;
 
-	s32 xmin, xmax, ymin, ymax;
+	int32_t xmin, xmax, ymin, ymax;
 	xmin = gpu_unai.DrawingArea[0];	xmax = gpu_unai.DrawingArea[2];
 	ymin = gpu_unai.DrawingArea[1];	ymax = gpu_unai.DrawingArea[3];
 
@@ -151,8 +151,8 @@ void gpuDrawT(PtrUnion packet, const PT gpuTileSpanDriver)
 	x1 -= x0;
 	if (x1 <= 0) return;
 
-	const u16 Data = GPU_RGB16(packet.U4[0]);
-	u16 *Pixel = &((u16*)gpu_unai.vram)[FRAME_OFFSET(x0, y0)];
+	const uint16_t Data = GPU_RGB16(packet.U4[0]);
+	uint16_t *Pixel = &((uint16_t*)gpu_unai.vram)[FRAME_OFFSET(x0, y0)];
 	const int li=gpu_unai.ilace_mask;
 	const int pi=(ProgressiveInterlaceEnabled()?(gpu_unai.ilace_mask+1):0);
 	const int pif=(ProgressiveInterlaceEnabled()?(gpu_unai.prog_ilace_flag?(gpu_unai.ilace_mask+1):0):1);

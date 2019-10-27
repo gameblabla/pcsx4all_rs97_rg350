@@ -32,15 +32,15 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  GPU Blitting code with rescale and interlace support.
 
-INLINE void GPU_BlitWW(const void* src, u16* dst16, bool isRGB24)
+INLINE void GPU_BlitWW(const void* src, uint16_t* dst16, uint_fast8_t isRGB24)
 {
-	u32 uCount;
+	uint32_t uCount;
 	if(!isRGB24)
 	{
 		#ifndef USE_BGR15
 			uCount = 20;
-			const u32* src32 = (const u32*) src; 
-			u32* dst32 = (u32*)(void*) dst16;
+			const uint32_t* src32 = (const uint32_t*) src; 
+			uint32_t* dst32 = (uint32_t*)(void*) dst16;
 			do{
 				dst32[0] = RGB16X2(src32[0]);
 				dst32[1] = RGB16X2(src32[1]);
@@ -60,7 +60,7 @@ INLINE void GPU_BlitWW(const void* src, u16* dst16, bool isRGB24)
 	else
 	{
 		uCount = 20;
-		const u8* src8 = (const u8*)src;
+		const uint8_t* src8 = (const uint8_t*)src;
 		do{
 			dst16[ 0] = RGB24(src8[ 0], src8[ 1], src8[ 2] );
 			dst16[ 1] = RGB24(src8[ 3], src8[ 4], src8[ 5] );
@@ -85,14 +85,14 @@ INLINE void GPU_BlitWW(const void* src, u16* dst16, bool isRGB24)
 	}
 }
 
-INLINE void GPU_BlitWWSWWSWS(const void* src, u16* dst16, bool isRGB24)
+INLINE void GPU_BlitWWSWWSWS(const void* src, uint16_t* dst16, uint_fast8_t isRGB24)
 {
-	u32 uCount;
+	uint32_t uCount;
 	if(!isRGB24)
 	{
 		#ifndef USE_BGR15
 			uCount = 32;
-			const u16* src16 = (const u16*) src; 
+			const uint16_t* src16 = (const uint16_t*) src; 
 			do{
 				dst16[ 0] = RGB16(src16[0]);
 				dst16[ 1] = RGB16(src16[1]);
@@ -109,7 +109,7 @@ INLINE void GPU_BlitWWSWWSWS(const void* src, u16* dst16, bool isRGB24)
 			}while(--uCount);
 		#else
 			uCount = 64;
-			const u16* src16 = (const u16*) src; 
+			const uint16_t* src16 = (const uint16_t*) src; 
 			do{
 				*dst16++ = *src16++;
 				*dst16++ = *src16;
@@ -125,7 +125,7 @@ INLINE void GPU_BlitWWSWWSWS(const void* src, u16* dst16, bool isRGB24)
 	else
 	{
 		uCount = 32;
-		const u8* src8 = (const u8*)src;
+		const uint8_t* src8 = (const uint8_t*)src;
 		do{
 			dst16[ 0] = RGB24(src8[ 0], src8[ 1], src8[ 2] );
 			dst16[ 1] = RGB24(src8[ 3], src8[ 4], src8[ 5] );
@@ -145,14 +145,14 @@ INLINE void GPU_BlitWWSWWSWS(const void* src, u16* dst16, bool isRGB24)
 	}
 }
 
-INLINE void GPU_BlitWWWWWS(const void* src, u16* dst16, bool isRGB24)
+INLINE void GPU_BlitWWWWWS(const void* src, uint16_t* dst16, uint_fast8_t isRGB24)
 {
-	u32 uCount;
+	uint32_t uCount;
 	if(!isRGB24)
 	{
 		#ifndef USE_BGR15
 			uCount = 32;
-			const u16* src16 = (const u16*) src; 
+			const uint16_t* src16 = (const uint16_t*) src; 
 			do{
 				dst16[ 0] = RGB16(src16[0]);
 				dst16[ 1] = RGB16(src16[1]);
@@ -169,7 +169,7 @@ INLINE void GPU_BlitWWWWWS(const void* src, u16* dst16, bool isRGB24)
 			}while(--uCount);
 		#else
 			uCount = 64;
-			const u16* src16 = (const u16*) src; 
+			const uint16_t* src16 = (const uint16_t*) src; 
 			do{
 				*dst16++ = *src16++;
 				*dst16++ = *src16++;
@@ -183,7 +183,7 @@ INLINE void GPU_BlitWWWWWS(const void* src, u16* dst16, bool isRGB24)
 	else
 	{
 		uCount = 32;
-		const u8* src8 = (const u8*)src;
+		const uint8_t* src8 = (const uint8_t*)src;
 		do{
 			dst16[0] = RGB24(src8[ 0], src8[ 1], src8[ 2] );
 			dst16[1] = RGB24(src8[ 3], src8[ 4], src8[ 5] );
@@ -201,14 +201,14 @@ INLINE void GPU_BlitWWWWWS(const void* src, u16* dst16, bool isRGB24)
 	}
 }
 
-INLINE void GPU_BlitWWWWWWWWS(const void* src, u16* dst16, bool isRGB24, u32 uClip_src)
+INLINE void GPU_BlitWWWWWWWWS(const void* src, uint16_t* dst16, uint_fast8_t isRGB24, uint32_t uClip_src)
 {
-	u32 uCount;
+	uint32_t uCount;
 	if(!isRGB24)
 	{
 		#ifndef USE_BGR15
 			uCount = 20;
-			const u16* src16 = ((const u16*) src) + uClip_src; 
+			const uint16_t* src16 = ((const uint16_t*) src) + uClip_src; 
 			do{
 				dst16[ 0] = RGB16(src16[0]);
 				dst16[ 1] = RGB16(src16[1]);
@@ -232,7 +232,7 @@ INLINE void GPU_BlitWWWWWWWWS(const void* src, u16* dst16, bool isRGB24, u32 uCl
 			}while(--uCount);
 		#else
 			uCount = 40;
-			const u16* src16 = ((const u16*) src) + uClip_src; 
+			const uint16_t* src16 = ((const uint16_t*) src) + uClip_src; 
 			do{
 				*dst16++ = *src16++;
 				*dst16++ = *src16++;
@@ -249,7 +249,7 @@ INLINE void GPU_BlitWWWWWWWWS(const void* src, u16* dst16, bool isRGB24, u32 uCl
 	else
 	{
 		uCount = 20;
-		const u8* src8 = (const u8*)src + (uClip_src<<1) + uClip_src;
+		const uint8_t* src8 = (const uint8_t*)src + (uClip_src<<1) + uClip_src;
 		do{
 			dst16[ 0] = RGB24(src8[ 0], src8[ 1], src8[ 2] );
 			dst16[ 1] = RGB24(src8[ 3], src8[ 4], src8[ 5] );
@@ -274,14 +274,14 @@ INLINE void GPU_BlitWWWWWWWWS(const void* src, u16* dst16, bool isRGB24, u32 uCl
 	}
 }
 
-INLINE void GPU_BlitWWDWW(const void* src, u16* dst16, bool isRGB24)
+INLINE void GPU_BlitWWDWW(const void* src, uint16_t* dst16, uint_fast8_t isRGB24)
 {
-	u32 uCount;
+	uint32_t uCount;
 	if(!isRGB24)
 	{
 		#ifndef USE_BGR15
 			uCount = 32;
-			const u16* src16 = (const u16*) src; 
+			const uint16_t* src16 = (const uint16_t*) src; 
 			do{
 				dst16[ 0] = RGB16(src16[0]);
 				dst16[ 1] = RGB16(src16[1]);
@@ -298,7 +298,7 @@ INLINE void GPU_BlitWWDWW(const void* src, u16* dst16, bool isRGB24)
 			}while(--uCount);
 		#else
 			uCount = 64;
-			const u16* src16 = (const u16*) src; 
+			const uint16_t* src16 = (const uint16_t*) src; 
 			do{
 				*dst16++ = *src16++;
 				*dst16++ = *src16;
@@ -311,7 +311,7 @@ INLINE void GPU_BlitWWDWW(const void* src, u16* dst16, bool isRGB24)
 	else
 	{
 		uCount = 32;
-		const u8* src8 = (const u8*)src;
+		const uint8_t* src8 = (const uint8_t*)src;
 		do{
 			dst16[ 0] = RGB24(src8[0], src8[ 1], src8[ 2] );
 			dst16[ 1] = RGB24(src8[3], src8[ 4], src8[ 5] );
@@ -331,14 +331,14 @@ INLINE void GPU_BlitWWDWW(const void* src, u16* dst16, bool isRGB24)
 }
 
 
-INLINE void GPU_BlitWS(const void* src, u16* dst16, bool isRGB24)
+INLINE void GPU_BlitWS(const void* src, uint16_t* dst16, uint_fast8_t isRGB24)
 {
-	u32 uCount;
+	uint32_t uCount;
 	if(!isRGB24)
 	{
 		#ifndef USE_BGR15
 			uCount = 20;
-			const u16* src16 = (const u16*) src; 
+			const uint16_t* src16 = (const uint16_t*) src; 
 			do{
 				dst16[ 0] = RGB16(src16[0]);
 				dst16[ 1] = RGB16(src16[2]);
@@ -365,7 +365,7 @@ INLINE void GPU_BlitWS(const void* src, u16* dst16, bool isRGB24)
 			}while(--uCount);
 		#else
 			uCount = 320;
-			const u16* src16 = (const u16*) src; 
+			const uint16_t* src16 = (const uint16_t*) src; 
 			do{
 				*dst16++ = *src16; src16+=2;
 			}while(--uCount);
@@ -374,7 +374,7 @@ INLINE void GPU_BlitWS(const void* src, u16* dst16, bool isRGB24)
 	else
 	{
 		uCount = 20;
-		const u8* src8 = (const u8*) src; 
+		const uint8_t* src8 = (const uint8_t*) src; 
 		do{
 			dst16[ 0] = RGB24(src8[ 0], src8[ 1], src8[ 2] );
 			dst16[ 1] = RGB24(src8[ 6], src8[ 7], src8[ 8] );

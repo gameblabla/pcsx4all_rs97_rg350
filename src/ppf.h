@@ -30,7 +30,7 @@ extern unsigned char *sbi_sectors;
 
 #include "cdrom.h"
 
-static inline int CheckSBI(const u8 *t)
+static inline int CheckSBI(const uint8_t *t)
 {
 	int s;
 	if (sbi_sectors == NULL)

@@ -79,15 +79,15 @@ static void SetupLightLUT()
 //     'r' input:  --------------rrrrrrrrXXXXXXXXXX
 //                 ^ bit 31
 // RETURNS:
-//    u32 output:  rrrrrrrrXXXggggggggXXXbbbbbbbbXX
+//    uint32_t output:  rrrrrrrrXXXggggggggXXXbbbbbbbbXX
 //                 ^ bit 31
 // Where 'r,g,b' are integer bits of colors, 'X' fixed-pt, and '-' don't care
 ////////////////////////////////////////////////////////////////////////////////
-GPU_INLINE u32 gpuPackGouraudCol(u32 r, u32 g, u32 b)
+GPU_INLINE uint32_t gpuPackGouraudCol(uint32_t r, uint32_t g, uint32_t b)
 {
-	return ((u32)(b>> 8)&(0x03ff    ))
-	     | ((u32)(g<< 3)&(0x07ff<<10))
-	     | ((u32)(r<<14)&(0x07ff<<21));
+	return ((uint32_t)(b>> 8)&(0x03ff    ))
+	     | ((uint32_t)(g<< 3)&(0x07ff<<10))
+	     | ((uint32_t)(r<<14)&(0x07ff<<21));
 }
 
 
@@ -99,7 +99,7 @@ GPU_INLINE u32 gpuPackGouraudCol(u32 r, u32 g, u32 b)
 //   'dr' input:  ssssssssssssssrrrrrrrrXXXXXXXXXX
 //                ^ bit 31
 // RETURNS:
-//   u32 output:  rrrrrrrrXXXggggggggXXXbbbbbbbbXX
+//   uint32_t output:  rrrrrrrrXXXggggggggXXXbbbbbbbbXX
 //                ^ bit 31
 // Where 'r,g,b' are integer bits of colors, 'X' fixed-pt, and 's' sign bits
 //
@@ -107,27 +107,27 @@ GPU_INLINE u32 gpuPackGouraudCol(u32 r, u32 g, u32 b)
 //       having been merely factored out from original code in
 //       poly-drawing functions. Feel free to check/improve it -senquack
 ////////////////////////////////////////////////////////////////////////////////
-GPU_INLINE u32 gpuPackGouraudColInc(s32 dr, s32 dg, s32 db)
+GPU_INLINE uint32_t gpuPackGouraudColInc(int32_t dr, int32_t dg, int32_t db)
 {
-	u32 dr_tmp = (u32)(dr << 14)&(0xffffffff<<21);  if (dr < 0) dr_tmp += 1<<21;
-	u32 dg_tmp = (u32)(dg <<  3)&(0xffffffff<<10);  if (dg < 0) dg_tmp += 1<<10;
-	u32 db_tmp = (u32)(db >>  8)&(0xffffffff    );  if (db < 0) db_tmp += 1<< 0;
+	uint32_t dr_tmp = (uint32_t)(dr << 14)&(0xffffffff<<21);  if (dr < 0) dr_tmp += 1<<21;
+	uint32_t dg_tmp = (uint32_t)(dg <<  3)&(0xffffffff<<10);  if (dg < 0) dg_tmp += 1<<10;
+	uint32_t db_tmp = (uint32_t)(db >>  8)&(0xffffffff    );  if (db < 0) db_tmp += 1<< 0;
 	return db_tmp + dg_tmp + dr_tmp;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// Extract bgr555 color from Gouraud u32 fixed-pt 8.3:8.3:8.2 rgb triplet
+// Extract bgr555 color from Gouraud uint32_t fixed-pt 8.3:8.3:8.2 rgb triplet
 //
 // INPUT:
 //  'gCol' input:  rrrrrrrrXXXggggggggXXXbbbbbbbbXX
 //                 ^ bit 31
 // RETURNS:
-//    u16 output:  0bbbbbgggggrrrrr
+//    uint16_t output:  0bbbbbgggggrrrrr
 //                 ^ bit 16
 // Where 'r,g,b' are integer bits of colors, 'X' fixed-pt, and '0' zero
 ////////////////////////////////////////////////////////////////////////////////
-GPU_INLINE u16 gpuLightingRGB(u32 gCol)
+GPU_INLINE uint16_t gpuLightingRGB(uint32_t gCol)
 {
 	return ((gCol<< 5)&0x7C00) |
 	       ((gCol>>11)&0x03E0) |
@@ -136,19 +136,19 @@ GPU_INLINE u16 gpuLightingRGB(u32 gCol)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// Convert packed Gouraud u32 fixed-pt 8.3:8.3:8.2 rgb triplet in 'gCol'
-//  to padded u32 5.4:5.4:5.4 bgr fixed-pt triplet, suitable for use
+// Convert packed Gouraud uint32_t fixed-pt 8.3:8.3:8.2 rgb triplet in 'gCol'
+//  to padded uint32_t 5.4:5.4:5.4 bgr fixed-pt triplet, suitable for use
 //  with HQ 24-bit lighting/quantization.
 //
 // INPUT:
 //       'gCol' input:  rrrrrrrrXXXggggggggXXXbbbbbbbbXX
 //                      ^ bit 31
 // RETURNS:
-//         u32 output:  000bbbbbXXXX0gggggXXXX0rrrrrXXXX
+//         uint32_t output:  000bbbbbXXXX0gggggXXXX0rrrrrXXXX
 //                      ^ bit 31
 //  Where 'X' are fixed-pt bits, '0' zero-padding, and '-' is don't care
 ////////////////////////////////////////////////////////////////////////////////
-GPU_INLINE u32 gpuLightingRGB24(u32 gCol)
+GPU_INLINE uint32_t gpuLightingRGB24(uint32_t gCol)
 {
 	return ((gCol<<19) & (0x1FF<<20)) |
 	       ((gCol>> 2) & (0x1FF<<10)) |
@@ -165,10 +165,10 @@ GPU_INLINE u32 gpuLightingRGB24(u32 gCol)
 //        'uSrc' input:  -bbbbbgggggrrrrr
 //                       ^ bit 16
 // RETURNS:
-//          u16 output:  0bbbbbgggggrrrrr
+//          uint16_t output:  0bbbbbgggggrrrrr
 // Where 'X' are fixed-pt bits, '0' is zero-padding, and '-' is don't care
 ////////////////////////////////////////////////////////////////////////////////
-GPU_INLINE u16 gpuLightingTXT(u16 uSrc, u8 r5, u8 g5, u8 b5)
+GPU_INLINE uint16_t gpuLightingTXT(uint16_t uSrc, uint8_t r5, uint8_t g5, uint8_t b5)
 {
 	return (gpu_unai.LightLUT[((uSrc&0x7C00)>>5) | b5] << 10) |
 	       (gpu_unai.LightLUT[ (uSrc&0x03E0)     | g5] <<  5) |
@@ -180,17 +180,17 @@ GPU_INLINE u16 gpuLightingTXT(u16 uSrc, u8 r5, u8 g5, u8 b5)
 // Apply fast (low-precision) 5-bit Gouraud lighting to bgr555 texture color:
 //
 // INPUT:
-//  'gCol' is a packed Gouraud u32 fixed-pt 8.3:8.3:8.2 rgb triplet, value of
+//  'gCol' is a packed Gouraud uint32_t fixed-pt 8.3:8.3:8.2 rgb triplet, value of
 //     15.0 is midpoint that does not modify color of texture
 //         gCol input :  rrrrrXXXXXXgggggXXXXXXbbbbbXXXXX
 //                       ^ bit 31
 //        'uSrc' input:  -bbbbbgggggrrrrr
 //                       ^ bit 16
 // RETURNS:
-//          u16 output:  0bbbbbgggggrrrrr
+//          uint16_t output:  0bbbbbgggggrrrrr
 // Where 'X' are fixed-pt bits, '0' is zero-padding, and '-' is don't care
 ////////////////////////////////////////////////////////////////////////////////
-GPU_INLINE u16 gpuLightingTXTGouraud(u16 uSrc, u32 gCol)
+GPU_INLINE uint16_t gpuLightingTXTGouraud(uint16_t uSrc, uint32_t gCol)
 {
 	return (gpu_unai.LightLUT[((uSrc&0x7C00)>>5) | ((gCol>> 5)&0x1F)]<<10) |
 	       (gpu_unai.LightLUT[ (uSrc&0x03E0)     | ((gCol>>16)&0x1F)]<< 5) |
@@ -200,7 +200,7 @@ GPU_INLINE u16 gpuLightingTXTGouraud(u16 uSrc, u32 gCol)
 
 ////////////////////////////////////////////////////////////////////////////////
 // Apply high-precision 8-bit lighting to bgr555 texture color,
-//  returning a padded u32 5.4:5.4:5.4 bgr fixed-pt triplet
+//  returning a padded uint32_t 5.4:5.4:5.4 bgr fixed-pt triplet
 //  suitable for use with HQ 24-bit lighting/quantization.
 //
 // INPUT:
@@ -210,23 +210,23 @@ GPU_INLINE u16 gpuLightingTXTGouraud(u16 uSrc, u32 gCol)
 //         uSrc input: -bbbbbgggggrrrrr
 //                     ^ bit 16
 // RETURNS:
-//         u32 output: 000bbbbbXXXX0gggggXXXX0rrrrrXXXX
+//         uint32_t output: 000bbbbbXXXX0gggggXXXX0rrrrrXXXX
 //                     ^ bit 31
 // Where 'X' are fixed-pt bits, '0' is zero-padding, and '-' is don't care
 ////////////////////////////////////////////////////////////////////////////////
-GPU_INLINE u32 gpuLightingTXT24(u16 uSrc, u8 r8, u8 g8, u8 b8)
+GPU_INLINE uint32_t gpuLightingTXT24(uint16_t uSrc, uint8_t r8, uint8_t g8, uint8_t b8)
 {
-	u16 r1 = uSrc&0x001F;
-	u16 g1 = uSrc&0x03E0;
-	u16 b1 = uSrc&0x7C00;
+	uint16_t r1 = uSrc&0x001F;
+	uint16_t g1 = uSrc&0x03E0;
+	uint16_t b1 = uSrc&0x7C00;
 
-	u16 r2 = r8;
-	u16 g2 = g8;
-	u16 b2 = b8;
+	uint16_t r2 = r8;
+	uint16_t g2 = g8;
+	uint16_t b2 = b8;
 
-	u32 r3 = r1 * r2; if (r3 & 0xFFFFF000) r3 = ~0xFFFFF000;
-	u32 g3 = g1 * g2; if (g3 & 0xFFFE0000) g3 = ~0xFFFE0000;
-	u32 b3 = b1 * b2; if (b3 & 0xFFC00000) b3 = ~0xFFC00000;
+	uint32_t r3 = r1 * r2; if (r3 & 0xFFFFF000) r3 = ~0xFFFFF000;
+	uint32_t g3 = g1 * g2; if (g3 & 0xFFFE0000) g3 = ~0xFFFE0000;
+	uint32_t b3 = b1 * b2; if (b3 & 0xFFC00000) b3 = ~0xFFC00000;
 
 	return ((r3>> 3)    ) |
 	       ((g3>> 8)<<10) |
@@ -236,7 +236,7 @@ GPU_INLINE u32 gpuLightingTXT24(u16 uSrc, u8 r8, u8 g8, u8 b8)
 
 ////////////////////////////////////////////////////////////////////////////////
 // Apply high-precision 8-bit lighting to bgr555 texture color in 'uSrc',
-//  returning a padded u32 5.4:5.4:5.4 bgr fixed-pt triplet
+//  returning a padded uint32_t 5.4:5.4:5.4 bgr fixed-pt triplet
 //  suitable for use with HQ 24-bit lighting/quantization.
 //
 // INPUT:
@@ -245,23 +245,23 @@ GPU_INLINE u32 gpuLightingTXT24(u16 uSrc, u8 r8, u8 g8, u8 b8)
 //       'gCol' input: rrrrrrrrXXXggggggggXXXbbbbbbbbXX
 //                     ^ bit 31
 // RETURNS:
-//         u32 output: 000bbbbbXXXX0gggggXXXX0rrrrrXXXX
+//         uint32_t output: 000bbbbbXXXX0gggggXXXX0rrrrrXXXX
 //                     ^ bit 31
 // Where 'X' are fixed-pt bits, '0' is zero-padding, and '-' is don't care
 ////////////////////////////////////////////////////////////////////////////////
-GPU_INLINE u32 gpuLightingTXT24Gouraud(u16 uSrc, u32 gCol)
+GPU_INLINE uint32_t gpuLightingTXT24Gouraud(uint16_t uSrc, uint32_t gCol)
 {
-	u16 r1 = uSrc&0x001F;
-	u16 g1 = uSrc&0x03E0;
-	u16 b1 = uSrc&0x7C00;
+	uint16_t r1 = uSrc&0x001F;
+	uint16_t g1 = uSrc&0x03E0;
+	uint16_t b1 = uSrc&0x7C00;
 
-	u16 r2 = (gCol>>24) & 0xFF;
-	u16 g2 = (gCol>>13) & 0xFF;
-	u16 b2 = (gCol>> 2) & 0xFF;
+	uint16_t r2 = (gCol>>24) & 0xFF;
+	uint16_t g2 = (gCol>>13) & 0xFF;
+	uint16_t b2 = (gCol>> 2) & 0xFF;
 
-	u32 r3 = r1 * r2; if (r3 & 0xFFFFF000) r3 = ~0xFFFFF000;
-	u32 g3 = g1 * g2; if (g3 & 0xFFFE0000) g3 = ~0xFFFE0000;
-	u32 b3 = b1 * b2; if (b3 & 0xFFC00000) b3 = ~0xFFC00000;
+	uint32_t r3 = r1 * r2; if (r3 & 0xFFFFF000) r3 = ~0xFFFFF000;
+	uint32_t g3 = g1 * g2; if (g3 & 0xFFFE0000) g3 = ~0xFFFE0000;
+	uint32_t b3 = b1 * b2; if (b3 & 0xFFC00000) b3 = ~0xFFC00000;
 
 	return ((r3>> 3)    ) |
 	       ((g3>> 8)<<10) |

@@ -83,16 +83,16 @@
 
 //#define LOG_LOAD_STORE_SERIES
 
-static s16 imm_max, imm_min;
+static int16_t imm_max, imm_min;
 
-static u32 LWL_MASKSHIFT[8] = { 0xffffff, 0xffff, 0xff, 0,
+static uint32_t LWL_MASKSHIFT[8] = { 0xffffff, 0xffff, 0xff, 0,
                                 24, 16, 8, 0 };
-static u32 LWR_MASKSHIFT[8] = { 0, 0xff000000, 0xffff0000, 0xffffff00,
+static uint32_t LWR_MASKSHIFT[8] = { 0, 0xff000000, 0xffff0000, 0xffffff00,
                                 0, 8, 16, 24 };
 
-static u32 SWL_MASKSHIFT[8] = { 0xffffff00, 0xffff0000, 0xff000000, 0,
+static uint32_t SWL_MASKSHIFT[8] = { 0xffffff00, 0xffff0000, 0xff000000, 0,
                                 24, 16, 8, 0 };
-static u32 SWR_MASKSHIFT[8] = { 0, 0xff, 0xffff, 0xffffff,
+static uint32_t SWR_MASKSHIFT[8] = { 0, 0xff, 0xffff, 0xffffff,
                                 0, 8, 16, 24 };
 
 
@@ -102,7 +102,7 @@ static u32 SWR_MASKSHIFT[8] = { 0, 0xff, 0xffff, 0xffffff,
 #ifdef USE_LSU_CACHING
 
 static const int LSU_TMP_CACHE_SIZE = 2;
-static const u8 lsu_tmp_cache_reg_pool[LSU_TMP_CACHE_SIZE] =
+static const uint8_t lsu_tmp_cache_reg_pool[LSU_TMP_CACHE_SIZE] =
 	{ MIPSREG_AT, MIPSREG_V1 };
 
 enum {
@@ -111,16 +111,16 @@ enum {
 };
 
 struct lsu_tmp_cache_entry_t {
-	u8   host_reg;
-	u8   use_type;
-	u16  age;
-	u32  constval;
+	uint8_t   host_reg;
+	uint8_t   use_type;
+	uint16_t  age;
+	uint32_t  constval;
 } lsu_tmp_cache[LSU_TMP_CACHE_SIZE];
 
 static struct lsu_tmp_cache_entry_t*
-LSU_tmp_cache_get_reg(const int use_type, const u32 constval, u32 unused_param)
+LSU_tmp_cache_get_reg(const int use_type, const uint32_t constval, uint32_t unused_param)
 {
-	// NOTE: 'lsu_tmp_cache_valid' is global bool defined in recompiler.cpp
+	// NOTE: 'lsu_tmp_cache_valid' is global uint_fast8_t defined in recompiler.cpp
 	for (int i=0; i < LSU_TMP_CACHE_SIZE; ++i) {
 		if (lsu_tmp_cache_valid) {
 			if (lsu_tmp_cache[i].use_type != LSU_TMP_CACHE_USE_TYPE_INVALID)
@@ -181,18 +181,18 @@ LSU_tmp_cache_get_reg(const int use_type, const u32 constval, u32 unused_param)
  * LSU reg caching (end) *
  *************************/
 
-static u32 emitConstBaseRegLUI(const u16 adr_hi)
+static uint32_t emitConstBaseRegLUI(const uint16_t adr_hi)
 {
-	u32 host_reg = MIPSREG_AT;
+	uint32_t host_reg = MIPSREG_AT;
 
 #ifdef USE_LSU_CACHING
 	lsu_tmp_cache_entry_t *entry =
-		LSU_tmp_cache_get_reg(LSU_TMP_CACHE_USE_TYPE_CONST, (u32)adr_hi << 16, 0);
+		LSU_tmp_cache_get_reg(LSU_TMP_CACHE_USE_TYPE_CONST, (uint32_t)adr_hi << 16, 0);
 
 	if (entry->use_type == LSU_TMP_CACHE_USE_TYPE_INVALID) {
 		// No regs had this constval, so update the reg assigned from the pool.
 		entry->use_type = LSU_TMP_CACHE_USE_TYPE_CONST;
-		entry->constval = (u32)adr_hi << 16;
+		entry->constval = (uint32_t)adr_hi << 16;
 
 		LUI(entry->host_reg, adr_hi);
 	}
@@ -222,10 +222,10 @@ static u32 emitConstBaseRegLUI(const u16 adr_hi)
  * NOTE: This function is shared with rec_gte.cpp.h
  *
  */
-static u32 emitAddressConversion(const u32 op_rs,
-                                 const u32 rs,
-                                 const u32 desired_reg,
-                                 const u32 tmp_reg)
+static uint32_t emitAddressConversion(const uint32_t op_rs,
+                                 const uint32_t rs,
+                                 const uint32_t desired_reg,
+                                 const uint32_t tmp_reg)
 {
 	if (psx_mem_mapped)
 	{
@@ -282,7 +282,7 @@ static u32 emitAddressConversion(const u32 op_rs,
 
 
 /* Emit no code invalidations for PSX base reg 'op_rs'? */
-static inline bool LSU_skip_code_invalidation(const u32 op_rs)
+static inline uint_fast8_t LSU_skip_code_invalidation(const uint32_t op_rs)
 {
 	// For certain games that do Icache trickery, we use a workaround that
 	//  requires recompiled code does *no* invalidations of its own.
@@ -308,7 +308,7 @@ static inline bool LSU_skip_code_invalidation(const u32 op_rs)
 }
 
 /* Emit only inlined direct accesses for PSX base reg 'op_rs'? */
-static inline bool LSU_use_only_direct_access(const u32 op_rs)
+static inline uint_fast8_t LSU_use_only_direct_access(const uint32_t op_rs)
 {
 	// NOTE: If 'psx_mem_mapped' is true, all valid PS1 addresses between begin
 	//       of RAM and end of scratchpad are virtually mapped/mirrored.
@@ -338,7 +338,7 @@ static inline bool LSU_use_only_direct_access(const u32 op_rs)
 }
 
 /* Emit only indirect C mem accesses for PSX base reg 'op_rs'? */
-static inline bool LSU_use_only_indirect_access(const u32 op_rs)
+static inline uint_fast8_t LSU_use_only_indirect_access(const uint32_t op_rs)
 {
 	// NOTE: If 'psx_mem_mapped' is true, all valid PS1 addresses between begin
 	//       of RAM and end of scratchpad are virtually mapped/mirrored.
@@ -368,10 +368,10 @@ static inline bool LSU_use_only_indirect_access(const u32 op_rs)
 /* Returns true if a load/store in a BD slot can be emitted before the
  *  branch/jump. Allows load/store series to extend into a BD slot.
  */
-static bool LSU_bd_slot_OoO_possible(const u32  bj_opcode,
-                                     const u32  bd_slot_opcode,
-                                     const u32  bd_slot_pc,
-                                     const bool bd_slot_is_load)
+static uint_fast8_t LSU_bd_slot_OoO_possible(const uint32_t  bj_opcode,
+                                     const uint32_t  bd_slot_opcode,
+                                     const uint32_t  bd_slot_pc,
+                                     const uint_fast8_t bd_slot_is_load)
 {
 	// A JR/JALR disqualifies out-of-order loads: we don't know the branch
 	//  target at recompile-time, and can't check for load-delay trickery.
@@ -379,10 +379,10 @@ static bool LSU_bd_slot_OoO_possible(const u32  bj_opcode,
 		return false;
 
 	// Regs accessed by the branch/jump. Don't care about zero reg.
-	const u32 bj_writes = (u32)opcodeGetWrites(bj_opcode) & ~1;
-	const u32 bj_reads  = (u32)opcodeGetReads(bj_opcode) & ~1;
+	const uint32_t bj_writes = (uint32_t)opcodeGetWrites(bj_opcode) & ~1;
+	const uint32_t bj_reads  = (uint32_t)opcodeGetReads(bj_opcode) & ~1;
 
-	const u32 bd_slot_reads = (u32)opcodeGetReads(bd_slot_opcode) & ~1;
+	const uint32_t bd_slot_reads = (uint32_t)opcodeGetReads(bd_slot_opcode) & ~1;
 
 	// JAL/JALR write a return address, so worry about that first.
 	if (bd_slot_reads & bj_writes)
@@ -395,14 +395,14 @@ static bool LSU_bd_slot_OoO_possible(const u32  bj_opcode,
 	//  written by the load (load delay).
 	if (bd_slot_is_load)
 	{
-		u32 target_opcode;
+		uint32_t target_opcode;
 		if (opcodeIsBranch(bj_opcode))
 			target_opcode = OPCODE_AT(opcodeGetBranchTargetAddr(bj_opcode, bd_slot_pc));
 		else
 			target_opcode = OPCODE_AT(opcodeGetDirectJumpTargetAddr(bj_opcode));
 
-		const u32 target_reads = (u32)opcodeGetReads(target_opcode) & ~1;
-		const u32 bd_slot_writes = 1 << _fRt_(bd_slot_opcode);
+		const uint32_t target_reads = (uint32_t)opcodeGetReads(target_opcode) & ~1;
+		const uint32_t bd_slot_writes = 1 << _fRt_(bd_slot_opcode);
 
 		if (bd_slot_writes & (bj_reads | target_reads))
 			return false;
@@ -418,12 +418,12 @@ static bool LSU_bd_slot_OoO_possible(const u32  bj_opcode,
    If 'pc_of_last_store_in_series' is not NULL, it will be set to the last store
    found in the series, or set to impossible value of 1 if no stores were found.
  */
-static int count_loads_stores(u32  *pc_of_last_store_in_series,
-                              bool *series_includes_bd_slot)
+static int count_loads_stores(uint32_t  *pc_of_last_store_in_series,
+                              uint_fast8_t *series_includes_bd_slot)
 {
 	int count = 0;
-	u32 PC = pc - 4;
-	const u32 shared_rs = _Rs_;
+	uint32_t PC = pc - 4;
+	const uint32_t shared_rs = _Rs_;
 
 #ifdef LOG_LOAD_STORE_SERIES
 	int num_nops = 0;
@@ -433,12 +433,12 @@ static int count_loads_stores(u32  *pc_of_last_store_in_series,
 
 	imm_min = imm_max = _Imm_;
 
-	bool store_found = false;
-	bool bd_slot_included = false;
+	uint_fast8_t store_found = false;
+	uint_fast8_t bd_slot_included = false;
 	int nops_at_end = 0;
 	for (;;)
 	{
-		const u32 opcode = OPCODE_AT(PC);
+		const uint32_t opcode = OPCODE_AT(PC);
 		PC += 4;
 
 		if (opcode == 0) {
@@ -450,8 +450,8 @@ static int count_loads_stores(u32  *pc_of_last_store_in_series,
 			continue;
 		}
 
-		const bool is_store = opcodeIsStore(opcode);
-		const bool is_load  = !is_store && opcodeIsLoad(opcode);
+		const uint_fast8_t is_store = opcodeIsStore(opcode);
+		const uint_fast8_t is_load  = !is_store && opcodeIsLoad(opcode);
 
 #ifdef LOG_LOAD_STORE_SERIES
 		num_stores += is_store;
@@ -468,9 +468,9 @@ static int count_loads_stores(u32  *pc_of_last_store_in_series,
 #ifdef INCLUDE_BD_SLOTS_IN_LSU_SERIES
 		} else if (opcodeIsBranchOrJump(opcode))
 		{
-			const u32  bd_slot_opcode = OPCODE_AT(PC);
-			const bool bd_slot_is_store = opcodeIsStore(bd_slot_opcode);
-			const bool bd_slot_is_load  = opcodeIsLoad(bd_slot_opcode);
+			const uint32_t  bd_slot_opcode = OPCODE_AT(PC);
+			const uint_fast8_t bd_slot_is_store = opcodeIsStore(bd_slot_opcode);
+			const uint_fast8_t bd_slot_is_load  = opcodeIsLoad(bd_slot_opcode);
 
 			if ((!bd_slot_is_store && !bd_slot_is_load) ||
 			    _fRs_(bd_slot_opcode) != shared_rs)
@@ -554,37 +554,37 @@ static int count_loads_stores(u32  *pc_of_last_store_in_series,
  *  Worst case scenario is that we emit both direct and indirect accesses.
  */
 static void general_loads_stores(const int  count,
-                                 const u32  pc_of_last_store_in_series,
-                                 const bool force_indirect)
+                                 const uint32_t  pc_of_last_store_in_series,
+                                 const uint_fast8_t force_indirect)
 {
 	// All loads/stores in series share the same base reg.
-	const u32 op_rs = _Rs_;
-	const u32 rs = regMipsToHost(op_rs, REG_LOAD, REG_REGISTER);
+	const uint32_t op_rs = _Rs_;
+	const uint32_t rs = regMipsToHost(op_rs, REG_LOAD, REG_REGISTER);
 
 	// Allocate the first 'rt' reg of the series. This helps reduce load stall
 	//  on 'rs' here and on first use of 'rt' later. It also lets the direct and
 	//  indirect codepaths share the code emitted for the reg allocation, if any.
-	u32 first_rt_allocation = 0;
+	uint32_t first_rt_allocation = 0;
 	if (opcodeIsLoad(OPCODE_AT(pc-4))) {
 		// LWL/LWR load is special: needs to load existing contents of reg
-		const u32  insn = OPCODE_AT(pc-4) & 0xfc000000;
-		const bool is_lwl_lwr = (insn == 0x88000000 || insn == 0x98000000);
+		const uint32_t  insn = OPCODE_AT(pc-4) & 0xfc000000;
+		const uint_fast8_t is_lwl_lwr = (insn == 0x88000000 || insn == 0x98000000);
 		first_rt_allocation = regMipsToHost(_Rt_, (is_lwl_lwr ? REG_LOAD : REG_FIND), REG_REGISTER);
 	} else {
 		first_rt_allocation = regMipsToHost(_Rt_, REG_LOAD, REG_REGISTER);
 	}
 
-	u32 *backpatch_label_exit_1 = 0;
-	u32 *backpatch_label_exit_2 = 0;
+	uint32_t *backpatch_label_exit_1 = 0;
+	uint32_t *backpatch_label_exit_2 = 0;
 
 #ifdef USE_DIRECT_MEM_ACCESS
-	const bool emit_direct   = !force_indirect && !LSU_use_only_indirect_access(op_rs);
-	const bool emit_indirect = !emit_direct || !LSU_use_only_direct_access(op_rs);
+	const uint_fast8_t emit_direct   = !force_indirect && !LSU_use_only_indirect_access(op_rs);
+	const uint_fast8_t emit_indirect = !emit_direct || !LSU_use_only_direct_access(op_rs);
 #else
 	// NOTE: If you are debugging, #undefine identifier 'USE_DIRECT_MEM_ACCESS'
 	//       and recompile dynarec. Just forcing these false/true isn't enough.
-	const bool emit_direct   = false;
-	const bool emit_indirect = true;
+	const uint_fast8_t emit_direct   = false;
+	const uint_fast8_t emit_indirect = true;
 #endif
 
 	/*****************************************************************
@@ -592,19 +592,19 @@ static void general_loads_stores(const int  count,
 	 *****************************************************************/
 	if (emit_direct)
 	{
-		const bool contains_store = (pc_of_last_store_in_series != 1);
-		const bool emit_code_invalidation   = contains_store && !LSU_skip_code_invalidation(op_rs);
-		const bool emit_address_range_check = emit_indirect;
+		const uint_fast8_t contains_store = (pc_of_last_store_in_series != 1);
+		const uint_fast8_t emit_code_invalidation   = contains_store && !LSU_skip_code_invalidation(op_rs);
+		const uint_fast8_t emit_address_range_check = emit_indirect;
 
-		u32 *backpatch_label_hle_1 = 0;
-		u32 *backpatch_label_hle_2 = 0;
-		u32 *backpatch_label_hle_3 = 0;
+		uint32_t *backpatch_label_hle_1 = 0;
+		uint32_t *backpatch_label_hle_2 = 0;
+		uint32_t *backpatch_label_hle_3 = 0;
 
 		/*********************************************************************
 		 * Emit any checks+branches (if indirect code is also being emitted) *
 		 *********************************************************************/
 
-		bool reg_state_pushed = false;
+		uint_fast8_t reg_state_pushed = false;
 
 		if (emit_address_range_check)
 		{
@@ -649,7 +649,7 @@ static void general_loads_stores(const int  count,
 					ADDIU(MIPSREG_A0, rs, imm_max);
 					SLL(MIPSREG_A1, MIPSREG_A0, 4);
 					SLTU(TEMP_1, MIPSREG_A1, TEMP_1);
-					backpatch_label_hle_1 = (u32 *)recMem;
+					backpatch_label_hle_1 = (uint32_t *)recMem;
 					BEQZ(TEMP_1, 0);
 
 					// MIPSREG_A0 contains effective address of opcode with
@@ -676,7 +676,7 @@ static void general_loads_stores(const int  count,
 #endif
 					// Note the use of 0x0801 here instead of 0xf801.
 					SLTIU(TEMP_1, TEMP_1, 0x0801);
-					backpatch_label_hle_1 = (u32 *)recMem;
+					backpatch_label_hle_1 = (uint32_t *)recMem;
 					BEQZ(TEMP_1, 0);
 
 					// MIPSREG_A0 contains effective address of opcode with
@@ -691,7 +691,7 @@ static void general_loads_stores(const int  count,
 
 				ADDIU(MIPSREG_A0, rs, imm_max);
 				SLL(MIPSREG_A1, MIPSREG_A0, 4);
-				backpatch_label_hle_1 = (u32 *)recMem;
+				backpatch_label_hle_1 = (uint32_t *)recMem;
 				BLTZ(MIPSREG_A1, 0);
 
 				// MIPSREG_A0 contains effective address of opcode with
@@ -714,7 +714,7 @@ static void general_loads_stores(const int  count,
 		//        psxmem.cpp psxMemWrite32_CacheCtrlPort()
 
 		LW(TEMP_1, PERM_REG_1, off(writeok)); // <BD slot>
-		backpatch_label_hle_2 = (u32 *)recMem;
+		backpatch_label_hle_2 = (uint32_t *)recMem;
 		BEQZ(TEMP_1, 0);
 
 		// NOTE: Branch delay slot contains next emitted instruction
@@ -744,7 +744,7 @@ static void general_loads_stores(const int  count,
 			SRL(TEMP_2, rs, 21);
 			ANDI(TEMP_2, TEMP_2, 7);
 #endif
-			backpatch_label_hle_3 = (u32 *)recMem;
+			backpatch_label_hle_3 = (uint32_t *)recMem;
 			BNE(TEMP_1, TEMP_2, 0);      // goto label_hle if not in same 2MB region
 
 			// NOTE: Branch delay slot contains next emitted instruction
@@ -758,7 +758,7 @@ static void general_loads_stores(const int  count,
 		//  TEMP_1 will hold converted base reg, TEMP_2 is overwritten temp reg.
 		//  However, in the future, emitAddressConversion() might return a
 		//  different reg, if caching of converted addresses is ever implemented.
-		const u32 converted_base_reg = emitAddressConversion(op_rs, rs, TEMP_1, TEMP_2);  // <BD slot>
+		const uint32_t converted_base_reg = emitAddressConversion(op_rs, rs, TEMP_1, TEMP_2);  // <BD slot>
 
 		// Code invalidation needs the original base register value. However,
 		//  it sometimes gets overwritten by the last load in a series.
@@ -767,21 +767,21 @@ static void general_loads_stores(const int  count,
 		//  detected, the original base reg value is moved to a dedicated
 		//  register (MIPSREG_A2) before the last load is done. Normally, the
 		//  invalidation sequence will use the original base reg.
-		u32 unmodified_base_reg = rs;
+		uint32_t unmodified_base_reg = rs;
 
-		u32 PC = pc - 4;
+		uint32_t PC = pc - 4;
 		int icount = count;
 		do
 		{
-			const u32 opcode = OPCODE_AT(PC);
+			const uint32_t opcode = OPCODE_AT(PC);
 			PC += 4;
 
 			// Skip any NOPs in the series
 			if (opcode == 0)
 				continue;
 
-			const bool is_store = contains_store ? opcodeIsStore(opcode) : false;
-			const bool is_load  = is_store ? false : opcodeIsLoad(opcode);
+			const uint_fast8_t is_store = contains_store ? opcodeIsStore(opcode) : false;
+			const uint_fast8_t is_load  = is_store ? false : opcodeIsLoad(opcode);
 
 			if (!is_store && !is_load) {
 				// Must be a jump/branch whose BD slot is included as the last
@@ -789,14 +789,14 @@ static void general_loads_stores(const int  count,
 				continue;
 			}
 
-			const s16 op_imm = _fImm_(opcode);
-			const u32 op_rt  = _fRt_(opcode);
+			const int16_t op_imm = _fImm_(opcode);
+			const uint32_t op_rt  = _fRt_(opcode);
 
 			if (is_store)
 			{
 				// STORE OPCODE (DIRECT)
 
-				u32 rt;
+				uint32_t rt;
 				if (icount == count) {
 					// The 'rt' reg for first opcode in series was already allocated
 					rt = first_rt_allocation;
@@ -807,7 +807,7 @@ static void general_loads_stores(const int  count,
 				backpatch_label_exit_1 = 0;
 				if (icount == 1 && (emit_code_invalidation || emit_indirect)) {
 					// This is the end of the loop
-					backpatch_label_exit_1 = (u32 *)recMem;
+					backpatch_label_exit_1 = (uint32_t *)recMem;
 					if (emit_code_invalidation) {
 						// If addresses were in scratchpad, skip both code
 						//  invalidation and the indirect code.
@@ -832,21 +832,21 @@ static void general_loads_stores(const int  count,
 					unmodified_base_reg = MIPSREG_A2;
 				}
 
-				u32 rt;
+				uint32_t rt;
 				if (icount == count) {
 					// The 'rt' reg for first opcode in series was already allocated
 					rt = first_rt_allocation;
 				} else {
 					// LWL/LWR load is special: it needs to load existing contents of reg
-					const u32 insn = opcode & 0xfc000000;
-					const bool is_lwl_lwr = (insn == 0x88000000 || insn == 0x98000000);
+					const uint32_t insn = opcode & 0xfc000000;
+					const uint_fast8_t is_lwl_lwr = (insn == 0x88000000 || insn == 0x98000000);
 
 					rt = regMipsToHost(op_rt, (is_lwl_lwr ? REG_LOAD : REG_FIND), REG_REGISTER);
 				}
 
 				if (icount == 1 && (emit_code_invalidation || emit_indirect)) {
 					// This is the end of the loop
-					backpatch_label_exit_1 = (u32 *)recMem;
+					backpatch_label_exit_1 = (uint32_t *)recMem;
 					if (emit_code_invalidation) {
 						// If addresses were in scratchpad, skip both code
 						//  invalidation and the indirect code.
@@ -871,22 +871,22 @@ static void general_loads_stores(const int  count,
 			 * Invalidate recRAM[addr+imm16] code block pointers *
 			 *****************************************************/
 
-			bool first_invalidation_done = false;
+			uint_fast8_t first_invalidation_done = false;
 
 			LUI(TEMP_3, ADR_HI(recRAM)); // temp_3 = upper code block ptr array addr
 
-			u32 PC = pc - 4;
+			uint32_t PC = pc - 4;
 			int icount = count;
 			do
 			{
-				u32 opcode = OPCODE_AT(PC);
+				uint32_t opcode = OPCODE_AT(PC);
 				PC += 4;
 
 				// Skip any loads, NOPs, or jumps/branches in the series
 				if (!opcodeIsStore(opcode))
 					continue;
 
-				const s16 op_imm = _fImm_(opcode);
+				const int16_t op_imm = _fImm_(opcode);
 
 				// See earlier notes at declaration of 'unmodified_base_reg'
 
@@ -924,7 +924,7 @@ static void general_loads_stores(const int  count,
 					//  made and the end of all the direct code. Skip past the
 					//  indirect code coming after this.
 
-					backpatch_label_exit_2 = (u32 *)recMem;
+					backpatch_label_exit_2 = (uint32_t *)recMem;
 					B(0); // b label_exit
 					// NOTE: Branch delay slot will contain the instruction below
 				}
@@ -956,33 +956,33 @@ static void general_loads_stores(const int  count,
 	if (emit_indirect)
 	{
 		enum { WIDTH_8, WIDTH_16, WIDTH_32 };
-		const uptr mem_read_func[]  = { (uptr)psxMemRead8,  (uptr)psxMemRead16,  (uptr)psxMemRead32  };
-		const uptr mem_write_func[] = { (uptr)psxMemWrite8, (uptr)psxMemWrite16, (uptr)psxMemWrite32 };
-		const uptr *read_func  = mem_read_func;
-		const uptr *write_func = mem_write_func;
+		const uintptr_t mem_read_func[]  = { (uintptr_t)psxMemRead8,  (uintptr_t)psxMemRead16,  (uintptr_t)psxMemRead32  };
+		const uintptr_t mem_write_func[] = { (uintptr_t)psxMemWrite8, (uintptr_t)psxMemWrite16, (uintptr_t)psxMemWrite32 };
+		const uintptr_t *read_func  = mem_read_func;
+		const uintptr_t *write_func = mem_write_func;
 #ifdef USE_HW_FUNCS_FOR_INDIRECT_ACCESS
 		// See notes at top of file
-		const uptr hw_read_func[]   = { (uptr)psxHwRead8,   (uptr)psxHwRead16,   (uptr)psxHwRead32   };
-		const uptr hw_write_func[]  = { (uptr)psxHwWrite8,  (uptr)psxHwWrite16,  (uptr)psxHwWrite32  };
+		const uintptr_t hw_read_func[]   = { (uintptr_t)psxHwRead8,   (uintptr_t)psxHwRead16,   (uintptr_t)psxHwRead32   };
+		const uintptr_t hw_write_func[]  = { (uintptr_t)psxHwWrite8,  (uintptr_t)psxHwWrite16,  (uintptr_t)psxHwWrite32  };
 		if (psx_mem_mapped) {
 			read_func  = hw_read_func;
 			write_func = hw_write_func;
 		}
 #endif
 
-		u32 PC = pc - 4;
+		uint32_t PC = pc - 4;
 		int icount = count;
 		do
 		{
-			const u32 opcode = OPCODE_AT(PC);
+			const uint32_t opcode = OPCODE_AT(PC);
 			PC += 4;
 
 			// Skip any NOPs in the series
 			if (opcode == 0)
 				continue;
 
-			const bool is_store = opcodeIsStore(opcode);
-			const bool is_load  = is_store ? false : opcodeIsLoad(opcode);
+			const uint_fast8_t is_store = opcodeIsStore(opcode);
+			const uint_fast8_t is_load  = is_store ? false : opcodeIsLoad(opcode);
 
 			if (!is_store && !is_load) {
 				// Must be a jump/branch whose BD slot is included as the last
@@ -990,14 +990,14 @@ static void general_loads_stores(const int  count,
 				continue;
 			}
 
-			const u32 op_rt  = _fRt_(opcode);
-			const s16 op_imm = _fImm_(opcode);
+			const uint32_t op_rt  = _fRt_(opcode);
+			const int16_t op_imm = _fImm_(opcode);
 
 			if (is_store)
 			{
 				// STORE OPCODE (INDIRECT)
 
-				u32 rt;
+				uint32_t rt;
 				if (icount == count) {
 					// The 'rt' reg for first opcode in series was already allocated
 					rt = first_rt_allocation;
@@ -1005,7 +1005,7 @@ static void general_loads_stores(const int  count,
 					rt = regMipsToHost(op_rt, REG_LOAD, REG_REGISTER);
 				}
 
-				const u32 insn = opcode & 0xfc000000;
+				const uint32_t insn = opcode & 0xfc000000;
 				switch (insn)
 				{
 					case 0xa0000000: // SB
@@ -1042,7 +1042,7 @@ static void general_loads_stores(const int  count,
 						else                      // SWR
 							LUI(TEMP_2, ADR_HI(SWR_MASKSHIFT));
 
-						// Lower 2 bits of dst addr are index into u32 mask/shift arrays:
+						// Lower 2 bits of dst addr are index into uint32_t mask/shift arrays:
 #ifdef HAVE_MIPS32R2_EXT_INS
 						INS(TEMP_2, MIPSREG_A0, 2, 2);
 						INS(MIPSREG_A0, 0, 0, 2);       // clear 2 lower bits of addr
@@ -1087,9 +1087,9 @@ static void general_loads_stores(const int  count,
 			{
 				// LOAD OPCODE (INDIRECT)
 
-				const u32 insn = opcode & 0xfc000000;
+				const uint32_t insn = opcode & 0xfc000000;
 
-				u32 rt;
+				uint32_t rt;
 				if (icount == count) {
 					// The 'rt' reg for first opcode in series was already allocated
 					rt = first_rt_allocation;
@@ -1168,7 +1168,7 @@ static void general_loads_stores(const int  count,
 						else                    // LWR
 							LUI(TEMP_2, ADR_HI(LWR_MASKSHIFT));
 
-						// Lower 2 bits of dst addr are index into u32 mask/shift arrays:
+						// Lower 2 bits of dst addr are index into uint32_t mask/shift arrays:
 #ifdef HAVE_MIPS32R2_EXT_INS
 						INS(TEMP_2, MIPSREG_A0, 2, 2);
 #else
@@ -1225,50 +1225,50 @@ static void general_loads_stores(const int  count,
  *        freeze when returning to main menu after ship self-destruct sequence.
  */
 static void const_loads_stores(const int  count,
-                               const bool contains_store,
-                               const u32  rs_constval,
-                               const u32  array_offset_reg)
+                               const uint_fast8_t contains_store,
+                               const uint32_t  rs_constval,
+                               const uint32_t  array_offset_reg)
 {
 #ifndef SKIP_WRITEOK_CHECK
 	// Do nothing if (psxRegs.writeok == 0).
-	u32 *backpatch_label_no_write = 0;
+	uint32_t *backpatch_label_no_write = 0;
 	if (contains_store) {
 		// Check if (psxRegs.writeok != 0) to see if RAM is writeable
 		LW(TEMP_1, PERM_REG_1, off(writeok));
-		backpatch_label_no_write = (u32 *)recMem;
+		backpatch_label_no_write = (uint32_t *)recMem;
 		BEQZ(TEMP_1, 0);  // if (!psxRegs.writeok) goto label_no_write
 		NOP(); // <BD slot>
 	}
 #endif
 
 	// We'll need to use this reg if 'array_offset_reg' is used.
-	const u32 tmp_base_reg = TEMP_1;
+	const uint32_t tmp_base_reg = TEMP_1;
 
 	// If param 'array_offset_reg' is non-zero, there is an array-offset reg
 	//  that gets added to the base reg. Used by emitOptimizedStaticLoad().
-	u32 host_array_offset_reg = 0;
+	uint32_t host_array_offset_reg = 0;
 	if (array_offset_reg)
 		host_array_offset_reg = regMipsToHost(array_offset_reg, REG_LOAD, REG_REGISTER);
 
 	// Keep upper half of last effective address in reg, tracking current
 	//  value so we can avoid loading same val repeatedly.
-	u32  base_reg = 0;
-	u32  base_reg_val = 0xffffffff;  // Initialize with impossible value
-	bool base_reg_lui_emitted = false;
+	uint32_t  base_reg = 0;
+	uint32_t  base_reg_val = 0xffffffff;  // Initialize with impossible value
+	uint_fast8_t base_reg_lui_emitted = false;
 
-	u32 PC = pc - 4;
+	uint32_t PC = pc - 4;
 	int icount = count;
 	do {
-		const u32 opcode = OPCODE_AT(PC);
+		const uint32_t opcode = OPCODE_AT(PC);
 		PC += 4;
 
 		// Skip any NOPs in the series
 		if (opcode == 0)
 			continue;
 
-		const bool is_store   = contains_store && opcodeIsStore(opcode);
-		const bool is_load    = !is_store && opcodeIsLoad(opcode);
-		const bool is_lwl_lwr = is_load && opcodeIsLoadWordUnaligned(opcode);
+		const uint_fast8_t is_store   = contains_store && opcodeIsStore(opcode);
+		const uint_fast8_t is_load    = !is_store && opcodeIsLoad(opcode);
+		const uint_fast8_t is_lwl_lwr = is_load && opcodeIsLoadWordUnaligned(opcode);
 
 		if (!is_store && !is_load) {
 			// Must be a jump/branch whose BD slot is included as the last
@@ -1276,21 +1276,21 @@ static void const_loads_stores(const int  count,
 			continue;
 		}
 
-		const s32 imm = _fImm_(opcode);
-		const u32 op_rt = _fRt_(opcode);
+		const int32_t imm = _fImm_(opcode);
+		const uint32_t op_rt = _fRt_(opcode);
 
-		u32 rt;
+		uint32_t rt;
 		// Note that LWL/LWR merge writeback with existing contents of reg.
 		if (is_store || is_lwl_lwr)
 			rt = regMipsToHost(op_rt, REG_LOAD, REG_REGISTER);
 		else
 			rt = regMipsToHost(op_rt, REG_FIND, REG_REGISTER);
 
-		const uptr host_addr = (uptr)psxM + ((rs_constval + imm) & 0x1fffff);
+		const uintptr_t host_addr = (uintptr_t)psxM + ((rs_constval + imm) & 0x1fffff);
 
 		// If psxM is mapped to virtual address 0 and PS1 address is in
 		//  lower 32KB address space, we can use $zero as base reg.
-		bool use_zero_base_reg = (ADR_HI(host_addr) == 0 && psxM == 0);
+		uint_fast8_t use_zero_base_reg = (ADR_HI(host_addr) == 0 && psxM == 0);
 
 		// Emit LUI for base reg (if not cached in host reg).
 		if (!use_zero_base_reg &&
@@ -1344,15 +1344,15 @@ static void emitLoadStoreSeries()
 {
 	// STATIC VARIABLE
 	// See comments below regarding series ending in a BD slot
-	static bool next_call_emits_nothing = false;
+	static uint_fast8_t next_call_emits_nothing = false;
 	if (next_call_emits_nothing) {
 		// Skip emitting anything for just this one call
 		next_call_emits_nothing = false;
 		return;
 	}
 
-	u32  pc_of_last_store_in_series = 1;
-	bool series_includes_bd_slot = false;
+	uint32_t  pc_of_last_store_in_series = 1;
+	uint_fast8_t series_includes_bd_slot = false;
 	const int count = count_loads_stores(&pc_of_last_store_in_series, &series_includes_bd_slot);
 
 	// Series can include a load/store in a BD-slot as their last opcode:
@@ -1377,7 +1377,7 @@ static void emitLoadStoreSeries()
 	}
 #endif
 
-	bool const_addr = false;
+	uint_fast8_t const_addr = false;
 #ifdef USE_CONST_ADDRESSES
 	const_addr = IsConst(_Rs_);
 #endif
@@ -1398,14 +1398,14 @@ static void emitLoadStoreSeries()
 		 ************************/
 
 		// Is address outside lower 8MB RAM region? (2MB mirrored x4)
-		const u32 base_reg_constval = GetConst(_Rs_);
-		const u32 addr_max = base_reg_constval + imm_max;
+		const uint32_t base_reg_constval = GetConst(_Rs_);
+		const uint32_t addr_max = base_reg_constval + imm_max;
 		if ((addr_max & 0x0fffffff) >= 0x800000)
 		{
-			bool is_hw_address = false;
+			uint_fast8_t is_hw_address = false;
 #ifdef USE_DIRECT_HW_ACCESS
 			{
-				const u16 upper = addr_max >> 16;
+				const uint16_t upper = addr_max >> 16;
 				if (upper == 0x1f80 || upper == 0x9f80 || upper == 0xbf80)
 					is_hw_address = true;
 			}
@@ -1432,7 +1432,7 @@ static void emitLoadStoreSeries()
 			 * Handle const RAM address *
 			 ****************************/
 
-			const bool contains_store = pc_of_last_store_in_series != 1;
+			const uint_fast8_t contains_store = pc_of_last_store_in_series != 1;
 			const_loads_stores(count, contains_store, base_reg_constval, 0);
 		}
 	}
@@ -1466,21 +1466,21 @@ static void emitLoadStoreSeries()
  *
  * Returns: true if sequence found and optimized load is emitted.
  */
-static bool emitOptimizedStaticLoad()
+static uint_fast8_t emitOptimizedStaticLoad()
 {
 #ifndef USE_CONST_ADDRESSES
 	return false;
 #endif
 
-	const u32  op1 = OPCODE_AT(pc-4);
-	const u32  op2 = OPCODE_AT(pc);
-	const u32  op3 = OPCODE_AT(pc+4);
-	const bool is_array_access = (_fOp_(op2) == 0 && _fFunct_(op2) == 0x21);  // ADDU
-	const u32  lsu_opcode  = is_array_access ? op3 : op2;
-	const u32  lui_opcode  = op1;
-	const u32  lui_addr    = (u32)_fImmU_(lui_opcode) << 16;
-	const bool is_ram_addr = (lui_addr & 0x0fffffff) < 0x00800000;
-	const bool is_hw_addr  = (lui_addr & 0x0fffffff) == 0x0f800000;
+	const uint32_t  op1 = OPCODE_AT(pc-4);
+	const uint32_t  op2 = OPCODE_AT(pc);
+	const uint32_t  op3 = OPCODE_AT(pc+4);
+	const uint_fast8_t is_array_access = (_fOp_(op2) == 0 && _fFunct_(op2) == 0x21);  // ADDU
+	const uint32_t  lsu_opcode  = is_array_access ? op3 : op2;
+	const uint32_t  lui_opcode  = op1;
+	const uint32_t  lui_addr    = (uint32_t)_fImmU_(lui_opcode) << 16;
+	const uint_fast8_t is_ram_addr = (lui_addr & 0x0fffffff) < 0x00800000;
+	const uint_fast8_t is_hw_addr  = (lui_addr & 0x0fffffff) == 0x0f800000;
 
 	if (!opcodeIsLoad(lsu_opcode) || opcodeIsLoadWordUnaligned(lsu_opcode))
 		return false;
@@ -1492,8 +1492,8 @@ static bool emitOptimizedStaticLoad()
 	if (!is_ram_addr && !is_hw_addr)
 		return false;
 
-	u32 rs_constval = lui_addr;
-	u32 array_offset_reg = 0;
+	uint32_t rs_constval = lui_addr;
+	uint32_t array_offset_reg = 0;
 
 	if (is_array_access)
 	{
@@ -1502,11 +1502,11 @@ static bool emitOptimizedStaticLoad()
 		if ((lui_addr >> 28) != 0x8)
 			return false;
 
-		const u32 addu_opcode = op2;
-		const u32 lui_writes  = (1 << _fRt_(lui_opcode)) & ~1;
-		const u32 addu_reads  = ((1 << _fRs_(addu_opcode)) | (1 << _fRt_(addu_opcode))) & ~1;
-		const u32 addu_writes = (1 << _fRd_(addu_opcode)) & ~1;
-		const u32 lsu_reads   = (1 << _fRs_(lsu_opcode)) & ~1;
+		const uint32_t addu_opcode = op2;
+		const uint32_t lui_writes  = (1 << _fRt_(lui_opcode)) & ~1;
+		const uint32_t addu_reads  = ((1 << _fRs_(addu_opcode)) | (1 << _fRt_(addu_opcode))) & ~1;
+		const uint32_t addu_writes = (1 << _fRd_(addu_opcode)) & ~1;
+		const uint32_t lsu_reads   = (1 << _fRs_(lsu_opcode)) & ~1;
 
 		if (!(lui_writes & addu_reads) || !(lsu_reads & addu_writes))
 			return false;
@@ -1533,7 +1533,7 @@ static bool emitOptimizedStaticLoad()
 	}
 
 	// We only allow loads, never stores.
-	const bool contains_store = false;
+	const uint_fast8_t contains_store = false;
 	if (is_ram_addr)
 		const_loads_stores(1, contains_store, rs_constval, array_offset_reg);
 	else

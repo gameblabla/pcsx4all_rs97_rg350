@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdbool.h>
 #include "psxcommon.h"
 #include "port.h"
 #include "plugins.h"
@@ -8,62 +9,62 @@
 #define FRAME_OFFSET(x,y)       (((y)<<10)+(x))
 
 //CHUI: No se usan pero por compatibilidad:
-bool frameLimit = false; /* frames to wait */
+uint_fast8_t frameLimit = false; /* frames to wait */
 int skipCount = 2; /* frame skip (0,1,2,3...) */
 int enableAbbeyHack = 0; /* Abe's Odyssey hack */
 int linesInterlace      = 0;  /* Internal lines interlace */
 int linesInterlace_user = 0; /* Lines interlace 0,1,3,5,7 */
-bool progressInterlace = false;
+uint_fast8_t progressInterlace = false;
 int alt_fps = 0; /* Alternative FPS algorithm */
 
 typedef union {
-	s8 S1[64];
-	s16 S2[32];
-	s32 S4[16];
-	u8 U1[64];
-	u16 U2[32];
-	u32 U4[16];
+	int8_t S1[64];
+	int16_t S2[32];
+	int32_t S4[16];
+	uint8_t U1[64];
+	uint16_t U2[32];
+	uint32_t U4[16];
 } PacketBuffer_t;
 
-u32 frameRate=60;
+uint32_t frameRate=60;
 double frameRateAvg=0.0;
-s32 framesToSkip=0;
-s32 framesSkipped=0;
-u32 displayFrameInfo=1; //0;
-s32 frameRateCounter=0;
-u32 framesTotal=0;
-u32 autoFrameSkip = 0;
+int32_t framesToSkip=0;
+int32_t framesSkipped=0;
+uint32_t displayFrameInfo=1; //0;
+int32_t frameRateCounter=0;
+uint32_t framesTotal=0;
+uint32_t autoFrameSkip = 0;
 unsigned systicks=0;
 
 int GPU_framesInterlace=0;
 int GPU_framesProgresiveInt=1;
 
-s32 GPU_gp0=0;
-s32 GPU_gp1=0;
-s32 FrameToRead=0;
-s32 FrameToWrite=0;
-s32 FrameWidth;
-s32 FrameCount;
-s32 FrameIndex;
+int32_t GPU_gp0=0;
+int32_t GPU_gp1=0;
+int32_t FrameToRead=0;
+int32_t FrameToWrite=0;
+int32_t FrameWidth;
+int32_t FrameCount;
+int32_t FrameIndex;
 PacketBuffer_t PacketBuffer;
-s32 PacketCount;
-s32 PacketIndex;
-s32 isPAL = 0;
-s32 TextureWindow[4];
-s32 DrawingArea[4];
-s32 DrawingOffset[2];
-s32 DisplayArea[8];
-s32 OtherEnv[16];
+int32_t PacketCount;
+int32_t PacketIndex;
+int32_t isPAL = 0;
+int32_t TextureWindow[4];
+int32_t DrawingArea[4];
+int32_t DrawingOffset[2];
+int32_t DisplayArea[8];
+int32_t OtherEnv[16];
 #if 0
-s32 skip_this_frame=0;
+int32_t skip_this_frame=0;
 #else
 #define skip_this_frame 0
 #endif
-static s32 lastframerate = 0;
-static s32 frameskipChange = 2;	// must be an even number so both frames in the buffer are cleared
+static int32_t lastframerate = 0;
+static int32_t frameskipChange = 2;	// must be an even number so both frames in the buffer are cleared
 
 
-u8 PacketSize[256] = {
+uint8_t PacketSize[256] = {
 	0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	//		0-15
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	//		16-31
 	3, 3, 3, 3, 6, 6, 6, 6, 4, 4, 4, 4, 8, 8, 8, 8,	//		32-47
@@ -82,24 +83,24 @@ u8 PacketSize[256] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0	//
 };
 
-u16 HorizontalResolution[8] = {
+uint16_t HorizontalResolution[8] = {
 	256, 368, 320, 384, 512, 512, 640, 640
 };
 
-u16 VerticalResolution[4] = {
+uint16_t VerticalResolution[4] = {
 	240, 480, 256, 480
 };
 
 
-static u16 _dummy_gpu_frame_buffer[(0x100000)/2];
-u32 gpu_writeDmaWidth=0, gpu_writeDmaHeight=0;
-u16 *gpu_frame_buffer=&_dummy_gpu_frame_buffer[0];
-u16 *gpu_pvram=&_dummy_gpu_frame_buffer[0];
-s32 gpu_x_start=0, gpu_y_start=0, gpu_x_end=0, gpu_y_end=0;
-s32 gpu_px=0, gpu_py=0;
-s32 gpu_updateLace = 1;
+static uint16_t _dummy_gpu_frame_buffer[(0x100000)/2];
+uint32_t gpu_writeDmaWidth=0, gpu_writeDmaHeight=0;
+uint16_t *gpu_frame_buffer=&_dummy_gpu_frame_buffer[0];
+uint16_t *gpu_pvram=&_dummy_gpu_frame_buffer[0];
+int32_t gpu_x_start=0, gpu_y_start=0, gpu_x_end=0, gpu_y_end=0;
+int32_t gpu_px=0, gpu_py=0;
+int32_t gpu_updateLace = 1;
 
-static u8 TextureMask[32] = {
+static uint8_t TextureMask[32] = {
 	255, 7, 15, 7, 31, 7, 15, 7, 63, 7, 15, 7, 31, 7, 15, 7,
 	127, 7, 15, 7, 31, 7, 15, 7, 63, 7, 15, 7, 31, 7, 15, 7
 };
@@ -135,7 +136,7 @@ void gpu_closeVideo(void)
 /* LoadImage */
 void gpu_loadImage(void)
 {
-	u16 x0, y0, w0, h0;
+	uint16_t x0, y0, w0, h0;
 	x0 = PacketBuffer.U2[2] & 1023;
 	y0 = PacketBuffer.U2[3] & 511;
 	w0 = PacketBuffer.U2[4];
@@ -162,7 +163,7 @@ void gpu_loadImage(void)
 /* StoreImage */
 void gpu_storeImage(void)
 {
-	u16 x0, y0, w0, h0;
+	uint16_t x0, y0, w0, h0;
 	x0 = PacketBuffer.U2[2] & 1023;
 	y0 = PacketBuffer.U2[3] & 511;
 	w0 = PacketBuffer.U2[4];
@@ -183,7 +184,7 @@ void gpu_storeImage(void)
 	GPU_gp1 |= 0x08000000;
 }
 
-static __inline__ void gpuSetTexture(u16 tpage)
+static __inline__ void gpuSetTexture(uint16_t tpage)
 {
 //GPU_gp1 = (GPU_gp1 & ~0x1FF) | (tpage & 0x1FF);
 	GPU_gp1 = (GPU_gp1 & ~0x7FF) | (tpage & 0x7FF);
@@ -195,7 +196,7 @@ gpuSendPacket
 
 void gpu_sendPacket(void)
 {
-	u32 temp;
+	uint32_t temp;
 
 	temp = PacketBuffer.U4[0];
 	switch (temp >> 24) {
@@ -539,8 +540,8 @@ void gpu_sendPacket(void)
 			// DrawingOffset[1] = (temp >> 11) & 0x7FF;
 		
 //SysMessage("E5 %x", temp); // EDIT TEMP
-			DrawingOffset[0] = ((s32)temp<<(32-11))>>(32-11);
-			DrawingOffset[1] = ((s32)temp<<(32-22))>>(32-11);
+			DrawingOffset[0] = ((int32_t)temp<<(32-11))>>(32-11);
+			DrawingOffset[1] = ((int32_t)temp<<(32-22))>>(32-11);
 			return;
 		case 0xE6:
 			temp &= 3;
@@ -580,7 +581,7 @@ long int GPU_shutdown(void) {
 	return 0;
 }
 
-int GPU_Open(u32 *gpu) {
+int GPU_Open(uint32_t *gpu) {
 	systicks=get_ticks()/1000;
 	return GPU_init(); 
 }
@@ -588,11 +589,11 @@ int GPU_Open(u32 *gpu) {
 void GPU_Close(void) {
 }
 
-s32 GPU_configure(void) {
+int32_t GPU_configure(void) {
 	return 0;
 }
 
-s32 GPU_test(void) {
+int32_t GPU_test(void) {
 	return 0;
 }
 
@@ -602,28 +603,28 @@ void GPU_about(void) {
 void GPU_makeSnapshot(void) {
 }
 
-void GPU_keypressed(s32) {
+void GPU_keypressed(int32_t) {
 }
 
-void GPU_displayText(s8 *) {
+void GPU_displayText(int8_t *) {
 }
 
 long  GPU_freeze(unsigned int bWrite, GPUFreeze_t* p2) {
 	return 0;
 }
 
-void GPU_getScreenPic(u8 *) {
+void GPU_getScreenPic(uint8_t *) {
 }
 
 /* GPUgetMode */
-s32  GPU_getMode(void)
+int32_t  GPU_getMode(void)
 {
 	/* Support Discontinued */
 	return (0);
 }
 
 /* GPUsetMode */
-void  GPU_setMode(u32 p1)
+void  GPU_setMode(uint32_t p1)
 {
 	/* Support Discontinued */
 }
@@ -631,13 +632,13 @@ void  GPU_setMode(u32 p1)
 
 static void FrameSkip(void)
 {
-	static u32 firstTime = 1;
-	static s32 palhz = 50;
-	static s32 ntschz = 60;
+	static uint32_t firstTime = 1;
+	static int32_t palhz = 50;
+	static int32_t ntschz = 60;
 
-	static s32 pollcount = 0;
-	s32 hz = (isPAL ? palhz : ntschz);
-	s32 previousframeskip = framesToSkip;
+	static int32_t pollcount = 0;
+	int32_t hz = (isPAL ? palhz : ntschz);
+	int32_t previousframeskip = framesToSkip;
 
 	if( firstTime )
 	{
@@ -720,7 +721,7 @@ void  GPU_updateLace(void)
 		static unsigned cuantos=0;
 		double rate=(((double)frameRateCounter) / (((double)diffticks)/1000.0));
 		cuantos++;
-		frameRate = (u32)rate;
+		frameRate = (uint32_t)rate;
 		systicks += 1000;
 		frameRateCounter = 0;
 		frameRateAvg=((frameRateAvg*((double)(cuantos-1)))+rate)/((double)cuantos);
@@ -738,7 +739,7 @@ void  GPU_updateLace(void)
 
 
 /* GPUwriteStatus */
-void GPU_writeStatus(u32 data)
+void GPU_writeStatus(uint32_t data)
 {
 	switch (data >> 24) {
 		case 0x00:
@@ -841,21 +842,21 @@ void GPU_writeStatus(u32 data)
 }
 
 /* GPUreadStatus */
-u32  GPU_readStatus(void)
+uint32_t  GPU_readStatus(void)
 {
-//	u32 ret=(GPU_gp1 | 0x1c000000) & ~0x00480000;
-	u32 ret=GPU_gp1;
+//	uint32_t ret=(GPU_gp1 | 0x1c000000) & ~0x00480000;
+	uint32_t ret=GPU_gp1;
 
 	return ret;
 }
 
 
 /* GPUwriteData */
-void GPU_writeData(u32 data)
+void GPU_writeData(uint32_t data)
 {
 	GPU_gp1 &= ~0x14000000;
 	if (FrameToWrite > 0) {
-          gpu_pvram[gpu_px]=(u16)data;
+          gpu_pvram[gpu_px]=(uint16_t)data;
           if (++gpu_px>=gpu_x_end) {
                gpu_px = gpu_x_start;
                gpu_pvram += 1024;
@@ -892,9 +893,9 @@ void GPU_writeData(u32 data)
 	GPU_gp1 |= 0x14000000;
 }
 
-void GPU_writeDataMem(u32 * dmaAddress, s32 dmaCount)
+void GPU_writeDataMem(uint32_t * dmaAddress, int32_t dmaCount)
 {
-	u32 temp, temp2;
+	uint32_t temp, temp2;
 
 	GPU_gp1 &= ~0x14000000;
 
@@ -902,7 +903,7 @@ void GPU_writeDataMem(u32 * dmaAddress, s32 dmaCount)
 		if (FrameToWrite > 0) {
 			while (dmaCount--) 
 			{
-				u32 data = *dmaAddress++;
+				uint32_t data = *dmaAddress++;
 
 				if (gpu_px<1024 && gpu_py<512)
 					gpu_pvram[gpu_px] = data;
@@ -954,7 +955,7 @@ void GPU_writeDataMem(u32 * dmaAddress, s32 dmaCount)
 }
 
 /* GPUreadData */
-u32  GPU_readData(void)
+uint32_t  GPU_readData(void)
 {
 	GPU_gp1 &= ~0x14000000;
 	if (FrameToRead)
@@ -979,7 +980,7 @@ u32  GPU_readData(void)
 	return (GPU_gp0);
 }
 
-void  GPU_readDataMem(u32 * dmaAddress, s32 dmaCount)
+void  GPU_readDataMem(uint32_t * dmaAddress, int32_t dmaCount)
 {
 	if( FrameToRead == 0 ) return;
 
@@ -988,7 +989,7 @@ void  GPU_readDataMem(u32 * dmaAddress, s32 dmaCount)
 	do 
 	{
 		// lower 16 bit
-		u32 data = (unsigned long)gpu_pvram[gpu_px];
+		uint32_t data = (unsigned long)gpu_pvram[gpu_px];
 
 		if (++gpu_px>=gpu_x_end) 
 		{
@@ -1017,9 +1018,9 @@ void  GPU_readDataMem(u32 * dmaAddress, s32 dmaCount)
 	GPU_gp1 = (GPU_gp1 | 0x14000000) & ~0x60000000;
 }
 
-long int GPU_dmaChain(u32 * baseAddr, u32 dmaVAddr)
+long int GPU_dmaChain(uint32_t * baseAddr, uint32_t dmaVAddr)
 {
-	u32 temp, data, *address, count, offset;
+	uint32_t temp, data, *address, count, offset;
 	GPU_gp1 &= ~0x14000000;
 	dmaVAddr &= 0x00FFFFFF;
 	while (dmaVAddr != 0xFFFFFF) {

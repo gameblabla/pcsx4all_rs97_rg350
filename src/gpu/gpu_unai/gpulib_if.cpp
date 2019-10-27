@@ -52,11 +52,14 @@
 #include "gpu_command.h"
 
 /////////////////////////////////////////////////////////////////////////////
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int renderer_init(void)
 {
   memset((void*)&gpu_unai, 0, sizeof(gpu_unai));
-  gpu_unai.vram = (u16*)gpu.vram;
+  gpu_unai.vram = (uint16_t*)gpu.vram;
 
   // Original standalone gpu_unai initialized TextureWindow[]. I added the
   //  same behavior here, since it seems unsafe to leave [2],[3] unset when
@@ -67,9 +70,9 @@ int renderer_init(void)
   gpu_unai.TextureWindow[3] = 255;
   //senquack - new vars must be updated whenever texture window is changed:
   //           (used for polygon-drawing in gpu_inner.h, gpu_raster_polygon.h)
-  const u32 fb = FIXED_BITS;  // # of fractional fixed-pt bits of u4/v4
-  gpu_unai.u_msk = (((u32)gpu_unai.TextureWindow[2]) << fb) | ((1 << fb) - 1);
-  gpu_unai.v_msk = (((u32)gpu_unai.TextureWindow[3]) << fb) | ((1 << fb) - 1);
+  const uint32_t fb = FIXED_BITS;  // # of fractional fixed-pt bits of u4/v4
+  gpu_unai.u_msk = (((uint32_t)gpu_unai.TextureWindow[2]) << fb) | ((1 << fb) - 1);
+  gpu_unai.v_msk = (((uint32_t)gpu_unai.TextureWindow[3]) << fb) | ((1 << fb) - 1);
 
   // Configuration options
   gpu_unai.config = gpu_unai_config_ext;
@@ -89,7 +92,7 @@ int renderer_init(void)
 #else
     v *= double(0x80000000);
 #endif
-    s_invTable[i-1]=s32(v);
+    s_invTable[i-1]=int32_t(v);
   }
 #endif
 
@@ -146,16 +149,16 @@ void renderer_notify_res_change(void)
 }
 
 // Handles GP0 draw settings commands 0xE1...0xE6
-static void gpuGP0Cmd_0xEx(gpu_unai_t &gpu_unai, u32 cmd_word)
+static void gpuGP0Cmd_0xEx(gpu_unai_t &gpu_unai, uint32_t cmd_word)
 {
   // Assume incoming GP0 command is 0xE1..0xE6, convert to 1..6
-  u8 num = (cmd_word >> 24) & 7;
+  uint8_t num = (cmd_word >> 24) & 7;
   gpu.ex_regs[num] = cmd_word; // Update gpulib register
   switch (num) {
     case 1: {
       // GP0(E1h) - Draw Mode setting (aka "Texpage")
-      u32 cur_texpage = gpu_unai.GPU_GP1 & 0x7FF;
-      u32 new_texpage = cmd_word & 0x7FF;
+      uint32_t cur_texpage = gpu_unai.GPU_GP1 & 0x7FF;
+      uint32_t new_texpage = cmd_word & 0x7FF;
       if (cur_texpage != new_texpage) {
         gpu_unai.GPU_GP1 = (gpu_unai.GPU_GP1 & ~0x7FF) | new_texpage;
         gpuSetTexture(gpu_unai.GPU_GP1);
@@ -165,7 +168,7 @@ static void gpuGP0Cmd_0xEx(gpu_unai_t &gpu_unai, u32 cmd_word)
     case 2: {
       // GP0(E2h) - Texture Window setting
       if (cmd_word != gpu_unai.TextureWindowCur) {
-        static const u8 TextureMask[32] = {
+        static const uint8_t TextureMask[32] = {
           255, 7, 15, 7, 31, 7, 15, 7, 63, 7, 15, 7, 31, 7, 15, 7,
           127, 7, 15, 7, 31, 7, 15, 7, 63, 7, 15, 7, 31, 7, 15, 7
         };
@@ -178,9 +181,9 @@ static void gpuGP0Cmd_0xEx(gpu_unai_t &gpu_unai, u32 cmd_word)
         gpu_unai.TextureWindow[1] &= ~gpu_unai.TextureWindow[3];
 
         // Inner loop vars must be updated whenever texture window is changed:
-        const u32 fb = FIXED_BITS;  // # of fractional fixed-pt bits of u4/v4
-        gpu_unai.u_msk = (((u32)gpu_unai.TextureWindow[2]) << fb) | ((1 << fb) - 1);
-        gpu_unai.v_msk = (((u32)gpu_unai.TextureWindow[3]) << fb) | ((1 << fb) - 1);
+        const uint32_t fb = FIXED_BITS;  // # of fractional fixed-pt bits of u4/v4
+        gpu_unai.u_msk = (((uint32_t)gpu_unai.TextureWindow[2]) << fb) | ((1 << fb) - 1);
+        gpu_unai.v_msk = (((uint32_t)gpu_unai.TextureWindow[3]) << fb) | ((1 << fb) - 1);
 
         gpuSetTexture(gpu_unai.GPU_GP1);
       }
@@ -200,8 +203,8 @@ static void gpuGP0Cmd_0xEx(gpu_unai_t &gpu_unai, u32 cmd_word)
 
     case 5: {
       // GP0(E5h) - Set Drawing Offset (X,Y)
-      gpu_unai.DrawingOffset[0] = ((s32)cmd_word<<(32-11))>>(32-11);
-      gpu_unai.DrawingOffset[1] = ((s32)cmd_word<<(32-22))>>(32-11);
+      gpu_unai.DrawingOffset[0] = ((int32_t)cmd_word<<(32-11))>>(32-11);
+      gpu_unai.DrawingOffset[1] = ((int32_t)cmd_word<<(32-22))>>(32-11);
     } break;
 
     case 6: {
@@ -269,7 +272,7 @@ int do_cmd_list(unsigned int *list, int list_len, int *last_cmd)
         gpuSetCLUT   (gpu_unai.PacketBuffer.U4[2] >> 16);
         gpuSetTexture(gpu_unai.PacketBuffer.U4[4] >> 16);
 
-        u32 driver_idx =
+        uint32_t driver_idx =
           (gpu_unai.blit_mask?1024:0) |
           Dithering |
           Blending_Mode | gpu_unai.TEXT_MODE |
@@ -305,7 +308,7 @@ int do_cmd_list(unsigned int *list, int list_len, int *last_cmd)
         gpuSetCLUT   (gpu_unai.PacketBuffer.U4[2] >> 16);
         gpuSetTexture(gpu_unai.PacketBuffer.U4[4] >> 16);
 
-        u32 driver_idx =
+        uint32_t driver_idx =
           (gpu_unai.blit_mask?1024:0) |
           Dithering |
           Blending_Mode | gpu_unai.TEXT_MODE |
@@ -388,17 +391,17 @@ int do_cmd_list(unsigned int *list, int list_len, int *last_cmd)
       case 0x42:
       case 0x43: {          // Monochrome line
         // Shift index right by one, as untextured prims don't use lighting
-        u32 driver_idx = (Blending_Mode | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>3)) >> 1;
+        uint32_t driver_idx = (Blending_Mode | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>3)) >> 1;
         PSD driver = gpuPixelSpanDrivers[driver_idx];
         gpuDrawLineF(packet, driver);
       } break;
 
       case 0x48 ... 0x4F: { // Monochrome line strip
-        u32 num_vertexes = 1;
-        u32 *list_position = &(list[2]);
+        uint32_t num_vertexes = 1;
+        uint32_t *list_position = &(list[2]);
 
         // Shift index right by one, as untextured prims don't use lighting
-        u32 driver_idx = (Blending_Mode | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>3)) >> 1;
+        uint32_t driver_idx = (Blending_Mode | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>3)) >> 1;
         PSD driver = gpuPixelSpanDrivers[driver_idx];
         gpuDrawLineF(packet, driver);
 
@@ -425,7 +428,7 @@ int do_cmd_list(unsigned int *list, int list_len, int *last_cmd)
       case 0x52:
       case 0x53: {          // Gouraud-shaded line
         // Shift index right by one, as untextured prims don't use lighting
-        u32 driver_idx = (Blending_Mode | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>3)) >> 1;
+        uint32_t driver_idx = (Blending_Mode | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>3)) >> 1;
         // Index MSB selects Gouraud-shaded PixelSpanDriver:
         driver_idx |= (1 << 5);
         PSD driver = gpuPixelSpanDrivers[driver_idx];
@@ -433,11 +436,11 @@ int do_cmd_list(unsigned int *list, int list_len, int *last_cmd)
       } break;
 
       case 0x58 ... 0x5F: { // Gouraud-shaded line strip
-        u32 num_vertexes = 1;
-        u32 *list_position = &(list[2]);
+        uint32_t num_vertexes = 1;
+        uint32_t *list_position = &(list[2]);
 
         // Shift index right by one, as untextured prims don't use lighting
-        u32 driver_idx = (Blending_Mode | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>3)) >> 1;
+        uint32_t driver_idx = (Blending_Mode | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>3)) >> 1;
         // Index MSB selects Gouraud-shaded PixelSpanDriver:
         driver_idx |= (1 << 5);
         PSD driver = gpuPixelSpanDrivers[driver_idx];
@@ -476,7 +479,7 @@ int do_cmd_list(unsigned int *list, int list_len, int *last_cmd)
       case 0x66:
       case 0x67: {          // Textured rectangle (variable size)
         gpuSetCLUT    (gpu_unai.PacketBuffer.U4[2] >> 16);
-        u32 driver_idx = Blending_Mode | gpu_unai.TEXT_MODE | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>1);
+        uint32_t driver_idx = Blending_Mode | gpu_unai.TEXT_MODE | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>1);
 
         //senquack - Only color 808080h-878787h allows skipping lighting calculation:
         // This fixes Silent Hill running animation on loading screens:
@@ -522,7 +525,7 @@ int do_cmd_list(unsigned int *list, int list_len, int *last_cmd)
       case 0x77: {          // Textured rectangle (8x8)
         gpu_unai.PacketBuffer.U4[3] = 0x00080008;
         gpuSetCLUT    (gpu_unai.PacketBuffer.U4[2] >> 16);
-        u32 driver_idx = Blending_Mode | gpu_unai.TEXT_MODE | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>1);
+        uint32_t driver_idx = Blending_Mode | gpu_unai.TEXT_MODE | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>1);
 
         //senquack - Only color 808080h-878787h allows skipping lighting calculation:
         //if ((gpu_unai.PacketBuffer.U1[0]>0x5F) && (gpu_unai.PacketBuffer.U1[1]>0x5F) && (gpu_unai.PacketBuffer.U1[2]>0x5F))
@@ -557,7 +560,7 @@ int do_cmd_list(unsigned int *list, int list_len, int *last_cmd)
       case 0x7F: {          // Textured rectangle (16x16)
         gpu_unai.PacketBuffer.U4[3] = 0x00100010;
         gpuSetCLUT    (gpu_unai.PacketBuffer.U4[2] >> 16);
-        u32 driver_idx = Blending_Mode | gpu_unai.TEXT_MODE | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>1);
+        uint32_t driver_idx = Blending_Mode | gpu_unai.TEXT_MODE | gpu_unai.Masking | Blending | (gpu_unai.PixelMSB>>1);
         //senquack - Only color 808080h-878787h allows skipping lighting calculation:
         //if ((gpu_unai.PacketBuffer.U1[0]>0x5F) && (gpu_unai.PacketBuffer.U1[1]>0x5F) && (gpu_unai.PacketBuffer.U1[2]>0x5F))
         // Strip lower 3 bits of each color and determine if lighting should be used:
@@ -574,9 +577,9 @@ int do_cmd_list(unsigned int *list, int list_len, int *last_cmd)
 #ifdef TEST
       case 0xA0:          //  sys -> vid
       {
-        u32 load_width = list[2] & 0xffff;
-        u32 load_height = list[2] >> 16;
-        u32 load_size = load_width * load_height;
+        uint32_t load_width = list[2] & 0xffff;
+        uint32_t load_height = list[2] >> 16;
+        uint32_t load_size = load_width * load_height;
 
         len += load_size / 2;
       } break;
@@ -622,9 +625,13 @@ void renderer_set_interlace(int enable, int is_odd)
 }
 
 // Handle any gpulib settings applicable to gpu_unai:
-void renderer_set_config(const gpulib_config_t *config)
+void renderer_set_config(const struct gpulib_config_t *config)
 {
-  gpu_unai.vram = (u16*)gpu.vram;
+  gpu_unai.vram = (uint16_t*)gpu.vram;
 }
 
+
+#ifdef __cplusplus
+}
+#endif
 // vim:shiftwidth=2:expandtab

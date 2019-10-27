@@ -39,13 +39,13 @@
  *  'C_func_called' will be set to true if a call to C is made, false if not.
  * Returns: true if caller should do a direct store to psxH[]
  */
-static bool emit_const_hw_store(u32 addr, u32 r2, u32 opcode, bool *C_func_called)
+static uint_fast8_t emit_const_hw_store(uint32_t addr, uint32_t r2, uint32_t opcode, uint_fast8_t *C_func_called)
 {
-	u32 rs = _fRs_(opcode);
-	bool direct = false;
-	bool indirect = false;
-	u32 upper = addr >> 16;
-	u32 lower = addr & 0xffff;
+	uint32_t rs = _fRs_(opcode);
+	uint_fast8_t direct = false;
+	uint_fast8_t indirect = false;
+	uint32_t upper = addr >> 16;
+	uint32_t lower = addr & 0xffff;
 
 	int width;
 	switch (opcode & 0xfc000000) {
@@ -396,15 +396,15 @@ static bool emit_const_hw_store(u32 addr, u32 r2, u32 opcode, bool *C_func_calle
 
 	if (indirect)
 	{
-		s16 imm = _fImm_(opcode);
-		u32 r1 = regMipsToHost(rs, REG_LOAD, REG_REGISTER);
+		int16_t imm = _fImm_(opcode);
+		uint32_t r1 = regMipsToHost(rs, REG_LOAD, REG_REGISTER);
 		switch (width) {
 			case 0:
 			{
 				// SWL/SWR to HW I/O port
 				//  Probably never encountered. We'll try to support it anyway..
 
-				u32 insn = opcode & 0xfc000000;
+				uint32_t insn = opcode & 0xfc000000;
 				ADDIU(MIPSREG_A0, r1, imm);
 #ifdef HAVE_MIPS32R2_EXT_INS
 				JAL(psxHwRead32);               // result in MIPSREG_V0
@@ -422,7 +422,7 @@ static bool emit_const_hw_store(u32 addr, u32 r2, u32 opcode, bool *C_func_calle
 				else                      // SWR
 					LUI(TEMP_2, ADR_HI(SWR_MASKSHIFT));
 
-				// Lower 2 bits of dst addr are index into u32 mask/shift arrays:
+				// Lower 2 bits of dst addr are index into uint32_t mask/shift arrays:
 #ifdef HAVE_MIPS32R2_EXT_INS
 				INS(TEMP_2, MIPSREG_A0, 2, 2);
 				INS(MIPSREG_A0, 0, 0, 2);       // clear 2 lower bits of addr
@@ -486,15 +486,15 @@ static bool emit_const_hw_store(u32 addr, u32 r2, u32 opcode, bool *C_func_calle
  *  'C_func_called' will be set to true if a call to C is made, false if not.
  * Returns: true if caller should do a direct store to psxH[]
  */
-static bool emit_const_hw_load(u32 addr, u32 r2, u32 opcode, bool *C_func_called)
+static uint_fast8_t emit_const_hw_load(uint32_t addr, uint32_t r2, uint32_t opcode, uint_fast8_t *C_func_called)
 {
-	u32 rt = _fRt_(opcode);
-	bool direct = false;
-	bool indirect = false;
-	u32 upper = addr >> 16;
-	u32 lower = addr & 0xffff;
+	uint32_t rt = _fRt_(opcode);
+	uint_fast8_t direct = false;
+	uint_fast8_t indirect = false;
+	uint32_t upper = addr >> 16;
+	uint32_t lower = addr & 0xffff;
 
-	bool sign_extend = false;
+	uint_fast8_t sign_extend = false;
 	int width;
 	switch (opcode & 0xfc000000) {
 		case 0x88000000:  // LWL
@@ -535,7 +535,7 @@ static bool emit_const_hw_load(u32 addr, u32 r2, u32 opcode, bool *C_func_called
 		}
 		else if (width == 8)
 		{
-			bool move_result_out_of_v0 = false;
+			uint_fast8_t move_result_out_of_v0 = false;
 			switch (lower)
 			{
 				case 0x1040:  // JOY_DATA
@@ -593,7 +593,7 @@ static bool emit_const_hw_load(u32 addr, u32 r2, u32 opcode, bool *C_func_called
 		}
 		else if (width == 16)
 		{
-			bool move_result_out_of_v0 = false;
+			uint_fast8_t move_result_out_of_v0 = false;
 			switch (lower)
 			{
 				case 0x1040:  // JOY_DATA
@@ -724,7 +724,7 @@ static bool emit_const_hw_load(u32 addr, u32 r2, u32 opcode, bool *C_func_called
 		}
 		else if (width == 32)
 		{
-			bool move_result_out_of_v0 = false;
+			uint_fast8_t move_result_out_of_v0 = false;
 			switch (lower)
 			{
 				case 0x1040:  // JOY_DATA
@@ -839,16 +839,16 @@ static bool emit_const_hw_load(u32 addr, u32 r2, u32 opcode, bool *C_func_called
 
 	if (indirect)
 	{
-		s16 imm = _fImm_(opcode);
-		u32 rs = _fRs_(opcode);
-		u32 r1 = regMipsToHost(rs, REG_LOAD, REG_REGISTER);
+		int16_t imm = _fImm_(opcode);
+		uint32_t rs = _fRs_(opcode);
+		uint32_t r1 = regMipsToHost(rs, REG_LOAD, REG_REGISTER);
 		switch (width) {
 			case 0:
 			{
 				// LWL/LWR from HW I/O port
 				//  Probably never encountered. We'll try to support it anyway..
 
-				u32 insn = opcode & 0xfc000000;
+				uint32_t insn = opcode & 0xfc000000;
 				ADDIU(MIPSREG_A0, r1, imm);
 #ifdef HAVE_MIPS32R2_EXT_INS
 				JAL(psxHwRead32);           // result in MIPSREG_V0
@@ -866,7 +866,7 @@ static bool emit_const_hw_load(u32 addr, u32 r2, u32 opcode, bool *C_func_called
 				else                    // LWR
 					LUI(TEMP_2, ADR_HI(LWR_MASKSHIFT));
 
-				// Lower 2 bits of dst addr are index into u32 mask/shift arrays:
+				// Lower 2 bits of dst addr are index into uint32_t mask/shift arrays:
 #ifdef HAVE_MIPS32R2_EXT_INS
 				INS(TEMP_2, MIPSREG_A0, 2, 2);
 #else
@@ -948,27 +948,27 @@ static bool emit_const_hw_load(u32 addr, u32 r2, u32 opcode, bool *C_func_called
  * address, i.e. address is in [0xXf80_0000 .. 0xXf80_ffff] range.
  */
 static void const_hw_loads_stores(const int count,
-                                  u32 rs_constval)
+                                  uint32_t rs_constval)
 {
 	// Keep upper half of last effective address in reg, tracking current
 	//  value so we can avoid loading same val repeatedly.
-	u32  base_reg = 0;
-	u32  base_reg_val = 0xffffffff;  // Initialize with impossible value
-	bool base_reg_lui_emitted = false;
+	uint32_t  base_reg = 0;
+	uint32_t  base_reg_val = 0xffffffff;  // Initialize with impossible value
+	uint_fast8_t base_reg_lui_emitted = false;
 
-	u32 PC = pc - 4;
+	uint32_t PC = pc - 4;
 	int icount = count;
 	do {
-		const u32 opcode = OPCODE_AT(PC);
+		const uint32_t opcode = OPCODE_AT(PC);
 		PC += 4;
 
 		// Skip any NOPs in the series
 		if (opcode == 0)
 			continue;
 
-		const bool is_store   = opcodeIsStore(opcode);
-		const bool is_load    = !is_store && opcodeIsLoad(opcode);
-		const bool is_lwl_lwr = is_load && opcodeIsLoadWordUnaligned(opcode);
+		const uint_fast8_t is_store   = opcodeIsStore(opcode);
+		const uint_fast8_t is_load    = !is_store && opcodeIsLoad(opcode);
+		const uint_fast8_t is_lwl_lwr = is_load && opcodeIsLoadWordUnaligned(opcode);
 
 		if (!is_store && !is_load) {
 			// Must be a jump/branch whose BD slot is included as the last
@@ -976,13 +976,13 @@ static void const_hw_loads_stores(const int count,
 			continue;
 		}
 
-		const u32 op_rt = _fRt_(opcode);
-		const u32 psx_eff_addr = rs_constval + _fImm_(opcode);
+		const uint32_t op_rt = _fRt_(opcode);
+		const uint32_t psx_eff_addr = rs_constval + _fImm_(opcode);
 
-		bool C_func_called = false;
-		bool emit_direct;
+		uint_fast8_t C_func_called = false;
+		uint_fast8_t emit_direct;
 
-		u32  rt;
+		uint32_t  rt;
 		if (is_store) {
 			rt = regMipsToHost(op_rt, REG_LOAD, REG_REGISTER);
 
@@ -1000,7 +1000,7 @@ static void const_hw_loads_stores(const int count,
 
 		if (emit_direct)
 		{
-			const uptr host_addr = (uptr)psxH + (psx_eff_addr & 0xffff);
+			const uintptr_t host_addr = (uintptr_t)psxH + (psx_eff_addr & 0xffff);
 
 			// Emit LUI for base reg (if not cached in host reg).
 			if (C_func_called ||

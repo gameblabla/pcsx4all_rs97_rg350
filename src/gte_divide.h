@@ -7,7 +7,7 @@
 
 #include "psxcommon.h"
 
-static const u16 initial_guess[32768] = {
+static const uint16_t initial_guess[32768] = {
 	0x0000, 0xFE93, 0xFE91, 0xFE8F, 0xFE8D, 0xFE8B, 0xFE89, 0xFE87,
 	0xFE85, 0xFE83, 0xFE81, 0xFE7F, 0xFE7D, 0xFE7B, 0xFE79, 0xFE77,
 	0xFE75, 0xFE71, 0xFE6F, 0xFE6D, 0xFE6B, 0xFE69, 0xFE67, 0xFE65,
@@ -4107,13 +4107,13 @@ static const u16 initial_guess[32768] = {
 };
 
 // note: returns 16.16 fixed-point
-//senquack - n param should be unsigned (will be 'gteH' reg which is u16)
-static u32 DIVIDE(u16 n, u16 d) {
+//senquack - n param should be unsigned (will be 'gteH' reg which is uint16_t)
+static uint32_t DIVIDE(uint16_t n, uint16_t d) {
 	if (n < d * 2) {
-		u32 offset = d;
+		uint32_t offset = d;
 		int shift = 0;
-		u64 reciprocal;
-		u32 r, s;
+		uint64_t reciprocal;
+		uint32_t r, s;
 
 		while (offset <= 0x8000) {
 			offset <<= 1;
@@ -4124,15 +4124,15 @@ static u32 DIVIDE(u16 n, u16 d) {
 		// (16.16 fixed-point)
 		r = initial_guess[offset & 0x7fff] | 0x10000;
 
-		s = (u64)offset * r >> 16;
-		r = (u64)r * (0x20000 - s) >> 16;
+		s = (uint64_t)offset * r >> 16;
+		r = (uint64_t)r * (0x20000 - s) >> 16;
 
-		s = (u64)offset * r >> 16;
-		r = (u64)r * (0x20000 - s) >> 16;
+		s = (uint64_t)offset * r >> 16;
+		r = (uint64_t)r * (0x20000 - s) >> 16;
 
-		reciprocal = (u64)(r) << shift;
+		reciprocal = (uint64_t)(r) << shift;
 
-		return (u32)(((reciprocal * n) + 0x8000) >> 16);
+		return (uint32_t)(((reciprocal * n) + 0x8000) >> 16);
 	}
 
 	return 0xffffffff;

@@ -27,14 +27,14 @@
 #include "psxdma.h"
 
 void mdecInit(void);
-void mdecWrite0(u32 data);
-void mdecWrite1(u32 data);
-u32  mdecRead0(void);
-u32  mdecRead1(void);
-void psxDma0(u32 madr, u32 bcr, u32 chcr);
-void psxDma1(u32 madr, u32 bcr, u32 chcr);
+void mdecWrite0(uint32_t data);
+void mdecWrite1(uint32_t data);
+uint32_t  mdecRead0(void);
+uint32_t  mdecRead1(void);
+void psxDma0(uint32_t madr, uint32_t bcr, uint32_t chcr);
+void psxDma1(uint32_t madr, uint32_t bcr, uint32_t chcr);
 void mdec0Interrupt(void);
 void mdec1Interrupt(void);
-int  mdecFreeze(void* f, FreezeMode mode);
+int  mdecFreeze(void* f, enum FreezeMode mode);
 
 #endif

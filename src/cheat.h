@@ -4,8 +4,8 @@
 #include "psxcommon.h"
 
 typedef struct cheat_line_ {
-  u32 code1;
-  u16 code2;
+  uint32_t code1;
+  uint16_t code2;
 } cheat_line_t;
 
 typedef struct cheat_entry_ {

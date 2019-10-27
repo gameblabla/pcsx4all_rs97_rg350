@@ -27,30 +27,30 @@
 #include "psxmem.h"
 #include "plugins.h"
 
-extern u32 hSyncCount, frame_counter;
+extern uint32_t hSyncCount, frame_counter;
 
-extern const u32 FrameRate[2];
-extern const u32 HSyncTotal[2];
+extern const uint32_t FrameRate[2];
+extern const uint32_t HSyncTotal[2];
 
 typedef struct Rcnt
 {
-    u16 mode, target;
-    u32 rate, irq, counterState, irqState;
-    u32 cycle, cycleStart;
+    uint16_t mode, target;
+    uint32_t rate, irq, counterState, irqState;
+    uint32_t cycle, cycleStart;
 } Rcnt;
 
 void psxRcntInit(void);
 void psxRcntUpdate(void);
 
-void psxRcntWcount(u32 index, u32 value);
-void psxRcntWmode(u32 index, u32 value);
-void psxRcntWtarget(u32 index, u32 value);
+void psxRcntWcount(uint32_t index, uint32_t value);
+void psxRcntWmode(uint32_t index, uint32_t value);
+void psxRcntWtarget(uint32_t index, uint32_t value);
 
-u32 psxRcntRcount(u32 index);
-u32 psxRcntRmode(u32 index);
-u32 psxRcntRtarget(u32 index);
+uint32_t psxRcntRcount(uint32_t index);
+uint32_t psxRcntRmode(uint32_t index);
+uint32_t psxRcntRtarget(uint32_t index);
 
-int psxRcntFreeze(void* f, FreezeMode mode);
+int psxRcntFreeze(void* f, enum FreezeMode mode);
 void psxRcntInitFromFreeze(void);
 
 void psxRcntAdjustTimestamps(const uint32_t prev_cycle_val);

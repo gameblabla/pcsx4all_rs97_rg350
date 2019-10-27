@@ -65,12 +65,12 @@
  */
 int rec_mmap_psx_mem()
 {
-	bool  l_psx_mem_mapped = false;
-	bool  success = true;
+	uint_fast8_t  l_psx_mem_mapped = false;
+	uint_fast8_t  success = true;
 	int   memfd = -1;
 	void* mmap_retval = NULL;
 	const char* mem_fname = NULL;
-	bool  l_psxM_mirrored = false;
+	uint_fast8_t  l_psxM_mirrored = false;
 
 	// Everything done here with mmap() is with a granularity of 64KB, so
 	//  make sure the platform has a page size that will allow this
@@ -121,7 +121,7 @@ int rec_mmap_psx_mem()
 		success = false;
 		goto exit;
 	}
-	psxM = (s8*)mmap_retval;
+	psxM = (int8_t*)mmap_retval;
 	l_psx_mem_mapped = true;
 
 	// Create three mirrors of the 2MB RAM, all the way up to 0x7fffff
@@ -161,8 +161,8 @@ int rec_mmap_psx_mem()
 		success = false;
 		goto exit;
 	}
-	psxP = (s8*)mmap_retval;                          // ROM expansion region (parallel port)
-	psxH = (s8*)((uintptr_t)mmap_retval+0x00800000);  // HW I/O region
+	psxP = (int8_t*)mmap_retval;                          // ROM expansion region (parallel port)
+	psxH = (int8_t*)((uintptr_t)mmap_retval+0x00800000);  // HW I/O region
 	printf(" ..mapped to %p\n", (void*)psxP);
 
 	psxM_allocated = psxP_allocated = psxH_allocated = true;
@@ -222,12 +222,12 @@ void rec_munmap_psx_mem()
  */
 int rec_mmap_rec_mem()
 {
-	bool  l_rec_mem_mapped = false;
-	bool  success = true;
+	uint_fast8_t  l_rec_mem_mapped = false;
+	uint_fast8_t  success = true;
 	int   memfd = -1;
 	void* mmap_retval = NULL;
 	const char* mem_fname = NULL;
-	bool  l_recRAM_mirrored = false;
+	uint_fast8_t  l_recRAM_mirrored = false;
 
 	// Everything done here with mmap() is with a granularity of 512KB, so
 	//  make sure the platform has a page size that will allow this

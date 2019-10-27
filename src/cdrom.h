@@ -71,7 +71,7 @@ typedef struct {
 	unsigned char Cmd;
 	unsigned char Readed;
 	unsigned char SetlocPending;
-	u32 Reading;
+	uint32_t Reading;
 
 	unsigned char ResultTN[6];
 	unsigned char ResultTD[4];
@@ -79,7 +79,7 @@ typedef struct {
 	unsigned char SetSectorEnd[4];
 	unsigned char SetSector[4];
 	unsigned char Track;
-	boolean Play, Muted;
+	uint_fast8_t Play, Muted;
 	int CurTrack;
 	int Mode, File, Channel;
 	int Reset;
@@ -90,28 +90,28 @@ typedef struct {
 
 	int Init;
 
-	u16 Irq;
-	u8 IrqRepeated;
-	u32 eCycle;
+	uint16_t Irq;
+	uint8_t IrqRepeated;
+	uint32_t eCycle;
 
-	u8 Seeked;
-	u8 ReadRescheduled;
+	uint8_t Seeked;
+	uint8_t ReadRescheduled;
 
-	u8 DriveState;
-	u8 FastForward;
-	u8 FastBackward;
-	u8 pad;
+	uint8_t DriveState;
+	uint8_t FastForward;
+	uint8_t FastBackward;
+	uint8_t pad;
 
-	u8 AttenuatorLeftToLeft, AttenuatorLeftToRight;
-	u8 AttenuatorRightToRight, AttenuatorRightToLeft;
-	u8 AttenuatorLeftToLeftT, AttenuatorLeftToRightT;
-	u8 AttenuatorRightToRightT, AttenuatorRightToLeftT;
+	uint8_t AttenuatorLeftToLeft, AttenuatorLeftToRight;
+	uint8_t AttenuatorRightToRight, AttenuatorRightToLeft;
+	uint8_t AttenuatorLeftToLeftT, AttenuatorLeftToRightT;
+	uint8_t AttenuatorRightToRightT, AttenuatorRightToLeftT;
 } cdrStruct;
 
 extern cdrStruct cdr;
 
 void cdrReset();
-void cdrAttenuate(s16 *buf, int samples, int stereo);
+void cdrAttenuate(int16_t *buf, int samples, int stereo);
 void cdrInterrupt();
 void cdrReadInterrupt();
 void cdrRepplayInterrupt();
@@ -127,8 +127,8 @@ void cdrWrite0(unsigned char rt);
 void cdrWrite1(unsigned char rt);
 void cdrWrite2(unsigned char rt);
 void cdrWrite3(unsigned char rt);
-int cdrFreeze(void *f, FreezeMode mode);
+int cdrFreeze(void *f, enum FreezeMode mode);
 
-u16 calcCrc(const u8 *d, const int len);
+uint16_t calcCrc(const uint8_t *d, const int len);
 
 #endif /* __CDROM_H__ */

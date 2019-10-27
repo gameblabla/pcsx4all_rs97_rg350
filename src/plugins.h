@@ -49,7 +49,7 @@ typedef struct {
 typedef struct {
 	uint8_t *vram;
 	uint16_t x, y, w, h, hres, vres;
-	bool depth24, pal;
+	uint_fast8_t depth24, pal;
 } GPUScreenInfo_t;
 
 /// GPU functions
@@ -194,9 +194,9 @@ unsigned char PAD2_poll(unsigned char);
 
 void SetIsoFile(const char *filename);
 const char *GetIsoFile(void);
-boolean UsingIso(void);
-void SetCdOpenCaseTime(s64 time);
-s64 GetCdOpenCaseTime(void);
+uint_fast8_t UsingIso(void);
+void SetCdOpenCaseTime(int64_t time);
+int64_t GetCdOpenCaseTime(void);
 int ReloadCdromPlugin();
 
 // Memcard functions

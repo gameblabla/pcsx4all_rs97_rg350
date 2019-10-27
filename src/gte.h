@@ -32,11 +32,11 @@ void gteLWC2(void);
 void gteSWC2(void);
 
 void gteRTPS(void);
-void gteOP(u32 gteop);
+void gteOP(uint32_t gteop);
 void gteNCLIP(void);
-void gteDPCS(u32 gteop);
-void gteINTPL(u32 gteop);
-void gteMVMVA(u32 gteop);
+void gteDPCS(uint32_t gteop);
+void gteINTPL(uint32_t gteop);
+void gteMVMVA(uint32_t gteop);
 void gteNCDS(void);
 void gteNCDT(void);
 void gteCDP(void);
@@ -44,19 +44,19 @@ void gteNCCS(void);
 void gteCC(void);
 void gteNCS(void);
 void gteNCT(void);
-void gteSQR(u32 gteop);
-void gteDCPL(u32 gteop);
+void gteSQR(uint32_t gteop);
+void gteDCPL(uint32_t gteop);
 void gteDPCT(void);
 void gteAVSZ3(void);
 void gteAVSZ4(void);
 void gteRTPT(void);
-void gteGPF(u32 gteop);
-void gteGPL(u32 gteop);
+void gteGPF(uint32_t gteop);
+void gteGPL(uint32_t gteop);
 void gteNCCT(void);
 
 // for the recompiler
-u32 gtecalcMFC2(int reg);
-void gtecalcMTC2(u32 value, int reg);
-void gtecalcCTC2(u32 value, int reg);
+uint32_t gtecalcMFC2(int reg);
+void gtecalcMTC2(uint32_t value, int reg);
+void gtecalcCTC2(uint32_t value, int reg);
 
 #endif /* __GTE_H__ */

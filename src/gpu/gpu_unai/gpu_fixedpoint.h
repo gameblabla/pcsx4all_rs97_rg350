@@ -21,7 +21,7 @@
 #ifndef FIXED_H
 #define FIXED_H
 
-typedef s32 fixed;
+typedef int32_t fixed;
 
 //senquack - The gpu_drhell poly routines I adapted use 22.10 fixed point,
 //           while original Unai used 16.16: (see README_senquack.txt)
@@ -45,13 +45,13 @@ INLINE fixed FixedCeil(const fixed x)
 	return (x + (fixed_ONE - 1)) & fixed_HIMASK;
 }
 
-INLINE s32 FixedCeilToInt(const fixed x)
+INLINE int32_t FixedCeilToInt(const fixed x)
 {
 	return (x + (fixed_ONE - 1)) >> FIXED_BITS;
 }
 
 //senquack - float<->fixed conversions:
-#define f2x(x) ((s32)((x) * (float)(1<<FIXED_BITS)))
+#define f2x(x) ((int32_t)((x) * (float)(1<<FIXED_BITS)))
 #define x2f(x) ((float)(x) / (float)(1<<FIXED_BITS))
 
 //senquack - floating point reciprocal:
@@ -79,23 +79,23 @@ INLINE float FloatInv(const float x)
 
 //  big precision inverse table.
 #define TABLE_BITS 16
-s32 s_invTable[(1<<TABLE_BITS)];
+int32_t s_invTable[(1<<TABLE_BITS)];
 
 //senquack - MIPS32 happens to have same instruction/format:
 #if defined(__arm__) || (__mips == 32)
-INLINE u32 Log2(u32 x) { u32 res; asm("clz %0,%1" : "=r" (res) : "r" (x)); return 32-res; }
+INLINE uint32_t Log2(uint32_t x) { uint32_t res; asm("clz %0,%1" : "=r" (res) : "r" (x)); return 32-res; }
 #else
-INLINE u32 Log2(u32 x) { u32 i = 0; for ( ; x > 0; ++i, x >>= 1); return i - 1; }
+INLINE uint32_t Log2(uint32_t x) { uint32_t i = 0; for ( ; x > 0; ++i, x >>= 1); return i - 1; }
 #endif
 
-INLINE  void  xInv (const fixed _b, s32& iFactor_, s32& iShift_)
+INLINE  void  xInv (const fixed _b, int32_t& iFactor_, int32_t& iShift_)
 {
-  u32 uD = (_b<0) ? -_b : _b;
+  uint32_t uD = (_b<0) ? -_b : _b;
   if(uD>1)
   {
-	u32 uLog = Log2(uD);
+	uint32_t uLog = Log2(uD);
     uLog = uLog>(TABLE_BITS-1) ? uLog-(TABLE_BITS-1) : 0;
-    u32 uDen = (uD>>uLog);
+    uint32_t uDen = (uD>>uLog);
     iFactor_ = s_invTable[uDen];
     iFactor_ = (_b<0) ? -iFactor_ :iFactor_;
     //senquack - Adapted to 22.10 fixed point (originally 16.16):
@@ -109,20 +109,20 @@ INLINE  void  xInv (const fixed _b, s32& iFactor_, s32& iShift_)
   }
 }
 
-INLINE  fixed xInvMulx  (const fixed _a, const s32 _iFact, const s32 _iShift)
+INLINE  fixed xInvMulx  (const fixed _a, const int32_t _iFact, const int32_t _iShift)
 {
 	#ifdef __arm__
-		s64 res;
+		int64_t res;
 		asm ("smull %Q0, %R0, %1, %2" : "=&r" (res) : "r"(_a) , "r"(_iFact));
 		return fixed(res>>_iShift);
 	#else
-		return fixed( ((s64)(_a)*(s64)(_iFact))>>(_iShift) );
+		return fixed( ((int64_t)(_a)*(int64_t)(_iFact))>>(_iShift) );
 	#endif
 }
 
 INLINE  fixed xLoDivx   (const fixed _a, const fixed _b)
 {
-  s32 iFact, iShift;
+  int32_t iFact, iShift;
   xInv(_b, iFact, iShift);
   return xInvMulx(_a, iFact, iShift);
 }

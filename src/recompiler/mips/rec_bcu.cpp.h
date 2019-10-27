@@ -17,7 +17,7 @@
 /* Convert some small forwards conditional branches to modern conditional moves */
 #define USE_CONDITIONAL_MOVE_OPTIMIZATIONS
 
-static bool convertBranchToConditionalMoves();
+static uint_fast8_t convertBranchToConditionalMoves();
 
 enum {
 	BCU_FIRST_INSTRUCTION_MAYBE_EXECUTED  = false,
@@ -34,8 +34,8 @@ enum {
  * IMPORTANT: Because of caching, we might emit nothing.
  *            Callers must be careful to ensure any BD slots get filled.
  */
-static void emitBlockReturnPC(const u32  new_pc,
-                              const bool first_instruction_always_executed)
+static void emitBlockReturnPC(const uint32_t  new_pc,
+                              const uint_fast8_t first_instruction_always_executed)
 {
 #ifdef USE_PC_CACHING
 	//  We try to keep PCs cached in $v0, or at least their upper halves. This
@@ -54,22 +54,22 @@ static void emitBlockReturnPC(const u32  new_pc,
 
 	if (!host_v0_reg_is_const || host_v0_reg_constval != new_pc)
 	{
-		u32 v0_val = host_v0_reg_constval;
+		uint32_t v0_val = host_v0_reg_constval;
 
 		if (new_pc >= 0x10000)
 		{
 			// Be careful to avoid possible overflow here.
 			if (host_v0_reg_is_const             &&
 			    (new_pc >> 28) == (v0_val >> 28) &&
-			    (s32)(new_pc - v0_val) >= -32768 &&
-			    (s32)(new_pc - v0_val) <=  32767)
+			    (int32_t)(new_pc - v0_val) >= -32768 &&
+			    (int32_t)(new_pc - v0_val) <=  32767)
 			{
 				ADDIU(MIPSREG_V0, MIPSREG_V0, new_pc - v0_val);
 
 				v0_val = new_pc;
 			} else
 			{
-				bool first_instruction_emitted = false;
+				uint_fast8_t first_instruction_emitted = false;
 
 				if (!host_v0_reg_is_const || ((v0_val >> 16) != (new_pc >> 16))) {
 					LUI(MIPSREG_V0, new_pc >> 16);
@@ -106,10 +106,10 @@ static void emitBlockReturnPC(const u32  new_pc,
  *  'return_pc' of a JAL/JALR/BAL instruction.
  *
  */
-static void emitJumpAndLinkReturnAddress(const u32 reg,
-                                         const u32 return_pc)
+static void emitJumpAndLinkReturnAddress(const uint32_t reg,
+                                         const uint32_t return_pc)
 {
-	bool wrote_reg = false;
+	uint_fast8_t wrote_reg = false;
 
 #ifdef USE_PC_CACHING
 	// PCs are cached in host $v0 reg. Can we save an instruction?
@@ -120,12 +120,12 @@ static void emitJumpAndLinkReturnAddress(const u32 reg,
 
 	if (host_v0_reg_is_const)
 	{
-		const u32 v0_val = host_v0_reg_constval;
+		const uint32_t v0_val = host_v0_reg_constval;
 
 		// Be careful to avoid possible overflow here.
 		if ((v0_val >> 28) == (return_pc >> 28) &&
-		    (s32)(return_pc - v0_val) >= -32768 &&
-		    (s32)(return_pc - v0_val) <=  32767)
+		    (int32_t)(return_pc - v0_val) >= -32768 &&
+		    (int32_t)(return_pc - v0_val) <=  32767)
 		{
 			ADDIU(reg, MIPSREG_V0, return_pc - v0_val);
 
@@ -156,7 +156,7 @@ static void recSYSCALL()
 	LI16(MIPSREG_A0, 0x20); // <BD> Load first param using BD slot of JAL()
 
 	// If new PC is unknown, cannot use 'fastpath' return
-	const bool use_fastpath_return = false;
+	const uint_fast8_t use_fastpath_return = false;
 
 	rec_recompile_end_part1();
 
@@ -168,10 +168,10 @@ static void recSYSCALL()
 }
 
 /* Check if an opcode has a delayed read if in delay slot */
-static int iLoadTest(u32 code)
+static int iLoadTest(uint32_t code)
 {
 	// check for load delay
-	u32 op = _fOp_(code);
+	uint32_t op = _fOp_(code);
 	switch (op) {
 	case 0x10: // COP0
 		switch (_fRs_(code)) {
@@ -203,11 +203,11 @@ static int iLoadTest(u32 code)
 	return 0;
 }
 
-static int DelayTest(const u32 pc, const u32 bpc)
+static int DelayTest(const uint32_t pc, const uint32_t bpc)
 {
-	const u32 code1 = OPCODE_AT(pc);
-	const u32 code2 = OPCODE_AT(bpc);
-	const u32 reg = _fRt_(code1);
+	const uint32_t code1 = OPCODE_AT(pc);
+	const uint32_t code2 = OPCODE_AT(bpc);
+	const uint32_t reg = _fRt_(code1);
 
 //#define LOG_BRANCHLOADDELAYS
 #ifdef LOG_BRANCHLOADDELAYS
@@ -216,7 +216,7 @@ static int DelayTest(const u32 pc, const u32 bpc)
 		if (i == 1 || i == 2) {
 			char buffer[512];
 			printf("Case %d at %08x\n", i, pc);
-			const u32 jcode = OPCODE_AT(pc - 4);
+			const uint32_t jcode = OPCODE_AT(pc - 4);
 			disasm_mips_instruction(jcode, buffer, pc - 4, 0, 0);
 			printf("%08x: %s\n", pc - 4, buffer);
 			disasm_mips_instruction(code1, buffer, pc, 0, 0);
@@ -240,7 +240,7 @@ static int DelayTest(const u32 pc, const u32 bpc)
 /* Revert execution order of opcodes at branch target address and in delay slot
    This emulates the effect of delayed read from COP2 happening in delay slot
    when the branch is taken. This fixes Tekken 2 (broken models). */
-static void recRevDelaySlot(u32 pc, u32 bpc)
+static void recRevDelaySlot(uint32_t pc, uint32_t bpc)
 {
 	//  Set 'branch' to 1 before recompiling *either* opcode, indicating we're
 	// in a BD slot. Even though the opcode at bpc is not in a BD slot, it
@@ -270,16 +270,16 @@ static void recDelaySlot()
 	branch = 0;
 }
 
-static void iJumpNormal(u32 bpc)
+static void iJumpNormal(uint32_t bpc)
 {
 #ifdef LOG_BRANCHLOADDELAYS
-	u32 dt = DelayTest(pc, bpc);
+	uint32_t dt = DelayTest(pc, bpc);
 #endif
 
 	recDelaySlot();
 
 	// Can block use 'fastpath' return? (branches backward to its beginning)
-	const bool use_fastpath_return = rec_recompile_use_fastpath_return(bpc);
+	const uint_fast8_t use_fastpath_return = rec_recompile_use_fastpath_return(bpc);
 
 	rec_recompile_end_part1();
 	regClearJump();
@@ -293,9 +293,9 @@ static void iJumpNormal(u32 bpc)
 	end_block = 1;
 }
 
-static void iJumpAL(u32 bpc, u32 nbpc)
+static void iJumpAL(uint32_t bpc, uint32_t nbpc)
 {
-	const u32 ra = regMipsToHost(31, REG_FIND, REG_REGISTER);
+	const uint32_t ra = regMipsToHost(31, REG_FIND, REG_REGISTER);
 	emitJumpAndLinkReturnAddress(ra, nbpc);
 	regUnlock(ra);
 	SetConst(31, nbpc);
@@ -313,7 +313,7 @@ static void iJumpAL(u32 bpc, u32 nbpc)
 	}
 
 	// Can block use 'fastpath' return? (branches backward to its beginning)
-	const bool use_fastpath_return = rec_recompile_use_fastpath_return(bpc);
+	const uint_fast8_t use_fastpath_return = rec_recompile_use_fastpath_return(bpc);
 
 	rec_recompile_end_part1();
 	regClearJump();
@@ -328,9 +328,9 @@ static void iJumpAL(u32 bpc, u32 nbpc)
 }
 
 /* Used for BLTZ, BGTZ, BLTZAL, BGEZAL, BLEZ, BGEZ */
-static void emitBxxZ(int andlink, u32 bpc, u32 nbpc)
+static void emitBxxZ(int andlink, uint32_t bpc, uint32_t nbpc)
 {
-	const u32 code = psxRegs.code;
+	const uint32_t code = psxRegs.code;
 	const int dt = DelayTest(pc, bpc);
 
 #ifdef USE_CONST_BRANCH_OPTIMIZATIONS
@@ -345,8 +345,8 @@ static void emitBxxZ(int andlink, u32 bpc, u32 nbpc)
 		// MIPS branch decisions are made before execution of delay slots.
 		// Do the same here: the delay slot could write to decision regs!
 
-		const s32 val = GetConst(_Rs_);
-		bool branch_taken = false;
+		const int32_t val = GetConst(_Rs_);
+		uint_fast8_t branch_taken = false;
 
 		switch (code & 0xfc1f0000) {
 			case 0x04000000: /* BLTZ */
@@ -371,7 +371,7 @@ static void emitBxxZ(int andlink, u32 bpc, u32 nbpc)
 		// Branch-and-link instructions always write return address, even
 		//  when branch is not taken!
 		if (andlink) {
-			const u32 ra = regMipsToHost(31, REG_FIND, REG_REGISTER);
+			const uint32_t ra = regMipsToHost(31, REG_FIND, REG_REGISTER);
 			emitJumpAndLinkReturnAddress(ra, nbpc);
 			regUnlock(ra);
 			SetConst(31, nbpc);
@@ -401,11 +401,11 @@ static void emitBxxZ(int andlink, u32 bpc, u32 nbpc)
 
 	// Allocate branch decision reg. Hopefully, BD slot doesn't write to it.
 	// If it does, we must allocate private copy, increasing reg pressure.
-	u32 bd_slot_writes = 0;
+	uint32_t bd_slot_writes = 0;
 	if (OPCODE_AT(pc) != 0)
-		bd_slot_writes = (u32)opcodeGetWrites(OPCODE_AT(pc)) & ~1;
+		bd_slot_writes = (uint32_t)opcodeGetWrites(OPCODE_AT(pc)) & ~1;
 
-	u32 br1;
+	uint32_t br1;
 	if (bd_slot_writes & (1 << _Rs_)) {
 		// BD slot writes to reg read by branch: must get private copy.
 		br1 = regMipsToHost(_Rs_, REG_LOADBRANCH, REG_REGISTERBRANCH);
@@ -420,7 +420,7 @@ static void emitBxxZ(int andlink, u32 bpc, u32 nbpc)
 		//  allocating the the decision reg, which might get a private copy.
 		// NOTE: Branch-and-link is fairly rare, but some games do use it.
 		//       For testing the code here, try 'Tony Hawk Pro Skater 1/2'.
-		const u32 ra = regMipsToHost(31, REG_FIND, REG_REGISTER);
+		const uint32_t ra = regMipsToHost(31, REG_FIND, REG_REGISTER);
 		emitJumpAndLinkReturnAddress(ra, nbpc);
 		regUnlock(ra);
 		SetConst(31, nbpc);
@@ -430,7 +430,7 @@ static void emitBxxZ(int andlink, u32 bpc, u32 nbpc)
 	if (dt == 3 || dt == 0)
 		recDelaySlot();
 
-	u32* const backpatch = (u32 *)recMem;
+	uint32_t* const backpatch = (uint32_t *)recMem;
 
 	// Check opcode and emit branch with REVERSED logic!
 	switch (code & 0xfc1f0000) {
@@ -446,13 +446,13 @@ static void emitBxxZ(int andlink, u32 bpc, u32 nbpc)
 	}
 
 	// Remember location of branch delay slot so we can be sure it gets filled.
-	const uptr bd_slot_loc = (uptr)recMem;
+	const uintptr_t bd_slot_loc = (uintptr_t)recMem;
 
 	// IMPORTANT: Don't emit any instructions between here (BD slot) and
 	//            the call to emitBlockReturnPC(). It affects PC caching.
 
 	// Can block use 'fastpath' return? (branches backward to its beginning)
-	const bool use_fastpath_return = rec_recompile_use_fastpath_return(bpc);
+	const uint_fast8_t use_fastpath_return = rec_recompile_use_fastpath_return(bpc);
 
 	regPushState();
 
@@ -467,7 +467,7 @@ static void emitBxxZ(int andlink, u32 bpc, u32 nbpc)
 
 	// Only need to set $v0 to new PC when not returning to 'fastpath'.
 	if (!use_fastpath_return) {
-		if (bd_slot_loc == (uptr)recMem)
+		if (bd_slot_loc == (uintptr_t)recMem)
 			emitBlockReturnPC(bpc, BCU_FIRST_INSTRUCTION_ALWAYS_EXECUTED);  // <BD slot> (if instruction is emitted)
 		else
 			emitBlockReturnPC(bpc, BCU_FIRST_INSTRUCTION_MAYBE_EXECUTED);
@@ -480,7 +480,7 @@ static void emitBxxZ(int andlink, u32 bpc, u32 nbpc)
 	regClearBranch();  // <BD slot> (if instruction is emitted)
 
 	// Rarely, the branch delay slot is still empty at this point. Fill if so.
-	if (bd_slot_loc == (uptr)recMem)
+	if (bd_slot_loc == (uintptr_t)recMem)
 		NOP();  // <BD slot>
 
 	rec_recompile_end_part2(use_fastpath_return);
@@ -495,11 +495,11 @@ static void emitBxxZ(int andlink, u32 bpc, u32 nbpc)
 }
 
 /* Used for BEQ and BNE */
-static void emitBxx(u32 bpc)
+static void emitBxx(uint32_t bpc)
 {
-	const u32 code = psxRegs.code;
+	const uint32_t code = psxRegs.code;
 #ifdef LOG_BRANCHLOADDELAYS
-	const u32 dt = DelayTest(pc, bpc);
+	const uint32_t dt = DelayTest(pc, bpc);
 #endif
 
 	// XXX - If delay-slot trickery workarounds are ever added to this
@@ -516,9 +516,9 @@ static void emitBxx(u32 bpc)
 		// MIPS branch decisions are made before execution of delay slots.
 		// Do the same here: the delay slot could write to decision regs!
 
-		const s32 val1 = GetConst(_Rs_);
-		const s32 val2 = GetConst(_Rt_);
-		bool branch_taken = false;
+		const int32_t val1 = GetConst(_Rs_);
+		const int32_t val2 = GetConst(_Rt_);
+		uint_fast8_t branch_taken = false;
 
 		switch (code & 0xfc000000) {
 			case 0x10000000: /* BEQ */
@@ -550,18 +550,18 @@ static void emitBxx(u32 bpc)
 
 	// Allocate branch decision regs. Hopefully, BD slot doesn't write to them.
 	// If it does, we must allocate private copies, increasing reg pressure.
-	u32 bd_slot_writes = 0;
+	uint32_t bd_slot_writes = 0;
 	if (OPCODE_AT(pc) != 0)
-		bd_slot_writes = (u32)opcodeGetWrites(OPCODE_AT(pc)) & ~1;
+		bd_slot_writes = (uint32_t)opcodeGetWrites(OPCODE_AT(pc)) & ~1;
 
-	u32 br1;
+	uint32_t br1;
 	if (bd_slot_writes & (1 << _Rs_)) {
 		// BD slot writes to reg read by branch: must get private copy.
 		br1 = regMipsToHost(_Rs_, REG_LOADBRANCH, REG_REGISTERBRANCH);
 	} else {
 		br1 = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
 	}
-	u32 br2;
+	uint32_t br2;
 	if (bd_slot_writes & (1 << _Rt_)) {
 		// BD slot writes to reg read by branch: must get private copy.
 		br2 = regMipsToHost(_Rt_, REG_LOADBRANCH, REG_REGISTERBRANCH);
@@ -571,7 +571,7 @@ static void emitBxx(u32 bpc)
 
 	recDelaySlot();
 
-	u32* const backpatch = (u32 *)recMem;
+	uint32_t* const backpatch = (uint32_t *)recMem;
 
 	// Check opcode and emit branch with REVERSED logic!
 	switch (code & 0xfc000000) {
@@ -583,13 +583,13 @@ static void emitBxx(u32 bpc)
 	}
 
 	// Remember location of branch delay slot so we can be sure it gets filled.
-	const uptr bd_slot_loc = (uptr)recMem;
+	const uintptr_t bd_slot_loc = (uintptr_t)recMem;
 
 	// IMPORTANT: Don't emit any instructions between here (BD slot) and
 	//            the call to emitBlockReturnPC(). It affects PC caching.
 
 	// Can block use 'fastpath' return? (branches backward to its beginning)
-	const bool use_fastpath_return = rec_recompile_use_fastpath_return(bpc);
+	const uint_fast8_t use_fastpath_return = rec_recompile_use_fastpath_return(bpc);
 
 	// Only need to set $v0 to new PC when not returning to 'fastpath'.
 	if (!use_fastpath_return)
@@ -602,7 +602,7 @@ static void emitBxx(u32 bpc)
 	regClearBranch();  // <BD slot> (if instruction is emitted)
 
 	// Rarely, the branch delay slot is still empty at this point. Fill if so.
-	if (bd_slot_loc == (uptr)recMem)
+	if (bd_slot_loc == (uintptr_t)recMem)
 		NOP();  // <BD slot>
 
 	rec_recompile_end_part2(use_fastpath_return);
@@ -615,8 +615,8 @@ static void emitBxx(u32 bpc)
 static void recBLTZ()
 {
 // Branch if Rs < 0
-	u32 bpc = _Imm_ * 4 + pc;
-	u32 nbpc = pc + 4;
+	uint32_t bpc = _Imm_ * 4 + pc;
+	uint32_t nbpc = pc + 4;
 
 	if (bpc == nbpc && psxTestLoadDelay(_Rs_, OPCODE_AT(bpc)) == 0)
 		return;
@@ -632,8 +632,8 @@ static void recBLTZ()
 static void recBGTZ()
 {
 // Branch if Rs > 0
-	u32 bpc = _Imm_ * 4 + pc;
-	u32 nbpc = pc + 4;
+	uint32_t bpc = _Imm_ * 4 + pc;
+	uint32_t nbpc = pc + 4;
 
 	if (bpc == nbpc && psxTestLoadDelay(_Rs_, OPCODE_AT(bpc)) == 0)
 		return;
@@ -649,8 +649,8 @@ static void recBGTZ()
 static void recBLTZAL()
 {
 // Branch if Rs < 0
-	u32 bpc = _Imm_ * 4 + pc;
-	u32 nbpc = pc + 4;
+	uint32_t bpc = _Imm_ * 4 + pc;
+	uint32_t nbpc = pc + 4;
 
 	if (!(_Rs_)) {
 		recDelaySlot();
@@ -663,8 +663,8 @@ static void recBLTZAL()
 static void recBGEZAL()
 {
 // Branch if Rs >= 0
-	u32 bpc = _Imm_ * 4 + pc;
-	u32 nbpc = pc + 4;
+	uint32_t bpc = _Imm_ * 4 + pc;
+	uint32_t nbpc = pc + 4;
 
 	if (!(_Rs_)) {
 		iJumpAL(bpc, (pc + 4));
@@ -691,10 +691,10 @@ static void recJAL()
 extern void (*psxBSC[64])(void);
 
 /* HACK: Execute load delay in branch delay via interpreter */
-static u32 execBranchLoadDelay(u32 pc, u32 bpc)
+static uint32_t execBranchLoadDelay(uint32_t pc, uint32_t bpc)
 {
-	const u32 code1 = OPCODE_AT(pc);
-	const u32 code2 = OPCODE_AT(bpc);
+	const uint32_t code1 = OPCODE_AT(pc);
+	const uint32_t code2 = OPCODE_AT(bpc);
 
 	branch = 1;
 
@@ -703,7 +703,7 @@ static u32 execBranchLoadDelay(u32 pc, u32 bpc)
 	if (i == 1 || i == 2) {
 		char buffer[512];
 		printf("Case %d at %08x\n", i, pc);
-		const u32 jcode = OPCODE_AT(pc - 4);
+		const uint32_t jcode = OPCODE_AT(pc - 4);
 		disasm_mips_instruction(jcode, buffer, pc - 4, 0, 0);
 		printf("%08x: %s\n", pc - 4, buffer);
 		disasm_mips_instruction(code1, buffer, pc, 0, 0);
@@ -738,7 +738,7 @@ static u32 execBranchLoadDelay(u32 pc, u32 bpc)
 static void recJR_load_delay()
 {
 	regClearJump();
-	u32 br1 = regMipsToHost(_Rs_, REG_LOADBRANCH, REG_REGISTERBRANCH);
+	uint32_t br1 = regMipsToHost(_Rs_, REG_LOADBRANCH, REG_REGISTERBRANCH);
 
 	LI32(MIPSREG_A0, pc);
 	JAL(execBranchLoadDelay);
@@ -747,7 +747,7 @@ static void recJR_load_delay()
 	// $v0 here contains jump address returned from execBranchLoadDelay()
 
 	// If new PC is unknown, cannot use 'fastpath' return
-	const bool use_fastpath_return = false;
+	const uint_fast8_t use_fastpath_return = false;
 
 	rec_recompile_end_part1();
 	pc += 4;
@@ -772,11 +772,11 @@ static void recJR()
 		return;
 	}
 
-	u32 br1 = regMipsToHost(_Rs_, REG_LOADBRANCH, REG_REGISTERBRANCH);
+	uint32_t br1 = regMipsToHost(_Rs_, REG_LOADBRANCH, REG_REGISTERBRANCH);
 	recDelaySlot();
 
 	// If new PC is unknown, cannot use 'fastpath' return
-	const bool use_fastpath_return = false;
+	const uint_fast8_t use_fastpath_return = false;
 
 	rec_recompile_end_part1();
 
@@ -793,9 +793,9 @@ static void recJALR()
 {
 // jalr Rs, Rd=pc+4
 
-	const u32 br1 = regMipsToHost(_Rs_, REG_LOADBRANCH, REG_REGISTERBRANCH);
+	const uint32_t br1 = regMipsToHost(_Rs_, REG_LOADBRANCH, REG_REGISTERBRANCH);
 
-	const u32 rd = regMipsToHost(_Rd_, REG_FIND, REG_REGISTER);
+	const uint32_t rd = regMipsToHost(_Rd_, REG_FIND, REG_REGISTER);
 	emitJumpAndLinkReturnAddress(rd, pc + 4);
 	regUnlock(rd);
 	SetConst(_Rd_, pc + 4);
@@ -804,7 +804,7 @@ static void recJALR()
 	recDelaySlot();
 
 	// If new PC is unknown, cannot use 'fastpath' return
-	const bool use_fastpath_return = false;
+	const uint_fast8_t use_fastpath_return = false;
 
 	rec_recompile_end_part1();
 
@@ -820,8 +820,8 @@ static void recJALR()
 static void recBEQ()
 {
 // Branch if Rs == Rt
-	u32 bpc = _Imm_ * 4 + pc;
-	u32 nbpc = pc + 4;
+	uint32_t bpc = _Imm_ * 4 + pc;
+	uint32_t nbpc = pc + 4;
 
 	if (bpc == nbpc && psxTestLoadDelay(_Rs_, OPCODE_AT(bpc)) == 0)
 		return;
@@ -837,8 +837,8 @@ static void recBEQ()
 static void recBNE()
 {
 // Branch if Rs != Rt
-	u32 bpc = _Imm_ * 4 + pc;
-	u32 nbpc = pc + 4;
+	uint32_t bpc = _Imm_ * 4 + pc;
+	uint32_t nbpc = pc + 4;
 
 	if (bpc == nbpc && psxTestLoadDelay(_Rs_, OPCODE_AT(bpc)) == 0)
 		return;
@@ -854,8 +854,8 @@ static void recBNE()
 static void recBLEZ()
 {
 // Branch if Rs <= 0
-	u32 bpc = _Imm_ * 4 + pc;
-	u32 nbpc = pc + 4;
+	uint32_t bpc = _Imm_ * 4 + pc;
+	uint32_t nbpc = pc + 4;
 
 	if (bpc == nbpc && psxTestLoadDelay(_Rs_, OPCODE_AT(bpc)) == 0)
 		return;
@@ -871,8 +871,8 @@ static void recBLEZ()
 static void recBGEZ()
 {
 // Branch if Rs >= 0
-	u32 bpc = _Imm_ * 4 + pc;
-	u32 nbpc = pc + 4;
+	uint32_t bpc = _Imm_ * 4 + pc;
+	uint32_t nbpc = pc + 4;
 
 	if (bpc == nbpc && psxTestLoadDelay(_Rs_, OPCODE_AT(bpc)) == 0)
 		return;
@@ -896,11 +896,11 @@ static void recHLE()
 	regClearJump();
 
 	LI32(TEMP_1, pc);
-	JAL(((u32)psxHLEt[psxRegs.code & 0x7]));
+	JAL(((uint32_t)psxHLEt[psxRegs.code & 0x7]));
 	SW(TEMP_1, PERM_REG_1, off(pc));        // <BD> BD slot of JAL() above
 
 	// If new PC is unknown, cannot use 'fastpath' return
-	const bool use_fastpath_return = false;
+	const uint_fast8_t use_fastpath_return = false;
 
 	rec_recompile_end_part1();
 
@@ -923,7 +923,7 @@ static void recHLE()
  *       branch-and-link instructions.
  */
 #ifdef USE_CONDITIONAL_MOVE_OPTIMIZATIONS
-static bool convertBranchToConditionalMoves()
+static uint_fast8_t convertBranchToConditionalMoves()
 {
 	// Limit on size of branch-not-taken paths we convert. If it's too large,
 	// we'd waste time analyzing not-taken-paths that are really unlikely to
@@ -932,16 +932,16 @@ static bool convertBranchToConditionalMoves()
 
 	// Temporary registers we can use
 	const int max_renamed = 4;
-	const u8  renamed_reg_pool[max_renamed] = { MIPSREG_A0, MIPSREG_A1, MIPSREG_A2, MIPSREG_A3 };
-	const u8  temp_condition_reg = TEMP_1;
+	const uint8_t  renamed_reg_pool[max_renamed] = { MIPSREG_A0, MIPSREG_A1, MIPSREG_A2, MIPSREG_A3 };
+	const uint8_t  temp_condition_reg = TEMP_1;
 
-	const u32  branch_opcode  = OPCODE_AT(pc-4);
-	const u32  bd_slot_opcode = OPCODE_AT(pc);
-	const s32  branch_imm = _fImm_(branch_opcode);
-	const u8   branch_rs  = _fRs_(branch_opcode);
-	const u8   branch_rt  = _fRt_(branch_opcode);
-	const bool is_beq     = _fOp_(branch_opcode) == 0x04;
-	const bool is_bne     = _fOp_(branch_opcode) == 0x05;
+	const uint32_t  branch_opcode  = OPCODE_AT(pc-4);
+	const uint32_t  bd_slot_opcode = OPCODE_AT(pc);
+	const int32_t  branch_imm = _fImm_(branch_opcode);
+	const uint8_t   branch_rs  = _fRs_(branch_opcode);
+	const uint8_t   branch_rt  = _fRt_(branch_opcode);
+	const uint_fast8_t is_beq     = _fOp_(branch_opcode) == 0x04;
+	const uint_fast8_t is_bne     = _fOp_(branch_opcode) == 0x05;
 
 	// Don't allow any backward or 0-len branches, or branches too far.
 	if (branch_imm <= 1 || branch_imm > (max_ops+1))
@@ -959,36 +959,36 @@ static bool convertBranchToConditionalMoves()
 	 * STAGE 1: Ensure all ops are ALU, collect basic info *
 	 *******************************************************/
 	struct {
-		u32  opcode;
-		u8   dst_reg;
-		bool writes_rt;
-		bool reads_rs;
-		bool reads_rt;
-		bool rs_renamed;
-		bool rt_renamed;
-		u8   dst_renamed_to;
-		u8   rs_renamed_to;
-		u8   rt_renamed_to;
+		uint32_t  opcode;
+		uint8_t   dst_reg;
+		uint_fast8_t writes_rt;
+		uint_fast8_t reads_rs;
+		uint_fast8_t reads_rt;
+		uint_fast8_t rs_renamed;
+		uint_fast8_t rt_renamed;
+		uint8_t   dst_renamed_to;
+		uint8_t   rs_renamed_to;
+		uint8_t   rt_renamed_to;
 
 		//  Normally, it is assumed that dst reg has been renamed. However, some
 		// common 'addu rd, rs, $zero' compiler/assembler-generated reg-moves
 		// can avoid reg-renaming, and this gets set true.
-		bool emit_as_rd_rs_direct_cond_move;
+		uint_fast8_t emit_as_rd_rs_direct_cond_move;
 	} ops[max_ops];
 
 	memset(ops, 0, sizeof(ops));
 
 	// Bitfield representing any GPRs written by opcodes
-	u32  op_writes = 0;
+	uint32_t  op_writes = 0;
 
 	int  num_ops = 0;
-	bool success = true;
+	uint_fast8_t success = true;
 
 	for (int i=0; i < (branch_imm-1); ++i)
 	{
 		// 'pc' is currently pointing to the branch's BD slot, so
 		//   start looking at opcodes one instruction after that.
-		const u32 opcode = OPCODE_AT(pc + 4 + i*4);
+		const uint32_t opcode = OPCODE_AT(pc + 4 + i*4);
 
 		// Skip any NOPs
 		if (opcode == 0)
@@ -998,7 +998,7 @@ static bool convertBranchToConditionalMoves()
 
 		if (opcodeIsALU(opcode, &info))
 		{
-			const u8 dst_reg = info.writes_rt ? _fRt_(opcode) : _fRd_(opcode);
+			const uint8_t dst_reg = info.writes_rt ? _fRt_(opcode) : _fRd_(opcode);
 
 			// Skip any ALU ops with $zero dst reg
 			if (!dst_reg)
@@ -1027,20 +1027,20 @@ static bool convertBranchToConditionalMoves()
 	int num_renamed = 0;
 
 	// Reverse mapping: renamed reg -> original PSX reg (used in last stage)
-	u8 host_to_psx_map[max_renamed];
+	uint8_t host_to_psx_map[max_renamed];
 
 	{
 		// Only needed during this renaming phase:
 		struct {
-			bool is_renamed;
-			u8   renamed_to;
+			uint_fast8_t is_renamed;
+			uint8_t   renamed_to;
 		} reg_map[32];
 
 		memset(reg_map, 0, sizeof(reg_map));
 
 		for (int i=0; i < num_ops; ++i)
 		{
-			u32 opcode = ops[i].opcode;
+			uint32_t opcode = ops[i].opcode;
 
 			// Convert any overflow-trap instructions to non-trapping ones
 			switch (_fOp_(opcode)) {
@@ -1067,9 +1067,9 @@ static bool convertBranchToConditionalMoves()
 			}
 			ops[i].opcode = opcode;  // Write back opcode in case it was converted
 
-			const u8 dst_reg = ops[i].dst_reg;
-			const u8 rs_reg  = _fRs_(opcode);
-			const u8 rt_reg  = _fRt_(opcode);
+			const uint8_t dst_reg = ops[i].dst_reg;
+			const uint8_t rs_reg  = _fRs_(opcode);
+			const uint8_t rt_reg  = _fRt_(opcode);
 
 			//  Catch 'ADDU dst, rs, $zero', a reg move: if the src and dst regs
 			// haven't been been renamed yet, we can skip renaming the dst reg
@@ -1139,11 +1139,11 @@ static bool convertBranchToConditionalMoves()
 	// TODO -  What we probably want is a new mode we can specify to the
 	//        branch allocator: maybe REG_LOADPRIVATE or REG_LOADCOPY
 
-	const u32  bd_slot_writes = (u32)opcodeGetWrites(bd_slot_opcode);
+	const uint32_t  bd_slot_writes = (uint32_t)opcodeGetWrites(bd_slot_opcode);
 
 	// All branches read reg in 'rs' field
-	bool br1_locked = true;
-	u32  br1 = 0;
+	uint_fast8_t br1_locked = true;
+	uint32_t  br1 = 0;
 	if (bd_slot_writes & (1 << branch_rs)) {
 		// BD slot modifies a reg read by branch: must get special copy
 		br1 = regMipsToHost(branch_rs, REG_LOADBRANCH, REG_REGISTERBRANCH);
@@ -1152,8 +1152,8 @@ static bool convertBranchToConditionalMoves()
 	}
 
 	// BEQ,BNE also read reg in 'rt' field
-	bool br2_locked = false;
-	u32  br2 = 0;
+	uint_fast8_t br2_locked = false;
+	uint32_t  br2 = 0;
 	if (is_beq || is_bne) {
 		br2_locked = true;
 		if (bd_slot_writes & (1 << branch_rt)) {
@@ -1177,11 +1177,11 @@ static bool convertBranchToConditionalMoves()
 
 	// Conditional-moves will base their decision on this reg.
 	// Default is a temp reg, but sometimes we can use the branch's reg.
-	u32  condition_reg = temp_condition_reg;
-	bool condition_reg_locked = false;
+	uint32_t  condition_reg = temp_condition_reg;
+	uint_fast8_t condition_reg_locked = false;
 
 	// Use MOVZ or MOVN for conditional moves?
-	bool use_movz = true;
+	uint_fast8_t use_movz = true;
 
 	if (is_beq || is_bne)
 	{
@@ -1207,7 +1207,7 @@ static bool convertBranchToConditionalMoves()
 		//      the not-taken path, it is OK to forgo this requirement: The
 		//      reg is read by the MOVN/MOVZ before it is written back.
 
-		const u32 branch_reads = ((1 << branch_rs) | (1 << branch_rt));
+		const uint32_t branch_reads = ((1 << branch_rs) | (1 << branch_rt));
 
 		if ( (branch_rs == 0 || branch_rt == 0) &&
 		     ((bd_slot_writes & branch_reads) == 0) &&
@@ -1259,10 +1259,10 @@ static bool convertBranchToConditionalMoves()
 	 ****************************************************************************/
 	for (int i=0; i < num_ops; ++i)
 	{
-		const u32 opcode  = ops[i].opcode;
-		const u8 orig_dst = ops[i].dst_reg;
-		const u8 orig_rs  = _fRs_(opcode);
-		const u8 orig_rt  = _fRt_(opcode);
+		const uint32_t opcode  = ops[i].opcode;
+		const uint8_t orig_dst = ops[i].dst_reg;
+		const uint8_t orig_rs  = _fRs_(opcode);
+		const uint8_t orig_rt  = _fRt_(opcode);
 
 		if (ops[i].emit_as_rd_rs_direct_cond_move)
 		{
@@ -1273,8 +1273,8 @@ static bool convertBranchToConditionalMoves()
 
 			// Load *existing* contents of dest reg: they are overwritten based
 			//  on the condition reg.
-			const u32 dst = regMipsToHost(orig_dst, REG_LOAD, REG_REGISTER);
-			const u32 rs  = regMipsToHost(orig_rs,  REG_LOAD, REG_REGISTER);
+			const uint32_t dst = regMipsToHost(orig_dst, REG_LOAD, REG_REGISTER);
+			const uint32_t rs  = regMipsToHost(orig_rs,  REG_LOAD, REG_REGISTER);
 
 			if (use_movz)
 				MOVZ(dst, rs, condition_reg);
@@ -1287,11 +1287,11 @@ static bool convertBranchToConditionalMoves()
 			SetUndef(orig_dst);
 		} else
 		{
-			u32  new_opcode = opcode;
-			u32  rs = 0;
-			u32  rt = 0;
-			bool rs_locked = false;
-			bool rt_locked = false;
+			uint32_t  new_opcode = opcode;
+			uint32_t  rs = 0;
+			uint32_t  rt = 0;
+			uint_fast8_t rs_locked = false;
+			uint_fast8_t rt_locked = false;
 
 			if (ops[i].reads_rs) {
 				// Replace 'rs' opcode field with renamed or allocated reg
@@ -1348,9 +1348,9 @@ static bool convertBranchToConditionalMoves()
 	{
 		// Load *existing* contents of dest reg: they are overwritten based
 		//  on the condition reg.
-		const u32 renamed_dst_reg = renamed_reg_pool[i];
-		const u32 orig_dst_reg = host_to_psx_map[i];
-		const u32 dst = regMipsToHost(orig_dst_reg, REG_LOAD, REG_REGISTER);
+		const uint32_t renamed_dst_reg = renamed_reg_pool[i];
+		const uint32_t orig_dst_reg = host_to_psx_map[i];
+		const uint32_t dst = regMipsToHost(orig_dst_reg, REG_LOAD, REG_REGISTER);
 
 		if (use_movz)
 			MOVZ(dst, renamed_dst_reg, condition_reg);

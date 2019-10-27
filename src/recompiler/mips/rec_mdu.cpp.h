@@ -34,7 +34,7 @@
 	#define USE_3OP_MUL_JUMP_OPTIMIZATIONS
 #endif // HAVE_MIPS32_3OP_MUL
 
-static bool convertMultiplyTo3Op();
+static uint_fast8_t convertMultiplyTo3Op();
 
 
 static void recMULT()
@@ -43,18 +43,18 @@ static void recMULT()
 
 #ifdef USE_CONST_MULT_OPTIMIZATIONS
 	// First, check if either or both operands are const values
-	bool rs_const = IsConst(_Rs_);
-	bool rt_const = IsConst(_Rt_);
+	uint_fast8_t rs_const = IsConst(_Rs_);
+	uint_fast8_t rt_const = IsConst(_Rt_);
 
 	if (rs_const || rt_const)
 	{
 		// Check rs_const or rt_const before using either value here!
-		s32 rs_val = GetConst(_Rs_);
-		s32 rt_val = GetConst(_Rt_);
+		int32_t rs_val = GetConst(_Rs_);
+		int32_t rt_val = GetConst(_Rt_);
 
-		bool const_res = false;
-		s32 lo_res = 0;
-		s32 hi_res = 0;
+		uint_fast8_t const_res = false;
+		int32_t lo_res = 0;
+		int32_t hi_res = 0;
 
 		if ((rs_const && !rs_val) || (rt_const && !rt_val)) {
 			// If either operand is 0, both LO/HI result is 0
@@ -63,19 +63,19 @@ static void recMULT()
 			hi_res = 0;
 		} else if (rs_const && rt_const) {
 			// If both operands are known-const, compute result statically
-			s64 res = (s64)rs_val * (s64)rt_val;
+			int64_t res = (int64_t)rs_val * (int64_t)rt_val;
 			const_res = true;
-			lo_res = (s32)res;
-			hi_res = (s32)(res >> 32);
+			lo_res = (int32_t)res;
+			hi_res = (int32_t)(res >> 32);
 		} else if ((rs_const && (abs(rs_val) == 1)) || (rt_const && (abs(rt_val) == 1))) {
 			// If one of the operands is known to be const-val '+/-1', result is identity
 			//  (with negation if val is -1)
 
-			u32 ident_reg_psx = rs_const ? _Rt_ : _Rs_;
-			u32 ident_reg = regMipsToHost(ident_reg_psx, REG_LOAD, REG_REGISTER);
+			uint32_t ident_reg_psx = rs_const ? _Rt_ : _Rs_;
+			uint32_t ident_reg = regMipsToHost(ident_reg_psx, REG_LOAD, REG_REGISTER);
 
-			u32 work_reg = ident_reg;
-			bool negate_res = rs_const ? (rs_val < 0) : (rt_val < 0);
+			uint32_t work_reg = ident_reg;
+			uint_fast8_t negate_res = rs_const ? (rs_val < 0) : (rt_val < 0);
 
 			if (negate_res) {
 				SUBU(TEMP_1, 0, work_reg);
@@ -95,19 +95,19 @@ static void recMULT()
 			// If one of the operands is a const power-of-two, we can get result by shifting
 
 			// Determine which operand is const power-of-two value, if any
-			bool rs_pot = rs_const && (rs_val != 0x80000000) && ((abs(rs_val) & (abs(rs_val) - 1)) == 0);
-			bool rt_pot = rt_const && (rt_val != 0x80000000) && ((abs(rt_val) & (abs(rt_val) - 1)) == 0);
+			uint_fast8_t rs_pot = rs_const && (rs_val != 0x80000000) && ((abs(rs_val) & (abs(rs_val) - 1)) == 0);
+			uint_fast8_t rt_pot = rt_const && (rt_val != 0x80000000) && ((abs(rt_val) & (abs(rt_val) - 1)) == 0);
 
 			if (rs_pot || rt_pot) {
-				u32 npot_reg_psx = rs_pot ? _Rt_ : _Rs_;
-				u32 npot_reg = regMipsToHost(npot_reg_psx, REG_LOAD, REG_REGISTER);
+				uint32_t npot_reg_psx = rs_pot ? _Rt_ : _Rs_;
+				uint32_t npot_reg = regMipsToHost(npot_reg_psx, REG_LOAD, REG_REGISTER);
 
 				// Count trailing 0s of const power-of-two operand to get left-shift amount
-				u32 pot_val = rs_pot ? (u32)abs(rs_val) : (u32)abs(rt_val);
-				u32 shift_amt = __builtin_ctz(pot_val);
+				uint32_t pot_val = rs_pot ? (uint32_t)abs(rs_val) : (uint32_t)abs(rt_val);
+				uint32_t shift_amt = __builtin_ctz(pot_val);
 
-				u32 work_reg = npot_reg;
-				bool negate_res = rs_pot ? (rs_val < 0) : (rt_val < 0);
+				uint32_t work_reg = npot_reg;
+				uint_fast8_t negate_res = rs_pot ? (rs_val < 0) : (rt_val < 0);
 				if (negate_res) {
 					SUBU(TEMP_2, 0, npot_reg);
 					work_reg = TEMP_2;
@@ -128,14 +128,14 @@ static void recMULT()
 
 		if (const_res) {
 			if (lo_res) {
-				LI32(TEMP_1, (u32)lo_res);
+				LI32(TEMP_1, (uint32_t)lo_res);
 				SW(TEMP_1, PERM_REG_1, offGPR(32)); // LO
 			} else {
 				SW(0, PERM_REG_1, offGPR(32)); // LO
 			}
 
 			if (hi_res) {
-				LI32(TEMP_1, (u32)hi_res);
+				LI32(TEMP_1, (uint32_t)hi_res);
 				SW(TEMP_1, PERM_REG_1, offGPR(33)); // HI
 			} else {
 				SW(0, PERM_REG_1, offGPR(33)); // HI
@@ -157,8 +157,8 @@ static void recMULT()
 	}
 #endif
 
-	u32 rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
-	u32 rt = regMipsToHost(_Rt_, REG_LOAD, REG_REGISTER);
+	uint32_t rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
+	uint32_t rt = regMipsToHost(_Rt_, REG_LOAD, REG_REGISTER);
 
 	MULT(rs, rt);
 	MFLO(TEMP_1);
@@ -177,18 +177,18 @@ static void recMULTU()
 
 	// First, check if either or both operands are const values
 #ifdef USE_CONST_MULT_OPTIMIZATIONS
-	bool rs_const = IsConst(_Rs_);
-	bool rt_const = IsConst(_Rt_);
+	uint_fast8_t rs_const = IsConst(_Rs_);
+	uint_fast8_t rt_const = IsConst(_Rt_);
 
 	if (rs_const || rt_const)
 	{
 		// Check rs_const or rt_const before using either value here!
-		u32 rs_val = GetConst(_Rs_);
-		u32 rt_val = GetConst(_Rt_);
+		uint32_t rs_val = GetConst(_Rs_);
+		uint32_t rt_val = GetConst(_Rt_);
 
-		bool const_res = false;
-		u32 lo_res = 0;
-		u32 hi_res = 0;
+		uint_fast8_t const_res = false;
+		uint32_t lo_res = 0;
+		uint32_t hi_res = 0;
 
 		if ((rs_const && !rs_val) || (rt_const && !rt_val)) {
 			// If either operand is 0, both LO/HI result is 0
@@ -197,14 +197,14 @@ static void recMULTU()
 			hi_res = 0;
 		} else if (rs_const && rt_const) {
 			// If both operands are known-const, compute result statically
-			u64 res = (u64)rs_val * (u64)rt_val;
+			uint64_t res = (uint64_t)rs_val * (uint64_t)rt_val;
 			const_res = true;
-			lo_res = (u32)res;
-			hi_res = (u32)(res >> 32);
+			lo_res = (uint32_t)res;
+			hi_res = (uint32_t)(res >> 32);
 		} else if ((rs_const && (rs_val == 1)) || (rt_const && (rt_val == 1))) {
 			// If one of the operands is known to be const-val '1', result is identity
-			u32 ident_reg_psx = rs_const ? _Rt_ : _Rs_;
-			u32 ident_reg = regMipsToHost(ident_reg_psx, REG_LOAD, REG_REGISTER);
+			uint32_t ident_reg_psx = rs_const ? _Rt_ : _Rs_;
+			uint32_t ident_reg = regMipsToHost(ident_reg_psx, REG_LOAD, REG_REGISTER);
 
 			SW(0, PERM_REG_1, offGPR(33));         // HI
 			SW(ident_reg, PERM_REG_1, offGPR(32)); // LO
@@ -217,16 +217,16 @@ static void recMULTU()
 			// If one of the operands is a const power-of-two, we can get result by shifting
 
 			// Determine which operand is const power-of-two value, if any
-			bool rs_pot = rs_const && ((rs_val & (rs_val - 1)) == 0);
-			bool rt_pot = rt_const && ((rt_val & (rt_val - 1)) == 0);
+			uint_fast8_t rs_pot = rs_const && ((rs_val & (rs_val - 1)) == 0);
+			uint_fast8_t rt_pot = rt_const && ((rt_val & (rt_val - 1)) == 0);
 
 			if (rs_pot || rt_pot) {
-				u32 npot_reg_psx = rs_pot ? _Rt_ : _Rs_;
-				u32 npot_reg = regMipsToHost(npot_reg_psx, REG_LOAD, REG_REGISTER);
+				uint32_t npot_reg_psx = rs_pot ? _Rt_ : _Rs_;
+				uint32_t npot_reg = regMipsToHost(npot_reg_psx, REG_LOAD, REG_REGISTER);
 
 				// Count trailing 0s of const power-of-two operand to get left-shift amount
-				u32 pot_val = rs_pot ? rs_val : rt_val;
-				u32 shift_amt = __builtin_ctz(pot_val);
+				uint32_t pot_val = rs_pot ? rs_val : rt_val;
+				uint32_t shift_amt = __builtin_ctz(pot_val);
 
 				SLL(TEMP_1, npot_reg, shift_amt);
 				SW(TEMP_1, PERM_REG_1, offGPR(32)); // LO
@@ -271,8 +271,8 @@ static void recMULTU()
 	}
 #endif
 
-	u32 rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
-	u32 rt = regMipsToHost(_Rt_, REG_LOAD, REG_REGISTER);
+	uint32_t rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
+	uint32_t rt = regMipsToHost(_Rt_, REG_LOAD, REG_REGISTER);
 
 	MULTU(rs, rt);
 	MFLO(TEMP_1);
@@ -290,22 +290,22 @@ static void recDIV()
 // Hi, Lo = rs / rt signed
 
 #ifdef USE_CONST_DIV_OPTIMIZATIONS
-	bool rs_const = IsConst(_Rs_);
-	bool rt_const = IsConst(_Rt_);
+	uint_fast8_t rs_const = IsConst(_Rs_);
+	uint_fast8_t rt_const = IsConst(_Rt_);
 
 	// First, check if divisor operand is const value
 	if (rt_const)
 	{
 		// Check rs_const before using rs_val value here!
-		u32 rs_val = GetConst(_Rs_);
-		u32 rt_val = GetConst(_Rt_);
+		uint32_t rs_val = GetConst(_Rs_);
+		uint32_t rt_val = GetConst(_Rt_);
 
 		if (!rt_val) {
 			// If divisor operand is const 0:
 			//  LO result is -1 if dividend is positive or zero,
 			//               +1 if dividend is negative
 			//  HI result is Rs val
-			u32 rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
+			uint32_t rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
 
 			ADDIU(TEMP_2, 0, -1);
 			SLT(TEMP_1, rs, 0);           // TEMP_1 = dividend < 0
@@ -319,7 +319,7 @@ static void recDIV()
 			return;
 		} else if (rt_val == 1) {
 			// If divisor is const-val '1', result is identity
-			u32 rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
+			uint32_t rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
 
 			SW(0, PERM_REG_1, offGPR(33));  // HI
 			SW(rs, PERM_REG_1, offGPR(32)); // LO
@@ -330,8 +330,8 @@ static void recDIV()
 			return;
 		} else if (rs_const) {
 			// If both operands are known-const, compute result statically
-			u32 lo_res = rs_val / rt_val;
-			u32 hi_res = rs_val % rt_val;
+			uint32_t lo_res = rs_val / rt_val;
+			uint32_t hi_res = rs_val % rt_val;
 
 			if (lo_res) {
 				LI32(TEMP_1, lo_res);
@@ -351,17 +351,17 @@ static void recDIV()
 			return;
 		} else {
 			// If divisor is a const power-of-two, we can get result by shifting
-			bool rt_pot = (rt_val != 0x80000000) && ((abs(rt_val) & (abs(rt_val) - 1)) == 0);
+			uint_fast8_t rt_pot = (rt_val != 0x80000000) && ((abs(rt_val) & (abs(rt_val) - 1)) == 0);
 
 			if (rt_pot) {
-				u32 rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
+				uint32_t rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
 
 				// Count trailing 0s of const power-of-two divisor to get right-shift amount
-				u32 pot_val = (u32)abs(rt_val);
-				u32 shift_amt = __builtin_ctz(pot_val);
+				uint32_t pot_val = (uint32_t)abs(rt_val);
+				uint32_t shift_amt = __builtin_ctz(pot_val);
 
-				u32 work_reg = rs;
-				bool negate_res = (rt_val < 0);
+				uint32_t work_reg = rs;
+				uint_fast8_t negate_res = (rt_val < 0);
 
 				if (negate_res) {
 					SUBU(TEMP_2, 0, rs);
@@ -391,8 +391,8 @@ static void recDIV()
 	}
 #endif // USE_CONST_DIV_OPTIMIZATIONS
 
-	u32 rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
-	u32 rt = regMipsToHost(_Rt_, REG_LOAD, REG_REGISTER);
+	uint32_t rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
+	uint32_t rt = regMipsToHost(_Rt_, REG_LOAD, REG_REGISTER);
 
 	// Test if divisor is 0, emulating correct results for PS1 CPU.
 	// NOTE: we don't bother checking for signed division overflow (the
@@ -404,7 +404,7 @@ static void recDIV()
 	//  -80000000h..-1   0   -->  Rs           +1
 	//  -80000000h      -1   -->  0           -80000000h
 
-	bool omit_div_by_zero_fixup = false;
+	uint_fast8_t omit_div_by_zero_fixup = false;
 
 	if (IsConst(_Rt_) && GetConst(_Rt_) != 0) {
 		// If divisor is known-const val and isn't 0, no need to fixup
@@ -419,7 +419,7 @@ static void recDIV()
 		//  If found, don't bother to emulate PS1 div-by-zero result.
 		//
 		// Sequence is sometimes preceeded by one or two MFHI/MFLO opcodes.
-		u32 code_loc = pc;
+		uint32_t code_loc = pc;
 		code_loc += 4 * rec_scan_for_MFHI_MFLO_sequence(code_loc);
 		omit_div_by_zero_fixup = (rec_scan_for_div_by_zero_check_sequence(code_loc) > 0);
 #endif
@@ -461,21 +461,21 @@ static void recDIVU()
 
 	// First, check if divisor operand is const value
 #ifdef USE_CONST_DIV_OPTIMIZATIONS
-	bool rt_const = IsConst(_Rt_);
+	uint_fast8_t rt_const = IsConst(_Rt_);
 
 	if (rt_const)
 	{
-		bool rs_const = IsConst(_Rs_);
+		uint_fast8_t rs_const = IsConst(_Rs_);
 
 		// Check rs_const before using rs_val value here!
-		u32 rs_val = GetConst(_Rs_);
-		u32 rt_val = GetConst(_Rt_);
+		uint32_t rs_val = GetConst(_Rs_);
+		uint32_t rt_val = GetConst(_Rt_);
 
 		if (!rt_val) {
 			// If divisor operand is const 0:
 			//  LO result is 0xffff_ffff
 			//  HI result is Rs val
-			u32 rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
+			uint32_t rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
 
 			ADDIU(TEMP_1, 0, -1);
 			SW(TEMP_1, PERM_REG_1, offGPR(32)); // LO
@@ -487,7 +487,7 @@ static void recDIVU()
 			return;
 		} else if (rt_val == 1) {
 			// If divisor is const-val '1', result is identity
-			u32 rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
+			uint32_t rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
 
 			SW(0, PERM_REG_1, offGPR(33));  // HI
 			SW(rs, PERM_REG_1, offGPR(32)); // LO
@@ -498,8 +498,8 @@ static void recDIVU()
 			return;
 		} else if (rs_const) {
 			// If both operands are known-const, compute result statically
-			u32 lo_res = rs_val / rt_val;
-			u32 hi_res = rs_val % rt_val;
+			uint32_t lo_res = rs_val / rt_val;
+			uint32_t hi_res = rs_val % rt_val;
 
 			if (lo_res) {
 				LI32(TEMP_1, lo_res);
@@ -519,14 +519,14 @@ static void recDIVU()
 			return;
 		} else {
 			// If divisor is a const power-of-two, we can get result by shifting
-			bool rt_pot = (rt_val & (rt_val - 1)) == 0;
+			uint_fast8_t rt_pot = (rt_val & (rt_val - 1)) == 0;
 
 			if (rt_pot) {
-				u32 rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
+				uint32_t rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
 
 				// Count trailing 0s of const power-of-two divisor to get right-shift amount
-				u32 pot_val = rt_val;
-				u32 shift_amt = __builtin_ctz(pot_val);
+				uint32_t pot_val = rt_val;
+				uint32_t shift_amt = __builtin_ctz(pot_val);
 
 				SRL(TEMP_1, rs, shift_amt);
 				SW(TEMP_1, PERM_REG_1, offGPR(32)); // LO
@@ -551,14 +551,14 @@ static void recDIVU()
 	}
 #endif // USE_CONST_DIV_OPTIMIZATIONS
 
-	u32 rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
-	u32 rt = regMipsToHost(_Rt_, REG_LOAD, REG_REGISTER);
+	uint32_t rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
+	uint32_t rt = regMipsToHost(_Rt_, REG_LOAD, REG_REGISTER);
 
 	// Test if divisor is 0, emulating correct results for PS1 CPU.
 	//  Rs              Rt       Hi/Remainder  Lo/Result
 	//  0..FFFFFFFFh    0   -->  Rs            FFFFFFFFh
 
-	bool omit_div_by_zero_fixup = false;
+	uint_fast8_t omit_div_by_zero_fixup = false;
 
 	if (IsConst(_Rt_) && GetConst(_Rt_) != 0) {
 		// If divisor is known-const val and isn't 0, no need to fixup
@@ -566,7 +566,7 @@ static void recDIVU()
 	} else if (!branch) {
 #ifdef OMIT_DIV_BY_ZERO_FIXUP_IF_EXCEPTION_SEQUENCE_FOUND
 		// See notes in recDIV() emitter
-		u32 code_loc = pc;
+		uint32_t code_loc = pc;
 		code_loc += 4 * rec_scan_for_MFHI_MFLO_sequence(code_loc);
 		omit_div_by_zero_fixup = (rec_scan_for_div_by_zero_check_sequence(code_loc) > 0);
 #endif
@@ -602,7 +602,7 @@ static void recMFHI()
 // Rd = Hi
 	if (!_Rd_) return;
 	SetUndef(_Rd_);
-	u32 rd = regMipsToHost(_Rd_, REG_FIND, REG_REGISTER);
+	uint32_t rd = regMipsToHost(_Rd_, REG_FIND, REG_REGISTER);
 
 	LW(rd, PERM_REG_1, offGPR(33));
 	regMipsChanged(_Rd_);
@@ -612,7 +612,7 @@ static void recMFHI()
 static void recMTHI()
 {
 // Hi = Rs
-	u32 rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
+	uint32_t rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
 	SW(rs, PERM_REG_1, offGPR(33));
 	regUnlock(rs);
 }
@@ -634,7 +634,7 @@ static void recMFLO()
 	if (!_Rd_) return;
 
 	SetUndef(_Rd_);
-	u32 rd = regMipsToHost(_Rd_, REG_FIND, REG_REGISTER);
+	uint32_t rd = regMipsToHost(_Rd_, REG_FIND, REG_REGISTER);
 
 	LW(rd, PERM_REG_1, offGPR(32));
 	regMipsChanged(_Rd_);
@@ -645,7 +645,7 @@ static void recMFLO()
 static void recMTLO()
 {
 // Lo = Rs
-	u32 rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
+	uint32_t rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
 	SW(rs, PERM_REG_1, offGPR(32));
 	regUnlock(rs);
 }
@@ -667,19 +667,19 @@ static void recMTLO()
  * NOTE: If conversion succeeds, flag 'skip_emitting_next_mflo' is set, telling
  *       recMFLO() to emit nothing at its next call.
  */
-static bool convertMultiplyTo3Op()
+static uint_fast8_t convertMultiplyTo3Op()
 {
 	// Max number of opcodes to scan ahead in each stage/path
 	const int scan_max = 16;
 
 	// Bitfield indicating which GPR regs have been read/written between the
 	// multiply and the MFLO instruction.
-	u32 gpr_accesses = 0;
+	uint32_t gpr_accesses = 0;
 
-	bool convertible = true;
+	uint_fast8_t convertible = true;
 
 	// 'PC' start address is the instruction after the initial multiply
-	u32 PC = pc;
+	uint32_t PC = pc;
 
 	/****************************************************************
 	 * STAGE 1: Preliminary work needed if multiply is in a BD slot *
@@ -705,11 +705,11 @@ static bool convertMultiplyTo3Op()
 		//        tracking these through the next step.
 
 		// 'BPC' is the beginning of the branch-taken path, lying close ahead.
-		const u32 BPC = (PC-4) + (branch_imm * 4);
+		const uint32_t BPC = (PC-4) + (branch_imm * 4);
 
 		while (PC < BPC)
 		{
-			const u32 opcode = OPCODE_AT(PC);
+			const uint32_t opcode = OPCODE_AT(PC);
 			PC += 4;
 
 			// Skip any NOPs
@@ -725,8 +725,8 @@ static bool convertMultiplyTo3Op()
 				break;
 			}
 
-			// Bits 32,33 of u64 retval are LO,HI respectively. Lower bits are GPRs.
-			const u64 op_reg_accesses = opcodeGetReads(opcode) | opcodeGetWrites(opcode);
+			// Bits 32,33 of uint64_t retval are LO,HI respectively. Lower bits are GPRs.
+			const uint64_t op_reg_accesses = opcodeGetReads(opcode) | opcodeGetWrites(opcode);
 
 			// Ensure there are no accesses of HI/LO in the branch-not-taken path.
 			if ((op_reg_accesses >> 32) & 3) {
@@ -734,7 +734,7 @@ static bool convertMultiplyTo3Op()
 				break;
 			}
 
-			gpr_accesses |= (u32)op_reg_accesses;
+			gpr_accesses |= (uint32_t)op_reg_accesses;
 		}
 
 		// 'PC' is left set to the branch target pc: proceed to next stage
@@ -753,13 +753,13 @@ static bool convertMultiplyTo3Op()
 	//  To keep things simpler and fast, if we come to a jump/branch, we'll give
 	// up unless the MFLO is in its BD slot.
 
-	bool in_bd_slot = false;
-	u32  rd_of_mflo = 0;
+	uint_fast8_t in_bd_slot = false;
+	uint32_t  rd_of_mflo = 0;
 
 	int left = scan_max;
 	while (left-- > 0)
 	{
-		const u32 opcode = OPCODE_AT(PC);
+		const uint32_t opcode = OPCODE_AT(PC);
 		PC += 4;
 
 		// Skip any NOPs
@@ -778,8 +778,8 @@ static bool convertMultiplyTo3Op()
 			break;
 		}
 
-		// Bits 32,33 of u64 retval are LO,HI respectively. Lower bits are GPRs.
-		const u64 op_reg_accesses = opcodeGetReads(opcode) | opcodeGetWrites(opcode);
+		// Bits 32,33 of uint64_t retval are LO,HI respectively. Lower bits are GPRs.
+		const uint64_t op_reg_accesses = opcodeGetReads(opcode) | opcodeGetWrites(opcode);
 
 		// Ensure there are no reads or writes of HI/LO whatsoever before MFLO.
 		if ((op_reg_accesses >> 32) & 3) {
@@ -807,7 +807,7 @@ static bool convertMultiplyTo3Op()
 			left = 1;
 		}
 
-		gpr_accesses |= (u32)op_reg_accesses;
+		gpr_accesses |= (uint32_t)op_reg_accesses;
 	}
 
 	// Give up if we haven't found MFLO, or MFLO's dest reg was
@@ -828,24 +828,24 @@ static bool convertMultiplyTo3Op()
 	//  If we encounter a branch/jump, or the MFLO we found in last stage was
 	// in a BD slot, we stop and proceed to the next stage.
 
-	bool found_hi_lo_overwrite = false;
+	uint_fast8_t found_hi_lo_overwrite = false;
 
 	if (!in_bd_slot)
 	{
 		left = scan_max;
 		while (left-- > 0)
 		{
-			const u32 opcode = OPCODE_AT(PC);
+			const uint32_t opcode = OPCODE_AT(PC);
 			PC += 4;
 
 			// Skip any NOPs
 			if (opcode == 0)
 				continue;
 
-			// Bits 32,33 of u64 retval are LO,HI respectively. Lower bits are GPRs.
-			const u64 op_reg_reads    = opcodeGetReads(opcode);
-			const u64 op_reg_writes   = opcodeGetWrites(opcode);
-			const u64 op_reg_accesses = op_reg_reads | op_reg_writes;
+			// Bits 32,33 of uint64_t retval are LO,HI respectively. Lower bits are GPRs.
+			const uint64_t op_reg_reads    = opcodeGetReads(opcode);
+			const uint64_t op_reg_writes   = opcodeGetWrites(opcode);
+			const uint64_t op_reg_accesses = op_reg_reads | op_reg_writes;
 
 			// Check for a HI and LO overwrite (MULT,MULTU,DIV,DIVU)
 			if (((op_reg_writes >> 32) & 3) == 3) {
@@ -922,14 +922,14 @@ static bool convertMultiplyTo3Op()
 	if (in_bd_slot && !found_hi_lo_overwrite)
 	{
 		int num_paths = 2;
-		bool path_has_hi_lo_overwrite[2] = { false, false };
+		uint_fast8_t path_has_hi_lo_overwrite[2] = { false, false };
 
 		// Begin/end PCs of each codepath's scan range
-		u32 path_start[2];
-		u32 path_end[2];
+		uint32_t path_start[2];
+		uint32_t path_end[2];
 
 		// Opcode of branch or jump instruction before the BD slot
-		const u32 bj_opcode = OPCODE_AT(PC-8);
+		const uint32_t bj_opcode = OPCODE_AT(PC-8);
 
 		if (opcodeIsJump(bj_opcode))
 		{
@@ -994,17 +994,17 @@ static bool convertMultiplyTo3Op()
 			int left = (path_end[path] - path_start[path]) / 4;
 			while (left-- > 0)
 			{
-				const u32 opcode = OPCODE_AT(PC);
+				const uint32_t opcode = OPCODE_AT(PC);
 				PC += 4;
 
 				// Skip any NOPs
 				if (opcode == 0)
 					continue;
 
-				// Bits 32,33 of u64 retval are LO,HI respectively. Lower bits are GPRs.
-				const u64 op_reg_reads    = opcodeGetReads(opcode);
-				const u64 op_reg_writes   = opcodeGetWrites(opcode);
-				const u64 op_reg_accesses = op_reg_reads | op_reg_writes;
+				// Bits 32,33 of uint64_t retval are LO,HI respectively. Lower bits are GPRs.
+				const uint64_t op_reg_reads    = opcodeGetReads(opcode);
+				const uint64_t op_reg_writes   = opcodeGetWrites(opcode);
+				const uint64_t op_reg_accesses = op_reg_reads | op_reg_writes;
 
 				// Check for a HI and LO overwrite (MULT,MULTU,DIV,DIVU)
 				if (((op_reg_writes >> 32) & 3) == 3) {
@@ -1083,10 +1083,10 @@ static bool convertMultiplyTo3Op()
 
 	DISASM_MSG("CONVERTING MULT/MULTU TO 3-OP MUL\n");
 
-	u32 rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
-	u32 rt = regMipsToHost(_Rt_, REG_LOAD, REG_REGISTER);
+	uint32_t rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
+	uint32_t rt = regMipsToHost(_Rt_, REG_LOAD, REG_REGISTER);
 
-	u32 rd = 0;
+	uint32_t rd = 0;
 	if (rd_of_mflo == _Rs_) {
 		rd = rs;
 	} else if (rd_of_mflo == _Rt_) {

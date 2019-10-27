@@ -35,7 +35,7 @@
 //	1.0 x Back + 1.0 x Forward
 #define gpuBlending01(uSrc,uDst) \
 { \
-	u32 st,dt,out; \
+	uint32_t st,dt,out; \
 	asm ("and    %[dt],  %[dst],   #0x7C00\n" \
 	     "and    %[st],  %[src],   #0x7C00\n" \
 	     "add    %[out], %[dt],    %[st]  \n" \
@@ -60,7 +60,7 @@
 //	1.0 x Back - 1.0 x Forward	*/
 #define gpuBlending02(uSrc,uDst) \
 { \
-	u32 st,dt,out; \
+	uint32_t st,dt,out; \
 	asm ("and    %[dt],  %[dst],   #0x7C00\n" \
 	     "and    %[st],  %[src],   #0x7C00\n" \
 	     "subs   %[out], %[dt],    %[st]  \n" \
@@ -81,7 +81,7 @@
 //	1.0 x Back + 0.25 x Forward	*/
 #define gpuBlending03(uSrc,uDst) \
 { \
-	u32 st,dt,out; \
+	uint32_t st,dt,out; \
 	asm ("mov    %[src], %[src],   lsr #2 \n" \
 	     "and    %[dt],  %[dst],   #0x7C00\n" \
 	     "and    %[st],  %[src],   #0x1C00\n" \

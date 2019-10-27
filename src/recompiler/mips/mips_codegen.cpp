@@ -35,9 +35,9 @@
  * Returns: true if ALU op, false if not.
  *          If 'info' param is non-NULL and op is ALU, fill struct members.
  */
-bool opcodeIsALU(const u32 opcode, struct ALUOpInfo *info)
+uint_fast8_t opcodeIsALU(const uint32_t opcode, struct ALUOpInfo *info)
 {
-	bool is_alu_op = false;
+	uint_fast8_t is_alu_op = false;
 
 	struct ALUOpInfo l_info;
 	l_info.writes_rt = false;
@@ -107,16 +107,16 @@ bool opcodeIsALU(const u32 opcode, struct ALUOpInfo *info)
  *   https://github.com/Nebuleon/mupen64plus-core/
  *  NOTE: Our adaptations only support PS1 MIPS r3000a opcodes.
  *
- *  Return value is u64 where bits 0..31 represent $zero..$ra reg read/writes,
+ *  Return value is uint64_t where bits 0..31 represent $zero..$ra reg read/writes,
  *   bit 32 is LO reg, bit 33 is HI reg (MDU registers). Caller can discard or
- *   ignore upper half of u64 result when only GPR info is needed.
+ *   ignore upper half of uint64_t result when only GPR info is needed.
  */
 #ifdef BIT
 #undef BIT
 #endif
-#define BIT(b) ((u64)1 << (b))
+#define BIT(b) ((uint64_t)1 << (b))
 
-u64 opcodeGetReads(const u32 op)
+uint64_t opcodeGetReads(const uint32_t op)
 {
 	switch (_fOp_(op))
 	{
@@ -247,10 +247,10 @@ u64 opcodeGetReads(const u32 op)
 	/* We don't know what the opcode did. Assume EVERY register was read.
 	 * This is a safe default for optimisation purposes, as this opcode will
 	 * then act as a barrier. */
-	return ~(u64)0;
+	return ~(uint64_t)0;
 }
 
-u64 opcodeGetWrites(const u32 op)
+uint64_t opcodeGetWrites(const uint32_t op)
 {
 	switch (_fOp_(op))
 	{
@@ -377,7 +377,7 @@ u64 opcodeGetWrites(const u32 op)
 	/* We don't know what the opcode did. Assume EVERY register was written.
 	 * This is a safe default for optimisation purposes, as this opcode will
 	 * then act as a barrier. */
-	return ~(u64)0;
+	return ~(uint64_t)0;
 }
 
 enum {
@@ -411,7 +411,7 @@ static const char *mipsrec_discard_type_str[] =
  *
  * Returns: # of opcodes found, 0 if sequence not found.
  */
-int rec_scan_for_div_by_zero_check_sequence(u32 code_loc)
+int rec_scan_for_div_by_zero_check_sequence(uint32_t code_loc)
 {
 	int instr_cnt = 0;
 
@@ -437,7 +437,7 @@ int rec_scan_for_div_by_zero_check_sequence(u32 code_loc)
 /*
  * Returns: # of sequential MFHI/MFLO opcodes at PS1 code loc, 0 if none found.
  */
-int rec_scan_for_MFHI_MFLO_sequence(u32 code_loc)
+int rec_scan_for_MFHI_MFLO_sequence(uint32_t code_loc)
 {
 	int instr_cnt = 0;
 
@@ -458,7 +458,7 @@ int rec_scan_for_MFHI_MFLO_sequence(u32 code_loc)
  *
  * Returns: # of sequential opcodes that can be discarded, 0 if none.
  */
-int rec_discard_scan(u32 code_loc, int *discard_type)
+int rec_discard_scan(uint32_t code_loc, int *discard_type)
 {
 	int instr_cnt;
 

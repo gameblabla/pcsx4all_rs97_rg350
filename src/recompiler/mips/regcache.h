@@ -15,25 +15,25 @@
 
 /* Regcache data */
 typedef struct {
-	u32	mappedto;
-	u32	host_age;
-	u32	host_use;
-	u32	host_type;
-	bool	ismapped;
+	uint32_t	mappedto;
+	uint32_t	host_age;
+	uint32_t	host_use;
+	uint32_t	host_type;
+	uint_fast8_t	ismapped;
 	int	host_islocked;
 } HOST_RecRegister;
 
 typedef struct {
-	u32	mappedto;
-	bool	ismapped;
-	bool	psx_ischanged;
+	uint32_t	mappedto;
+	uint_fast8_t	ismapped;
+	uint_fast8_t	psx_ischanged;
 } PSX_RecRegister;
 
 typedef struct {
 	PSX_RecRegister		psx[32];
 	HOST_RecRegister	host[32];
-	u32			reglist[32];
-	u32			reglist_cnt;
+	uint32_t			reglist[32];
+	uint32_t			reglist_cnt;
 } RecRegisters;
 
 RecRegisters regcache;
@@ -105,7 +105,7 @@ static void regFreeRegs(void)
 	if (!firstfound) DEBUGF("FATAL ERROR: unable to free register");
 }
 
-static u32 regAllocHost()
+static uint32_t regAllocHost()
 {
 	//DEBUGF("regMipsToHostHelper regpsx %d action %d type %d reglist_cnt %d", regpsx, action, type, regcache.reglist_cnt);
 	int regnum = regcache.reglist[regcache.reglist_cnt];
@@ -137,7 +137,7 @@ static u32 regAllocHost()
 	return regnum;
 }
 
-static u32 regMipsToHostHelper(u32 regpsx, u32 action, u32 type)
+static uint32_t regMipsToHostHelper(uint32_t regpsx, uint32_t action, uint32_t type)
 {
 	int regnum = regAllocHost();
 
@@ -159,8 +159,8 @@ static u32 regMipsToHostHelper(u32 regpsx, u32 action, u32 type)
 		regcache.host[regnum].mappedto = 0;
 
 		// If reg value is known-const, see if it can be loaded with just one ALU op
-		if (IsConst(regpsx) && ( (((u32)GetConst(regpsx) <= 0xffff) || !(GetConst(regpsx) & 0xffff)) ||
-		                         (((s32)GetConst(regpsx) < 0) && ((s32)GetConst(regpsx) >= -32768))    ))
+		if (IsConst(regpsx) && ( (((uint32_t)GetConst(regpsx) <= 0xffff) || !(GetConst(regpsx) & 0xffff)) ||
+		                         (((int32_t)GetConst(regpsx) < 0) && ((int32_t)GetConst(regpsx) >= -32768))    ))
 		{
 			LI32(regnum, GetConst(regpsx));
 		} else {
@@ -173,8 +173,8 @@ static u32 regMipsToHostHelper(u32 regpsx, u32 action, u32 type)
 
 	if (action == REG_LOAD) {
 		// If reg value is known-const, see if it can be loaded with just one ALU op
-		if (IsConst(regpsx) && ( (((u32)GetConst(regpsx) <= 0xffff) || !(GetConst(regpsx) & 0xffff)) ||
-		                         (((s32)GetConst(regpsx) < 0) && ((s32)GetConst(regpsx) >= -32768))    ))
+		if (IsConst(regpsx) && ( (((uint32_t)GetConst(regpsx) <= 0xffff) || !(GetConst(regpsx) & 0xffff)) ||
+		                         (((int32_t)GetConst(regpsx) < 0) && ((int32_t)GetConst(regpsx) >= -32768))    ))
 		{
 			LI32(regcache.psx[regpsx].mappedto, GetConst(regpsx));
 		} else {
@@ -185,7 +185,7 @@ static u32 regMipsToHostHelper(u32 regpsx, u32 action, u32 type)
 	return regnum;
 }
 
-static u32 regMipsToHost(u32 regpsx, u32 action, u32 type)
+static uint32_t regMipsToHost(uint32_t regpsx, uint32_t action, uint32_t type)
 {
 	/* zero reg is not mapped anywhere */
 	if (!regpsx)
@@ -201,7 +201,7 @@ static u32 regMipsToHost(u32 regpsx, u32 action, u32 type)
 			return hostreg;
 		} else {
 			//DEBUGF("loadbranch regpsx %d", regpsx);
-			u32 mappedto = regcache.psx[regpsx].mappedto;
+			uint32_t mappedto = regcache.psx[regpsx].mappedto;
 
 			if (regcache.psx[regpsx].psx_ischanged) {
 				SW(mappedto, PERM_REG_1, offGPR(regpsx));
@@ -226,7 +226,7 @@ static u32 regMipsToHost(u32 regpsx, u32 action, u32 type)
 	return regMipsToHostHelper(regpsx, action, type);
 }
 
-static void regMipsChanged(u32 regpsx)
+static void regMipsChanged(uint32_t regpsx)
 {
 	/* do nothing for zero reg */
 	if (!regpsx)
@@ -235,7 +235,7 @@ static void regMipsChanged(u32 regpsx)
 	regcache.psx[regpsx].psx_ischanged = true;
 }
 
-static void regUnlock(u32 reghost)
+static void regUnlock(uint32_t reghost)
 {
 	/* do nothing for zero reg */
 	if (!reghost)

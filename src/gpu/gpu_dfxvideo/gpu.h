@@ -101,7 +101,7 @@
 #endif
 
 #define GETLEs16(X) ((int16_t)GETLE16((uint16_t *)X))
-#define GETLEs32(X) ((int16_t)GETLE32((uint16_t *)X))
+#define GETLEint32_t(X) ((int16_t)GETLE32((uint16_t *)X))
 
 #define GETLE16(X) LE2HOST16(*(uint16_t *)X)
 #define GETLE32(X) LE2HOST32(*(uint32_t *)X)

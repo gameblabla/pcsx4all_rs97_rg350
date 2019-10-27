@@ -34,7 +34,7 @@
 #include <stdint.h>
 
 struct pl_data_t {
-	bool fskip_advice, dynarec_compiled, is_pal;
+	uint_fast8_t fskip_advice, dynarec_compiled, is_pal;
 	int8_t frameskip;
 	int frame_interval, frame_interval1024;
 	int vsync_usec_time;
@@ -60,7 +60,7 @@ void pl_resume(void);
 void pl_clear_screen();
 void pl_clear_borders();
 
-static inline bool pl_frameskip_advice(void)
+static inline uint_fast8_t pl_frameskip_advice(void)
 {
 	return pl_data.fskip_advice;
 }
@@ -72,6 +72,6 @@ static inline void pl_dynarec_notify(void)
 }
 
 // In pl_sshot.cpp
-void pl_screenshot_160x120_rgb565(u16 *dst);
+void pl_screenshot_160x120_rgb565(uint16_t *dst);
 
 #endif // PLUGIN_LIB_H

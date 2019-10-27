@@ -27,43 +27,43 @@
 #include "sio.h"
 #include "psxcounters.h"
 
-#define HW_DMA0_MADR (psxHu32ref(0x1080)) // MDEC in DMA
-#define HW_DMA0_BCR  (psxHu32ref(0x1084))
-#define HW_DMA0_CHCR (psxHu32ref(0x1088))
+#define HW_DMA0_MADR (psxHuint32_tref(0x1080)) // MDEC in DMA
+#define HW_DMA0_BCR  (psxHuint32_tref(0x1084))
+#define HW_DMA0_CHCR (psxHuint32_tref(0x1088))
 
-#define HW_DMA1_MADR (psxHu32ref(0x1090)) // MDEC out DMA
-#define HW_DMA1_BCR  (psxHu32ref(0x1094))
-#define HW_DMA1_CHCR (psxHu32ref(0x1098))
+#define HW_DMA1_MADR (psxHuint32_tref(0x1090)) // MDEC out DMA
+#define HW_DMA1_BCR  (psxHuint32_tref(0x1094))
+#define HW_DMA1_CHCR (psxHuint32_tref(0x1098))
 
-#define HW_DMA2_MADR (psxHu32ref(0x10a0)) // GPU DMA
-#define HW_DMA2_BCR  (psxHu32ref(0x10a4))
-#define HW_DMA2_CHCR (psxHu32ref(0x10a8))
+#define HW_DMA2_MADR (psxHuint32_tref(0x10a0)) // GPU DMA
+#define HW_DMA2_BCR  (psxHuint32_tref(0x10a4))
+#define HW_DMA2_CHCR (psxHuint32_tref(0x10a8))
 
-#define HW_DMA3_MADR (psxHu32ref(0x10b0)) // CDROM DMA
-#define HW_DMA3_BCR  (psxHu32ref(0x10b4))
-#define HW_DMA3_CHCR (psxHu32ref(0x10b8))
+#define HW_DMA3_MADR (psxHuint32_tref(0x10b0)) // CDROM DMA
+#define HW_DMA3_BCR  (psxHuint32_tref(0x10b4))
+#define HW_DMA3_CHCR (psxHuint32_tref(0x10b8))
 
-#define HW_DMA4_MADR (psxHu32ref(0x10c0)) // SPU DMA
-#define HW_DMA4_BCR  (psxHu32ref(0x10c4))
-#define HW_DMA4_CHCR (psxHu32ref(0x10c8))
+#define HW_DMA4_MADR (psxHuint32_tref(0x10c0)) // SPU DMA
+#define HW_DMA4_BCR  (psxHuint32_tref(0x10c4))
+#define HW_DMA4_CHCR (psxHuint32_tref(0x10c8))
 
-#define HW_DMA6_MADR (psxHu32ref(0x10e0)) // GPU DMA (OT)
-#define HW_DMA6_BCR  (psxHu32ref(0x10e4))
-#define HW_DMA6_CHCR (psxHu32ref(0x10e8))
+#define HW_DMA6_MADR (psxHuint32_tref(0x10e0)) // GPU DMA (OT)
+#define HW_DMA6_BCR  (psxHuint32_tref(0x10e4))
+#define HW_DMA6_CHCR (psxHuint32_tref(0x10e8))
 
-#define HW_DMA_PCR   (psxHu32ref(0x10f0))
-#define HW_DMA_ICR   (psxHu32ref(0x10f4))
+#define HW_DMA_PCR   (psxHuint32_tref(0x10f0))
+#define HW_DMA_ICR   (psxHuint32_tref(0x10f4))
 
 #define HW_DMA_ICR_BUS_ERROR     (1<<15)
 #define HW_DMA_ICR_GLOBAL_ENABLE (1<<23)
 #define HW_DMA_ICR_IRQ_SENT      (1<<31)
 
 #define DMA_INTERRUPT(n) { \
-	u32 icr = SWAPu32(HW_DMA_ICR); \
+	uint32_t icr = SWAPuint32_t(HW_DMA_ICR); \
 	if (icr & (1 << (16 + n))) { \
 		icr |= 1 << (24 + n); \
 		if (icr & HW_DMA_ICR_GLOBAL_ENABLE && !(icr & HW_DMA_ICR_IRQ_SENT)) { \
-			psxHu32ref(0x1070) |= SWAP32(8); \
+			psxHuint32_tref(0x1070) |= SWAP32(8); \
 			icr |= HW_DMA_ICR_IRQ_SENT; \
 		} \
 		HW_DMA_ICR = SWAP32(icr); \
@@ -72,12 +72,12 @@
 }
 
 void psxHwReset(void);
-u8   psxHwRead8 (u32 add);
-u16  psxHwRead16(u32 add);
-u32  psxHwRead32(u32 add);
-void psxHwWrite8 (u32 add, u8  value);
-void psxHwWrite16(u32 add, u16 value);
-void psxHwWrite32(u32 add, u32 value);
-int psxHwFreeze(void* f, FreezeMode mode);
+uint8_t   psxHwRead8 (uint32_t add);
+uint16_t  psxHwRead16(uint32_t add);
+uint32_t  psxHwRead32(uint32_t add);
+void psxHwWrite8 (uint32_t add, uint8_t  value);
+void psxHwWrite16(uint32_t add, uint16_t value);
+void psxHwWrite32(uint32_t add, uint32_t value);
+int psxHwFreeze(void* f, enum FreezeMode mode);
 
 #endif /* __PSXHW_H__ */

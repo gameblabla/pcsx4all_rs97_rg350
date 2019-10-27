@@ -176,10 +176,10 @@ void gpuDrawLineF(PtrUnion packet, const PSD gpuPixelSpanDriver)
 	// Color to draw with (16 bits, highest of which is unset mask bit)
 	uintptr_t col16 = GPU_RGB16(packet.U4[0]);
 
-	// We use u8 pointers even though PS1 has u16 framebuffer.
+	// We use uint8_t pointers even though PS1 has uint16_t framebuffer.
 	//  This allows pixel-drawing functions to increment dst pointer
 	//  directly by the passed 'incr' value, not having to shift it first.
-	u8 *dst = (u8*)gpu_unai.vram + y0 * dst_stride + x0 * dst_depth;
+	uint8_t *dst = (uint8_t*)gpu_unai.vram + y0 * dst_stride + x0 * dst_depth;
 
 	// SPECIAL CASE: Vertical line
 	if (dx == 0) {
@@ -303,7 +303,7 @@ void gpuDrawLineG(PtrUnion packet, const PSD gpuPixelSpanDriver)
 {
 	int x0, y0, x1, y1;
 	int dx, dy, dr, dg, db;
-	u32 r0, g0, b0, r1, g1, b1;
+	uint32_t r0, g0, b0, r1, g1, b1;
 
 	// All three of these variables should be signed (so multiplication works)
 	ptrdiff_t sx;  // Sign of x delta, positive when x0 < x1
@@ -323,8 +323,8 @@ void gpuDrawLineG(PtrUnion packet, const PSD gpuPixelSpanDriver)
 	x1 = GPU_EXPANDSIGN(packet.S2[6]) + gpu_unai.DrawingOffset[0];
 	y1 = GPU_EXPANDSIGN(packet.S2[7]) + gpu_unai.DrawingOffset[1];
 
-	u32 col0 = packet.U4[0];
-	u32 col1 = packet.U4[2];
+	uint32_t col0 = packet.U4[0];
+	uint32_t col1 = packet.U4[2];
 
 	// Always draw top to bottom, so ensure y0 <= y1
 	if (y0 > y1) {
@@ -368,7 +368,7 @@ void gpuDrawLineG(PtrUnion packet, const PSD gpuPixelSpanDriver)
 		// We already know y0 < y1
 		if (y0 < ymin) {
 #ifdef USE_LINES_ALL_FIXED_PT_MATH
-			s32 factor = GPU_FAST_DIV(((ymin - y0) << GPU_LINE_FIXED_BITS), dy);
+			int32_t factor = GPU_FAST_DIV(((ymin - y0) << GPU_LINE_FIXED_BITS), dy);
 			x0 += (dx * factor) >> GPU_LINE_FIXED_BITS;
 			r0 += (dr * factor) >> GPU_LINE_FIXED_BITS;
 			g0 += (dg * factor) >> GPU_LINE_FIXED_BITS;
@@ -384,7 +384,7 @@ void gpuDrawLineG(PtrUnion packet, const PSD gpuPixelSpanDriver)
 
 		if (y1 > ymax) {
 #ifdef USE_LINES_ALL_FIXED_PT_MATH
-			s32 factor = GPU_FAST_DIV(((ymax - y1) << GPU_LINE_FIXED_BITS), dy);
+			int32_t factor = GPU_FAST_DIV(((ymax - y1) << GPU_LINE_FIXED_BITS), dy);
 			x1 += (dx * factor) >> GPU_LINE_FIXED_BITS;
 			r1 += (dr * factor) >> GPU_LINE_FIXED_BITS;
 			g1 += (dg * factor) >> GPU_LINE_FIXED_BITS;
@@ -421,7 +421,7 @@ void gpuDrawLineG(PtrUnion packet, const PSD gpuPixelSpanDriver)
 				if (x1 < xmin) return; // Both points outside X clip range
 
 #ifdef USE_LINES_ALL_FIXED_PT_MATH
-				s32 factor = GPU_FAST_DIV(((xmin - x0) << GPU_LINE_FIXED_BITS), dx);
+				int32_t factor = GPU_FAST_DIV(((xmin - x0) << GPU_LINE_FIXED_BITS), dx);
 				y0 += (dy * factor) >> GPU_LINE_FIXED_BITS;
 				r0 += (dr * factor) >> GPU_LINE_FIXED_BITS;
 				g0 += (dg * factor) >> GPU_LINE_FIXED_BITS;
@@ -437,7 +437,7 @@ void gpuDrawLineG(PtrUnion packet, const PSD gpuPixelSpanDriver)
 
 			if (x1 > xmax) {
 #ifdef USE_LINES_ALL_FIXED_PT_MATH
-				s32 factor = GPU_FAST_DIV(((xmax - x1) << GPU_LINE_FIXED_BITS), dx);
+				int32_t factor = GPU_FAST_DIV(((xmax - x1) << GPU_LINE_FIXED_BITS), dx);
 				y1 += (dy * factor) >> GPU_LINE_FIXED_BITS;
 				r1 += (dr * factor) >> GPU_LINE_FIXED_BITS;
 				g1 += (dg * factor) >> GPU_LINE_FIXED_BITS;
@@ -461,7 +461,7 @@ void gpuDrawLineG(PtrUnion packet, const PSD gpuPixelSpanDriver)
 				if (x0 < xmin) return; // Both points outside X clip range
 
 #ifdef USE_LINES_ALL_FIXED_PT_MATH
-				s32 factor = GPU_FAST_DIV(((xmin - x1) << GPU_LINE_FIXED_BITS), dx);
+				int32_t factor = GPU_FAST_DIV(((xmin - x1) << GPU_LINE_FIXED_BITS), dx);
 				y1 += (dy * factor) >> GPU_LINE_FIXED_BITS;
 				r1 += (dr * factor) >> GPU_LINE_FIXED_BITS;
 				g1 += (dg * factor) >> GPU_LINE_FIXED_BITS;
@@ -477,7 +477,7 @@ void gpuDrawLineG(PtrUnion packet, const PSD gpuPixelSpanDriver)
 
 			if (x0 > xmax) {
 #ifdef USE_LINES_ALL_FIXED_PT_MATH
-				s32 factor = GPU_FAST_DIV(((xmax - x0) << GPU_LINE_FIXED_BITS), dx);
+				int32_t factor = GPU_FAST_DIV(((xmax - x0) << GPU_LINE_FIXED_BITS), dx);
 				y0 += (dy * factor) >> GPU_LINE_FIXED_BITS;
 				r0 += (dr * factor) >> GPU_LINE_FIXED_BITS;
 				g0 += (dg * factor) >> GPU_LINE_FIXED_BITS;
@@ -516,16 +516,16 @@ void gpuDrawLineG(PtrUnion packet, const PSD gpuPixelSpanDriver)
 	gcol.g = g0 << GPU_GOURAUD_FIXED_BITS;
 	gcol.b = b0 << GPU_GOURAUD_FIXED_BITS;
 
-	// We use u8 pointers even though PS1 has u16 framebuffer.
+	// We use uint8_t pointers even though PS1 has uint16_t framebuffer.
 	//  This allows pixel-drawing functions to increment dst pointer
 	//  directly by the passed 'incr' value, not having to shift it first.
-	u8 *dst = (u8*)gpu_unai.vram + y0 * dst_stride + x0 * dst_depth;
+	uint8_t *dst = (uint8_t*)gpu_unai.vram + y0 * dst_stride + x0 * dst_depth;
 
 	// SPECIAL CASE: Vertical line
 	if (dx == 0) {
 #ifdef USE_LINES_ALL_FIXED_PT_MATH
 		// Get dy fixed-point inverse
-		s32 inv_factor = 1 << GPU_GOURAUD_FIXED_BITS;
+		int32_t inv_factor = 1 << GPU_GOURAUD_FIXED_BITS;
 		if (dy > 1) inv_factor = GPU_FAST_DIV(inv_factor, dy);
 
 		// Simultaneously divide and convert integer to Gouraud fixed point:
@@ -553,7 +553,7 @@ void gpuDrawLineG(PtrUnion packet, const PSD gpuPixelSpanDriver)
 	if (dy == 0) {
 #ifdef USE_LINES_ALL_FIXED_PT_MATH
 		// Get dx fixed-point inverse
-		s32 inv_factor = (1 << GPU_GOURAUD_FIXED_BITS);
+		int32_t inv_factor = (1 << GPU_GOURAUD_FIXED_BITS);
 		if (dx > 1) inv_factor = GPU_FAST_DIV(inv_factor, dx);
 
 		// Simultaneously divide and convert integer to Gouraud fixed point:
@@ -580,7 +580,7 @@ void gpuDrawLineG(PtrUnion packet, const PSD gpuPixelSpanDriver)
 	if (dx == dy) {
 #ifdef USE_LINES_ALL_FIXED_PT_MATH
 		// Get dx fixed-point inverse
-		s32 inv_factor = (1 << GPU_GOURAUD_FIXED_BITS);
+		int32_t inv_factor = (1 << GPU_GOURAUD_FIXED_BITS);
 		if (dx > 1) inv_factor = GPU_FAST_DIV(inv_factor, dx);
 
 		// Simultaneously divide and convert integer to Gouraud fixed point:
@@ -640,7 +640,7 @@ void gpuDrawLineG(PtrUnion packet, const PSD gpuPixelSpanDriver)
 	}
 
 #ifdef USE_LINES_ALL_FIXED_PT_MATH
-	s32 major_inv = GPU_FAST_DIV((1 << GPU_GOURAUD_FIXED_BITS), major);
+	int32_t major_inv = GPU_FAST_DIV((1 << GPU_GOURAUD_FIXED_BITS), major);
 
 	// Simultaneously divide and convert from integer to Gouraud fixed point:
 	gcol.r_incr = dr * major_inv;

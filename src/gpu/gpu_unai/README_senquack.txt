@@ -81,11 +81,11 @@ void gpuDrawF3(const PP gpuPolySpanDriver)
 	const int li=linesInterlace;
 	const int pi=(progressInterlace?(linesInterlace+1):0);
 	const int pif=(progressInterlace?(progressInterlace_flag?(linesInterlace+1):0):1);
-	s32 temp;
-	s32 xa, xb, xmin, xmax;
-	s32 ya, yb, ymin, ymax;
-	s32 x0, x1, x2, x3, dx3=0, x4, dx4=0, dx;
-	s32 y0, y1, y2;
+	int32_t temp;
+	int32_t xa, xb, xmin, xmax;
+	int32_t ya, yb, ymin, ymax;
+	int32_t x0, x1, x2, x3, dx3=0, x4, dx4=0, dx;
+	int32_t y0, y1, y2;
 
 	x0 = GPU_EXPANDSIGN(PacketBuffer.S2[2]);
 	y0 = GPU_EXPANDSIGN(PacketBuffer.S2[3]);
@@ -141,7 +141,7 @@ void gpuDrawF3(const PP gpuPolySpanDriver)
 	yb = y2 - y1;
 	dx =(x2 - x1) * ya - (x2 - x0) * yb;
 
-	for (s32 loop0 = 2; loop0; --loop0)
+	for (int32_t loop0 = 2; loop0; --loop0)
 	{
 		if (loop0 == 2)
 		{
@@ -191,7 +191,7 @@ void gpuDrawF3(const PP gpuPolySpanDriver)
 		x3+= fixed_HALF;
 		x4+= fixed_HALF;
 
-		u16* PixelBase  = &((u16*)GPU_FrameBuffer)[FRAME_OFFSET(0, ya)];
+		uint16_t* PixelBase  = &((uint16_t*)GPU_FrameBuffer)[FRAME_OFFSET(0, ya)];
 		
 		for(;ya<yb;++ya, PixelBase += FRAME_WIDTH, x3+=dx3, x4+=dx4)
 		{
@@ -217,13 +217,13 @@ void gpuDrawFT3(const PP gpuPolySpanDriver)
 	const int li=linesInterlace;
 	const int pi=(progressInterlace?(linesInterlace+1):0);
 	const int pif=(progressInterlace?(progressInterlace_flag?(linesInterlace+1):0):1);
-	s32 temp;
-	s32 xa, xb, xmin, xmax;
-	s32 ya, yb, ymin, ymax;
-	s32 x0, x1, x2, x3, dx3=0, x4, dx4=0, dx;
-	s32 y0, y1, y2;
-	s32 u0, u1, u2, u3, du3=0;
-	s32 v0, v1, v2, v3, dv3=0;
+	int32_t temp;
+	int32_t xa, xb, xmin, xmax;
+	int32_t ya, yb, ymin, ymax;
+	int32_t x0, x1, x2, x3, dx3=0, x4, dx4=0, dx;
+	int32_t y0, y1, y2;
+	int32_t u0, u1, u2, u3, du3=0;
+	int32_t v0, v1, v2, v3, dv3=0;
 
 	x0 = GPU_EXPANDSIGN(PacketBuffer.S2[2] );
 	y0 = GPU_EXPANDSIGN(PacketBuffer.S2[3] );
@@ -252,9 +252,9 @@ void gpuDrawFT3(const PP gpuPolySpanDriver)
 	u1 = PacketBuffer.U1[16]; v1 = PacketBuffer.U1[17];
 	u2 = PacketBuffer.U1[24]; v2 = PacketBuffer.U1[25];
 
-	r4 = s32(PacketBuffer.U1[0]);
-	g4 = s32(PacketBuffer.U1[1]);
-	b4 = s32(PacketBuffer.U1[2]);
+	r4 = int32_t(PacketBuffer.U1[0]);
+	g4 = int32_t(PacketBuffer.U1[1]);
+	b4 = int32_t(PacketBuffer.U1[2]);
 	dr4 = dg4 = db4 = 0;
 
 	if (y0 >= y1)
@@ -294,14 +294,14 @@ void gpuDrawFT3(const PP gpuPolySpanDriver)
 	du4 = (u2 - u1) * ya - (u2 - u0) * yb;
 	dv4 = (v2 - v1) * ya - (v2 - v0) * yb;
 
-	s32 iF,iS;
+	int32_t iF,iS;
 	xInv( dx, iF, iS);
 	du4 = xInvMulx( du4, iF, iS);
 	dv4 = xInvMulx( dv4, iF, iS);
-	tInc = ((u32)(du4<<7)&0x7fff0000) | ((u32)(dv4>>9)&0x00007fff);
+	tInc = ((uint32_t)(du4<<7)&0x7fff0000) | ((uint32_t)(dv4>>9)&0x00007fff);
 	tMsk = (TextureWindow[2]<<23) | (TextureWindow[3]<<7) | 0x00ff00ff;
 
-	for (s32 loop0 = 2; loop0; --loop0)
+	for (int32_t loop0 = 2; loop0; --loop0)
 	{
 		if (loop0 == 2)
 		{
@@ -371,7 +371,7 @@ void gpuDrawFT3(const PP gpuPolySpanDriver)
 		u3+= fixed_HALF;
 		v4+= fixed_HALF;
 
-		u16* PixelBase  = &((u16*)GPU_FrameBuffer)[FRAME_OFFSET(0, ya)];
+		uint16_t* PixelBase  = &((uint16_t*)GPU_FrameBuffer)[FRAME_OFFSET(0, ya)];
 
 		for(;ya<yb;++ya, PixelBase += FRAME_WIDTH, x3+=dx3, x4+=dx4, u3+=du3, v3+=dv3)
 		{
@@ -409,14 +409,14 @@ void gpuDrawG3(const PP gpuPolySpanDriver)
 	const int li=linesInterlace;
 	const int pi=(progressInterlace?(linesInterlace+1):0);
 	const int pif=(progressInterlace?(progressInterlace_flag?(linesInterlace+1):0):1);
-	s32 temp;
-	s32 xa, xb, xmin, xmax;
-	s32 ya, yb, ymin, ymax;
-	s32 x0, x1, x2, x3, dx3=0, x4, dx4=0, dx;
-	s32 y0, y1, y2;
-	s32 r0, r1, r2, r3, dr3=0;
-	s32 g0, g1, g2, g3, dg3=0;
-	s32 b0, b1, b2, b3, db3=0;
+	int32_t temp;
+	int32_t xa, xb, xmin, xmax;
+	int32_t ya, yb, ymin, ymax;
+	int32_t x0, x1, x2, x3, dx3=0, x4, dx4=0, dx;
+	int32_t y0, y1, y2;
+	int32_t r0, r1, r2, r3, dr3=0;
+	int32_t g0, g1, g2, g3, dg3=0;
+	int32_t b0, b1, b2, b3, db3=0;
 
 	x0 = GPU_EXPANDSIGN(PacketBuffer.S2[2] );
 	y0 = GPU_EXPANDSIGN(PacketBuffer.S2[3] );
@@ -477,17 +477,17 @@ void gpuDrawG3(const PP gpuPolySpanDriver)
 	dg4 = (g2 - g1) * ya - (g2 - g0) * yb;
 	db4 = (b2 - b1) * ya - (b2 - b0) * yb;
 
-	s32 iF,iS;
+	int32_t iF,iS;
 	xInv(            dx, iF, iS);
 	dr4 = xInvMulx( dr4, iF, iS);
 	dg4 = xInvMulx( dg4, iF, iS);
 	db4 = xInvMulx( db4, iF, iS);
-	u32 dr = (u32)(dr4<< 8)&(0xffffffff<<21);   if(dr4<0) dr+= 1<<21;
-	u32 dg = (u32)(dg4>> 3)&(0xffffffff<<10);   if(dg4<0) dg+= 1<<10;
-	u32 db = (u32)(db4>>14)&(0xffffffff    );   if(db4<0) db+= 1<< 0;
+	uint32_t dr = (uint32_t)(dr4<< 8)&(0xffffffff<<21);   if(dr4<0) dr+= 1<<21;
+	uint32_t dg = (uint32_t)(dg4>> 3)&(0xffffffff<<10);   if(dg4<0) dg+= 1<<10;
+	uint32_t db = (uint32_t)(db4>>14)&(0xffffffff    );   if(db4<0) db+= 1<< 0;
 	lInc = db + dg + dr;
 
-	for (s32 loop0 = 2; loop0; --loop0)
+	for (int32_t loop0 = 2; loop0; --loop0)
 	{
 		if (loop0 == 2)
 		{
@@ -560,7 +560,7 @@ void gpuDrawG3(const PP gpuPolySpanDriver)
 		x3+= fixed_HALF;  x4+= fixed_HALF;
 		r3+= fixed_HALF;  g3+= fixed_HALF;  b3+= fixed_HALF;
 
-		u16* PixelBase  = &((u16*)GPU_FrameBuffer)[FRAME_OFFSET(0, ya)];
+		uint16_t* PixelBase  = &((uint16_t*)GPU_FrameBuffer)[FRAME_OFFSET(0, ya)];
 		
 		for(;ya<yb;++ya, PixelBase += FRAME_WIDTH, x3+=dx3, x4+=dx4, r3+=dr3, g3+=dg3, b3+=db3)
 		{
@@ -596,16 +596,16 @@ void gpuDrawGT3(const PP gpuPolySpanDriver)
 	const int li=linesInterlace;
 	const int pi=(progressInterlace?(linesInterlace+1):0);
 	const int pif=(progressInterlace?(progressInterlace_flag?(linesInterlace+1):0):1);
-	s32 temp;
-	s32 xa, xb, xmin, xmax;
-	s32 ya, yb, ymin, ymax;
-	s32 x0, x1, x2, x3, dx3=0, x4, dx4=0, dx;
-	s32 y0, y1, y2;
-	s32 u0, u1, u2, u3, du3=0;
-	s32 v0, v1, v2, v3, dv3=0;
-	s32 r0, r1, r2, r3, dr3=0;
-	s32 g0, g1, g2, g3, dg3=0;
-	s32 b0, b1, b2, b3, db3=0;
+	int32_t temp;
+	int32_t xa, xb, xmin, xmax;
+	int32_t ya, yb, ymin, ymax;
+	int32_t x0, x1, x2, x3, dx3=0, x4, dx4=0, dx;
+	int32_t y0, y1, y2;
+	int32_t u0, u1, u2, u3, du3=0;
+	int32_t v0, v1, v2, v3, dv3=0;
+	int32_t r0, r1, r2, r3, dr3=0;
+	int32_t g0, g1, g2, g3, dg3=0;
+	int32_t b0, b1, b2, b3, db3=0;
 
 	x0 = GPU_EXPANDSIGN(PacketBuffer.S2[2] );
 	y0 = GPU_EXPANDSIGN(PacketBuffer.S2[3] );
@@ -674,7 +674,7 @@ void gpuDrawGT3(const PP gpuPolySpanDriver)
 	dg4 = (g2 - g1) * ya - (g2 - g0) * yb;
 	db4 = (b2 - b1) * ya - (b2 - b0) * yb;
 
-	s32 iF,iS;
+	int32_t iF,iS;
 
 	xInv(            dx, iF, iS);
 	du4 = xInvMulx( du4, iF, iS);
@@ -682,14 +682,14 @@ void gpuDrawGT3(const PP gpuPolySpanDriver)
 	dr4 = xInvMulx( dr4, iF, iS);
 	dg4 = xInvMulx( dg4, iF, iS);
 	db4 = xInvMulx( db4, iF, iS);
-	u32 dr = (u32)(dr4<< 8)&(0xffffffff<<21);   if(dr4<0) dr+= 1<<21;
-	u32 dg = (u32)(dg4>> 3)&(0xffffffff<<10);   if(dg4<0) dg+= 1<<10;
-	u32 db = (u32)(db4>>14)&(0xffffffff    );   if(db4<0) db+= 1<< 0;
+	uint32_t dr = (uint32_t)(dr4<< 8)&(0xffffffff<<21);   if(dr4<0) dr+= 1<<21;
+	uint32_t dg = (uint32_t)(dg4>> 3)&(0xffffffff<<10);   if(dg4<0) dg+= 1<<10;
+	uint32_t db = (uint32_t)(db4>>14)&(0xffffffff    );   if(db4<0) db+= 1<< 0;
 	lInc = db + dg + dr;
-	tInc = ((u32)(du4<<7)&0x7fff0000) | ((u32)(dv4>>9)&0x00007fff);
+	tInc = ((uint32_t)(du4<<7)&0x7fff0000) | ((uint32_t)(dv4>>9)&0x00007fff);
 	tMsk = (TextureWindow[2]<<23) | (TextureWindow[3]<<7) | 0x00ff00ff;
 
-	for (s32 loop0 = 2; loop0; --loop0)
+	for (int32_t loop0 = 2; loop0; --loop0)
 	{
 		if (loop0 == 2)
 		{
@@ -775,7 +775,7 @@ void gpuDrawGT3(const PP gpuPolySpanDriver)
 		x3+= fixed_HALF;  x4+= fixed_HALF;
 		u3+= fixed_HALF;  v4+= fixed_HALF;
 		r3+= fixed_HALF;  g3+= fixed_HALF;  b3+= fixed_HALF;
-		u16* PixelBase  = &((u16*)GPU_FrameBuffer)[FRAME_OFFSET(0, ya)];
+		uint16_t* PixelBase  = &((uint16_t*)GPU_FrameBuffer)[FRAME_OFFSET(0, ya)];
 		
 		for(;ya<yb;++ya, PixelBase += FRAME_WIDTH, x3+=dx3, x4+=dx4, u3+=du3, v3+=dv3, r3+=dr3, g3+=dg3,	b3+=db3)
 		{
@@ -810,7 +810,7 @@ void gpuDrawGT3(const PP gpuPolySpanDriver)
 // ( from gpu_inner.h ) NOTE: this uses 16.16, not 22.10 fixed point
 //////////////////////////////////////////////////////////////////////////
 template<const int CF>
-INLINE void  gpuPolySpanFn(u16 *pDst, u32 count)
+INLINE void  gpuPolySpanFn(uint16_t *pDst, uint32_t count)
 {
 	if (!TM)
 	{	
@@ -818,8 +818,8 @@ INLINE void  gpuPolySpanFn(u16 *pDst, u32 count)
 		if (!G)
 		{
 			// NO GOURAUD
-			u16 data;
-			if (L) { u32 lCol=((u32)(b4<< 2)&(0x03ff)) | ((u32)(g4<<13)&(0x07ff<<10)) | ((u32)(r4<<24)&(0x07ff<<21)); gpuLightingRGB(data,lCol); }
+			uint16_t data;
+			if (L) { uint32_t lCol=((uint32_t)(b4<< 2)&(0x03ff)) | ((uint32_t)(g4<<13)&(0x07ff<<10)) | ((uint32_t)(r4<<24)&(0x07ff<<21)); gpuLightingRGB(data,lCol); }
 			else data=PixelData;
 			if ((!M)&&(!B))
 			{
@@ -833,14 +833,14 @@ INLINE void  gpuPolySpanFn(u16 *pDst, u32 count)
 			}
 			else
 			{
-				u16 uSrc;
-				u16 uDst;
-				u32 uMsk; if (BM==0) uMsk=0x7BDE;
-				u32 bMsk; if (BI) bMsk=blit_mask;
+				uint16_t uSrc;
+				uint16_t uDst;
+				uint32_t uMsk; if (BM==0) uMsk=0x7BDE;
+				uint32_t bMsk; if (BI) bMsk=blit_mask;
 				do
 				{
 					// blit-mask
-					if (BI) { if((bMsk>>((((u32)pDst)>>1)&7))&1) goto endtile; }
+					if (BI) { if((bMsk>>((((uint32_t)pDst)>>1)&7))&1) goto endtile; }
 					//  masking
 					uDst = *pDst;
 					if(M) { if (uDst&0x8000) goto endtile;  }
@@ -860,16 +860,16 @@ INLINE void  gpuPolySpanFn(u16 *pDst, u32 count)
 		else
 		{
 			// GOURAUD
-			u16 uDst;
-			u16 uSrc;
-			u32 linc=lInc;
-			u32 lCol=((u32)(b4>>14)&(0x03ff)) | ((u32)(g4>>3)&(0x07ff<<10)) | ((u32)(r4<<8)&(0x07ff<<21));
-			u32 uMsk; if ((B)&&(BM==0)) uMsk=0x7BDE;
-			u32 bMsk; if (BI) bMsk=blit_mask;
+			uint16_t uDst;
+			uint16_t uSrc;
+			uint32_t linc=lInc;
+			uint32_t lCol=((uint32_t)(b4>>14)&(0x03ff)) | ((uint32_t)(g4>>3)&(0x07ff<<10)) | ((uint32_t)(r4<<8)&(0x07ff<<21));
+			uint32_t uMsk; if ((B)&&(BM==0)) uMsk=0x7BDE;
+			uint32_t bMsk; if (BI) bMsk=blit_mask;
 			do
 			{
 				// blit-mask
-				if (BI) { if((bMsk>>((((u32)pDst)>>1)&7))&1) goto endgou; }
+				if (BI) { if((bMsk>>((((uint32_t)pDst)>>1)&7))&1) goto endgou; }
 				//  masking
 				if(M) { uDst = *pDst;  if (uDst&0x8000) goto endgou;  }
 				//  blend
@@ -898,28 +898,28 @@ INLINE void  gpuPolySpanFn(u16 *pDst, u32 count)
 	else
 	{
 		// TEXTURE
-		u16 uDst;
-		u16 uSrc;
-		u32 linc; if (L&&G) linc=lInc;
-		u32 tinc=tInc;
-		u32 tmsk=tMsk;
-		u32 tCor = ((u32)( u4<<7)&0x7fff0000) | ((u32)( v4>>9)&0x00007fff); tCor&= tmsk;
-		const u16* _TBA=TBA;
-		const u16* _CBA; if (TM!=3) _CBA=CBA;
-		u32 lCol;
-		if(L && !G) { lCol = ((u32)(b4<< 2)&(0x03ff)) | ((u32)(g4<<13)&(0x07ff<<10)) | ((u32)(r4<<24)&(0x07ff<<21)); }
-		else if(L && G) { lCol = ((u32)(b4>>14)&(0x03ff)) | ((u32)(g4>>3)&(0x07ff<<10)) | ((u32)(r4<<8)&(0x07ff<<21)); 	}
-		u32 uMsk; if ((B)&&(BM==0)) uMsk=0x7BDE;
-		u32 bMsk; if (BI) bMsk=blit_mask;
+		uint16_t uDst;
+		uint16_t uSrc;
+		uint32_t linc; if (L&&G) linc=lInc;
+		uint32_t tinc=tInc;
+		uint32_t tmsk=tMsk;
+		uint32_t tCor = ((uint32_t)( u4<<7)&0x7fff0000) | ((uint32_t)( v4>>9)&0x00007fff); tCor&= tmsk;
+		const uint16_t* _TBA=TBA;
+		const uint16_t* _CBA; if (TM!=3) _CBA=CBA;
+		uint32_t lCol;
+		if(L && !G) { lCol = ((uint32_t)(b4<< 2)&(0x03ff)) | ((uint32_t)(g4<<13)&(0x07ff<<10)) | ((uint32_t)(r4<<24)&(0x07ff<<21)); }
+		else if(L && G) { lCol = ((uint32_t)(b4>>14)&(0x03ff)) | ((uint32_t)(g4>>3)&(0x07ff<<10)) | ((uint32_t)(r4<<8)&(0x07ff<<21)); 	}
+		uint32_t uMsk; if ((B)&&(BM==0)) uMsk=0x7BDE;
+		uint32_t bMsk; if (BI) bMsk=blit_mask;
 		do
 		{
 			// blit-mask
-			if (BI) { if((bMsk>>((((u32)pDst)>>1)&7))&1) goto endpoly; }
+			if (BI) { if((bMsk>>((((uint32_t)pDst)>>1)&7))&1) goto endpoly; }
 			//  masking
 			if(M) { uDst = *pDst;  if (uDst&0x8000) goto endpoly;  }
 			//  texture
-			if (TM==1) { u32 tu=(tCor>>23); u32 tv=(tCor<<4)&(0xff<<11); u8 rgb=((u8*)_TBA)[tv+(tu>>1)]; uSrc=_CBA[(rgb>>((tu&1)<<2))&0xf]; if(!uSrc) goto endpoly; }
-			if (TM==2) { uSrc = _CBA[(((u8*)_TBA)[(tCor>>23)+((tCor<<4)&(0xff<<11))])]; if(!uSrc)  goto endpoly; }
+			if (TM==1) { uint32_t tu=(tCor>>23); uint32_t tv=(tCor<<4)&(0xff<<11); uint8_t rgb=((uint8_t*)_TBA)[tv+(tu>>1)]; uSrc=_CBA[(rgb>>((tu&1)<<2))&0xf]; if(!uSrc) goto endpoly; }
+			if (TM==2) { uSrc = _CBA[(((uint8_t*)_TBA)[(tCor>>23)+((tCor<<4)&(0xff<<11))])]; if(!uSrc)  goto endpoly; }
 			if (TM==3) { uSrc = _TBA[(tCor>>23)+((tCor<<3)&(0xff<<10))]; if(!uSrc)  goto endpoly; }
 			//  blend
 			if(B)

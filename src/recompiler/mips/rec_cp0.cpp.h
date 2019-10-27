@@ -9,7 +9,7 @@ static void recMFC0()
 // Rt = Cop0->Rd
 	if (!_Rt_) return;
 	SetUndef(_Rt_);
-	u32 rt = regMipsToHost(_Rt_, REG_FIND, REG_REGISTER);
+	uint32_t rt = regMipsToHost(_Rt_, REG_FIND, REG_REGISTER);
 
 	LW(rt, PERM_REG_1, offCP0(_Rd_));
 	regMipsChanged(_Rt_);
@@ -40,11 +40,11 @@ static void emitTestSWInts()
 	AND(TEMP_1, MIPSREG_A0, MIPSREG_A1);   // TEMP_1 = Cause & Status
 	ANDI(MIPSREG_A1, MIPSREG_A1, 0x1);     // MIPSREG_A1 = Status & 0x1
 
-	u32 *backpatch1 = (u32 *)recMem;
+	uint32_t *backpatch1 = (uint32_t *)recMem;
 	BEQZ(MIPSREG_A1, 0);
 	ANDI(TEMP_1, TEMP_1, 0x300);  // <BD slot> TEMP_1 = (Cause & Status) & 0x300
 
-	u32 *backpatch2 = (u32 *)recMem;
+	uint32_t *backpatch2 = (uint32_t *)recMem;
 	BEQZ(TEMP_1, 0);
 	// NOTE: Branch delay slot contains next emitted instruction
 
@@ -73,7 +73,7 @@ static void emitTestSWInts()
 	LI16(MIPSREG_A1, (branch == 1 ? 1 : 0)); // <BD slot>
 
 	// If new PC is unknown, cannot use 'fastpath' return
-	bool use_fastpath = false;
+	uint_fast8_t use_fastpath = false;
 
 	rec_recompile_end_part1();
 
@@ -89,7 +89,7 @@ static void recMTC0()
 {
 // Cop0->Rd = Rt
 
-	u32 rt = regMipsToHost(_Rt_, REG_LOAD, REG_REGISTER);
+	uint32_t rt = regMipsToHost(_Rt_, REG_LOAD, REG_REGISTER);
 
 	switch (_Rd_) {
 		case 12: // Status
@@ -105,7 +105,7 @@ static void recMTC0()
 			} else {
 				ANDI(TEMP_1, rt, 0x401);
 				LI16(TEMP_2, 0x401);
-				u32 *backpatch = (u32 *)recMem;
+				uint32_t *backpatch = (uint32_t *)recMem;
 				BNE(TEMP_1, TEMP_2, 0);
 				SW(rt, PERM_REG_1, offCP0(12)); // <BD slot> Store new CP0 Status reg val
 				SW(0, PERM_REG_1, off(io_cycle_counter));
@@ -132,7 +132,7 @@ static void recMTC0()
 		case 13: // Cause
 			// Only bits 8,9 are writable
 			// ---- Equivalent C code: ----
-			// u32 val = _Rt_;
+			// uint32_t val = _Rt_;
 			// psxRegs.CP0.n.Cause &= ~0x300;
 			// psxRegs.CP0.n.Cause |= val & 0x300;
 

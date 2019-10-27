@@ -42,19 +42,22 @@
 #include "port.h"
 
 /* Define types */
-typedef int8_t s8;
-typedef int16_t s16;
-typedef int32_t s32;
-typedef int64_t s64;
-typedef intptr_t sptr;
 
-typedef uint8_t u8;
-typedef uint16_t u16;
-typedef uint32_t u32;
-typedef uint64_t u64;
-typedef uintptr_t uptr;
+/*
+typedef int8_t int8_t;
+typedef int16_t int16_t;
+typedef int32_t int32_t;
+typedef int64_t int64_t;
+typedef intptr_t intptr_t;
 
-typedef uint8_t boolean;
+typedef uint8_t uint8_t;
+typedef uint16_t uint16_t;
+typedef uint32_t uint32_t;
+typedef uint64_t uint64_t;
+typedef uintptr_t uintptr_t;
+
+typedef uint8_t uint_fast8_t;
+*/
 
 #ifndef TRUE
 #define TRUE 1
@@ -62,6 +65,14 @@ typedef uint8_t boolean;
 
 #ifndef FALSE
 #define FALSE 0
+#endif
+
+#ifndef true
+#define true 1
+#endif
+
+#ifndef false
+#define false 0
 #endif
 
 #ifndef PACKAGE_VERSION
@@ -125,46 +136,46 @@ typedef struct {
 	char BiosDir[MAXPATHLEN];
 	char LastDir[MAXPATHLEN];
 	char PatchesDir[MAXPATHLEN];  // PPF patch files
-	boolean Xa; /* 0=XA enabled, 1=XA disabled */
-	boolean Mdec; /* 0=Black&White Mdecs Only Disabled, 1=Black&White Mdecs Only Enabled */
-	boolean PsxAuto; /* 1=autodetect system (pal or ntsc) */
-	boolean Cdda; /* 0=Enable Cd audio, 1=Disable Cd audio */
-	boolean HLE; /* 1=HLE, 0=bios */
-	boolean SlowBoot; /* 0=skip bios logo sequence on boot  1=show sequence (does not apply to HLE) */
-	boolean AnalogArrow; /* 0=disable 1=use L-stick as D-pad arrow key */
-	u8 AnalogMode;   /* 0-Digital 1-DualAnalog 2-DualShock */
-	boolean RCntFix; /* 1=Parasite Eve 2, Vandal Hearts 1/2 Fix */
-	boolean VSyncWA; /* 1=InuYasha Sengoku Battle Fix */
-	u8 Cpu; /* 0=recompiler, 1=interpreter */
-	u8 PsxType; /* 0=ntsc, 1=pal */
-    u8 McdSlot1; /* mcd slot 1, mcd%03u.mcr */
-    u8 McdSlot2; /* mcd slot 2, mcd%03u.mcr */
+	uint_fast8_t Xa; /* 0=XA enabled, 1=XA disabled */
+	uint_fast8_t Mdec; /* 0=Black&White Mdecs Only Disabled, 1=Black&White Mdecs Only Enabled */
+	uint_fast8_t PsxAuto; /* 1=autodetect system (pal or ntsc) */
+	uint_fast8_t Cdda; /* 0=Enable Cd audio, 1=Disable Cd audio */
+	uint_fast8_t HLE; /* 1=HLE, 0=bios */
+	uint_fast8_t SlowBoot; /* 0=skip bios logo sequence on boot  1=show sequence (does not apply to HLE) */
+	uint_fast8_t AnalogArrow; /* 0=disable 1=use L-stick as D-pad arrow key */
+	uint8_t AnalogMode;   /* 0-Digital 1-DualAnalog 2-DualShock */
+	uint_fast8_t RCntFix; /* 1=Parasite Eve 2, Vandal Hearts 1/2 Fix */
+	uint_fast8_t VSyncWA; /* 1=InuYasha Sengoku Battle Fix */
+	uint8_t Cpu; /* 0=recompiler, 1=interpreter */
+	uint8_t PsxType; /* 0=ntsc, 1=pal */
+    uint8_t McdSlot1; /* mcd slot 1, mcd%03u.mcr */
+    uint8_t McdSlot2; /* mcd slot 2, mcd%03u.mcr */
 
 	//senquack - added Config.SpuIrq option from PCSX Rearmed/Reloaded:
-	boolean SpuIrq; /* 1=SPU IRQ always enabled (needed for audio in some games) */
+	uint_fast8_t SpuIrq; /* 1=SPU IRQ always enabled (needed for audio in some games) */
 
 	//senquack - Added audio syncronization option; if audio buffer is full,
 	//           main thread blocks
-	boolean SyncAudio;
+	uint_fast8_t SyncAudio;
 
-	s8      SpuUpdateFreq; // Frequency of SPU updates
+	int8_t      SpuUpdateFreq; // Frequency of SPU updates
 	                       // 0: once per frame  1: twice per frame etc
 	                       // (Use SPU_UPDATE_FREQ_* enum to set)
 
 	//senquack - Added option to allow queuing CDREAD_INT interrupts sooner
 	//           than they'd normally be issued when SPU's XA buffer is not
 	//           full. This fixes droupouts in music/speech on slow devices.
-	s8      ForcedXAUpdates;
+	int8_t      ForcedXAUpdates;
 
-	boolean ShowFps;     // Show FPS
-	boolean FrameLimit;  // Limit to NTSC/PAL framerate
+	uint_fast8_t ShowFps;     // Show FPS
+	uint_fast8_t FrameLimit;  // Limit to NTSC/PAL framerate
 
-	s8      FrameSkip;	// -1: AUTO  0: OFF  1-3: FIXED
-	s8      VideoScaling; // 0: Hardware  1: Software Nearest
+	int8_t      FrameSkip;	// -1: AUTO  0: OFF  1-3: FIXED
+	int8_t      VideoScaling; // 0: Hardware  1: Software Nearest
 
 	// Options for performance monitor
-	boolean PerfmonConsoleOutput;
-	boolean PerfmonDetailedStats;
+	uint_fast8_t PerfmonConsoleOutput;
+	uint_fast8_t PerfmonDetailedStats;
 
 } PcsxConfig;
 
@@ -174,9 +185,9 @@ extern PcsxConfig Config;
 // Savestate file handling //
 /////////////////////////////
 struct PcsxSaveFuncs {
-	void *(*open)(const char *name, boolean writing);
-	int   (*read)(void *file, void *buf, u32 len);
-	int   (*write)(void *file, const void *buf, u32 len);
+	void *(*open)(const char *name, uint_fast8_t writing);
+	int   (*read)(void *file, void *buf, uint32_t len);
+	int   (*write)(void *file, const void *buf, uint32_t len);
 	long  (*seek)(void *file, long offs, int whence);
 	int   (*close)(void *file);
 
