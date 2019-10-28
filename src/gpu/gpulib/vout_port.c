@@ -28,14 +28,6 @@
 #define RGB24(R,G,B)  	((((R)&0xF8)>>3)|(((G)&0xF8)<<2)|(((B)&0xF8)<<7))
 #endif
 
-#define uint8_t uint8_t
-#define int8_t int8_t
-#define uint16_t uint16_t
-#define int16_t int16_t
-#define uint32_t uint32_t
-#define int32_t int32_t
-#define int64_t int64_t
-
 #ifdef USE_MEMCPY32
 static inline void *memcpy32 (void * restrict dest, const void * restrict src, size_t len)
 {
@@ -448,10 +440,10 @@ void vout_update(void)
 	int x0 = gpu.screen.x;
 	int y0 = gpu.screen.y;
 	int w0 = gpu.screen.hres;
-	int w1 = gpu.screen.w;
 	#ifdef NO_HWSCALE
-	int h0 = !gpu_unai_config_ext.ntsc_fix || Config.VideoScaling == 1 ? gpu.screen.vres : SCREEN_HEIGHT;
+	int h0 = SCREEN_HEIGHT;
 	#else
+	int w1 = gpu.screen.w;
 	int h0 = !gpu_unai_config_ext.ntsc_fix || Config.VideoScaling == 1 ? gpu.screen.vres : SCREEN_HEIGHT;
 	#endif
 	int h1 = gpu.screen.h;     // height of image displayed on screen
@@ -469,8 +461,6 @@ void vout_update(void)
 
 #ifndef NO_HWSCALE
 	if (Config.VideoScaling == 1)
-#else
-	if (1)
 #endif
 	{
 		//  Height centering
