@@ -23,43 +23,26 @@ RECOMPILER = mips
 
 RM     = rm -f
 MD     = mkdir
-CC     = mipsel-linux-gcc
-CXX    = mipsel-linux-g++
-LD     = mipsel-linux-g++
+CC     = /opt/gcw0-toolchain-static/bin/mipsel-linux-gcc
+CXX    = /opt/gcw0-toolchain-static/bin/mipsel-linux-g++
+LD     = /opt/gcw0-toolchain-static/bin/mipsel-linux-g++
 
 SYSROOT     := $(shell $(CC) --print-sysroot)
 SDL_CONFIG  := $(SYSROOT)/usr/bin/sdl-config
 SDL_CFLAGS  := $(shell $(SDL_CONFIG) --cflags)
 SDL_LIBS    := $(shell $(SDL_CONFIG) --libs)
 
-LDFLAGS := $(SDL_LIBS) -lSDL_mixer -lSDL_image -lrt -lz -lshake
 
-C_ARCH = -mips32r2 -DGCW_ZERO -DRUMBLE -DRG350 -DSHMEM_MIRRORING
+C_ARCH = -mips32r2
 
-ifeq ($(DEV),1)
-	# If DEV=1 is passed to 'make', don't mmap anything to virtual address 0.
-	#  This is for development/debugging: it allows null pointer dereferences
-	#  to segfault as they normally would. We'll map PS1 address space higher.
-	#
-	# Furthermore, div-by-zero is also checked for at runtime (default for GCC)
-else
-	# Default: Allows address-conversion optimization in dynarec. PS1 addresses
-	#          will be mapped/mirrored at virtual address 0.
-	#
-	# Null pointer dereferences will NOT segfault.
-	# Locate program at virtual address 0x4000_0000. Anything below is free for
-	#  fixed mappings by dynarec, etc. Otherwise, the Linux default seems to be
-	#  0x40_0000 i.e., offset 4MB from 0. That's not enough room to map and
-	#  mirror PS1 address space.
-	#C_ARCH  += -DMMAP_TO_ADDRESS_ZERO
-	#LDFLAGS += -Wl,-Ttext-segment=0x40000000
-	LDFLAGS = $(SDL_LIBS) -lrt -lz -Wl,--as-needed -Wl,--gc-sections -s -lshake
-	LDFLAGS += -flto
-	# Furthermore, div-by-zero checks are disabled (helps software rendering)
-	C_ARCH  += -mno-check-zero-division
-endif
 
-CFLAGS := $(C_ARCH) -mplt -mno-shared -ggdb3 -Ofast -fexpensive-optimizations -flto -DTIME_IN_MSEC \
+#C_ARCH  += -DMMAP_TO_ADDRESS_ZERO
+#LDFLAGS += -Wl,-Ttext-segment=0x40000000
+
+OPTS = -Ofast -mno-fp-exceptions -mframe-header-opt -mno-check-zero-division -fno-signed-zeros -fno-trapping-math -mno-interlink-compressed
+OPTS += -fno-caller-saves -flto -fno-common -mno-abicalls -fno-PIC -fdata-sections -ffunction-sections
+
+CFLAGS := $(C_ARCH)  $(OPTS) -DTIME_IN_MSEC \
 	-Wall -Wunused -Wpointer-arith \
 	-Wno-sign-compare -Wno-cast-align \
 	-Isrc -Isrc/spu/$(SPU) -D$(SPU) -Isrc/gpu/$(GPU) \
@@ -73,11 +56,15 @@ CFLAGS := $(C_ARCH) -mplt -mno-shared -ggdb3 -Ofast -fexpensive-optimizations -f
 # Convert plugin names to uppercase and make them CFLAG defines
 CFLAGS += -D$(shell echo $(GPU) | tr a-z A-Z)
 CFLAGS += -D$(shell echo $(SPU) | tr a-z A-Z)
-CFLAGS += -DUSE_BGR15
+CFLAGS += -DUSE_BGR15 -DGCW_ZERO -DRUMBLE -DRG350 -DSHMEM_MIRRORING
 
 ifdef RECOMPILER
 CFLAGS += -DPSXREC -D$(RECOMPILER)
 endif
+
+CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti -nostdinc++ 
+
+LDFLAGS = -nodefaultlibs -lc -lgcc -lSDL -lasound -lz -lshake -Wl,--as-needed -Wl,--gc-sections -flto -s
 
 OBJDIRS = obj obj/gpu obj/gpu/$(GPU) obj/spu obj/spu/$(SPU) \
 	  obj/recompiler obj/recompiler/$(RECOMPILER) \
@@ -194,8 +181,6 @@ endif
 # spu_pcsxrearmed END
 #******************************************
 
-CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions
-
 $(TARGET): $(OBJS)
 	@echo Linking $(TARGET)...
 	$(HIDECMD)$(LD) $(OBJS) $(LDFLAGS) -o $@
@@ -215,11 +200,11 @@ endif
 
 obj/%.o: src/%.c
 	@echo Compiling $<...
-	$(HIDECMD)$(CC) $(CFLAGS) -c $< -o $@
+	$(HIDECMD)$(CC) -std=gnu99 $(CFLAGS) -c $< -o $@
 
 obj/%.o: src/%.cpp
 	@echo Compiling $<...
-	$(HIDECMD)$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(HIDECMD)$(CXX) -std=gnu++03 $(CXXFLAGS) -c $< -o $@
 
 obj/%.o: src/%.s
 	@echo Compiling $<...
