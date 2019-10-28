@@ -464,20 +464,17 @@ void vout_update(void)
 #endif
 	{
 		//  Height centering
-		int sizeShift = 0;
+		int sizeShift = 1;
 		if (h0 == 256) {
 			h0 = 240;
 		} else if (h0 == 480) {
-			sizeShift = 1;
+			sizeShift = 2;
 		}
 		if (h1 > h0) {
 			src16_offs = (src16_offs + (((h1 - h0) / 2) * 1024)) & src16_offs_msk;
 			h1 = h0;
 		} else if (h1 < h0) {
-			if (y0 + h1 > h0)
-				dst16 += ((h0 - h1) >> sizeShift) * SCREEN_WIDTH;
-			else
-				dst16 += (y0 >> sizeShift) * SCREEN_WIDTH;
+			dst16 += ((h0 - h1) >> sizeShift) * SCREEN_WIDTH;
 		}
 
 		int incY = (h0 == 480) ? 2 : 1;
