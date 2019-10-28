@@ -1,3 +1,7 @@
+/* Soar Qin - Cheats
+ * License : GPLv2+
+ * */
+
 #include "cheat.h"
 
 #include "psxmem.h"
