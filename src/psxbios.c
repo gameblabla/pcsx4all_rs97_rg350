@@ -171,7 +171,7 @@ char *biosC0n[256] = {
 #define k1 (psxRegs.GPR.n.k1)
 #define gp (psxRegs.GPR.n.gp)
 #define sp (psxRegs.GPR.n.sp)
-#define fp (psxRegs.GPR.n.int8_t)
+#define fp (psxRegs.GPR.n.s8)
 #define ra (psxRegs.GPR.n.ra)
 #define pc0 (psxRegs.pc)
 
