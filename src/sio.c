@@ -251,7 +251,7 @@ void sioWrite8(unsigned char value) {
 			return;
 		case 0x81: // start memcard
 			if (psxSio.CtrlReg & 0x2000) {
-				if (!sioMcdInserted(MCD2))
+				if (!sioMcdInserted(MCD2) || Config.MemoryCardHack == 1)
 					goto no_device;
 				memcpy(psxSio.buf, psxSio.cardh2, 4);
 			} else {

@@ -840,6 +840,7 @@ int main (int argc, char **argv)
 	
 	Config.AnalogDigital = 0;
 	Config.AnalogArrow = 0;
+	Config.MemoryCardHack = 0;
 
 	Config.Xa=0; /* 0=XA enabled, 1=XA disabled */
 	Config.Mdec=0; /* 0=Black&White Mdecs Only Disabled, 1=Black&White Mdecs Only Enabled */
