@@ -441,7 +441,7 @@ void vout_update(void)
 	int y0 = gpu.screen.y;
 	int w0 = gpu.screen.hres;
 	#ifdef NO_HWSCALE
-	int h0 = SCREEN_HEIGHT;
+	int h0 = gpu.screen.vres;
 	#else
 	int w1 = gpu.screen.w;
 	int h0 = !gpu_unai_config_ext.ntsc_fix || Config.VideoScaling == 1 ? gpu.screen.vres : SCREEN_HEIGHT;
