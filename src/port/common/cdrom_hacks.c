@@ -11,6 +11,7 @@
 #endif
 
 uint_fast8_t ishack_enabled = 0;
+uint_fast8_t default_analog = 0;
 
 const char CNTfix_table[25][10] =
 {
@@ -250,20 +251,11 @@ const char DualAnalogGames[93][10] =
  * */
 void CheckforCDROMid_applyhacks()
 {
-	uint8_t i;
+	uint32_t i;
 	
 	ishack_enabled = 0;
-	
-	/* Apply hack battle fix for Inuyasha - Sengoku Otogi Kassen */
-	if (strncmp(CdromId, "SLPS03503", 9) == 0)
-	{
-		Config.VSyncWA = 1;
-		ishack_enabled = 1;
-		return;
-	}
-	
 	/* Force DualShock mode for some games (Ape Escape, RE Dual shock edition) */
-	for(i=0;i<sizeof(DualShockOnlyGames);i++)
+	for(i=0;i<16;i++)
 	{
 		if (strncmp(CdromId, DualShockOnlyGames[i], 9) == 0)
 		{
@@ -272,14 +264,25 @@ void CheckforCDROMid_applyhacks()
 		}
 	}
 	
+	/* Don't enable this for consoles like the RS-97 that only has a D-PAD */
+	#if !defined(NOJOYSTICK_AVAILABLE)
 	/* Force Flightstick/DualAnalog mode on games that don't support the DualShock */
-	/*for(i=0;i<sizeof(DualAnalogGames);i++)
+	for(i=0;i<93;i++)
 	{
 		if (strncmp(CdromId, DualAnalogGames[i], 9) == 0)
 		{
 			Config.AnalogMode = 1;
 		}
-	}*/
+	}
+	#endif
+	
+	/* Apply hack battle fix for Inuyasha - Sengoku Otogi Kassen */
+	if (strncmp(CdromId, "SLPS03503", 9) == 0)
+	{
+		Config.VSyncWA = 1;
+		ishack_enabled = 1;
+		return;
+	}
 	
 	/* Apply Memory card hack for Codename Tenka for going past the screen asking to remove MC */
 	for(i=0;i<sizeof(MemorycardHack);i++)
