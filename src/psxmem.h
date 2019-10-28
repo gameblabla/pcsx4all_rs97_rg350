@@ -30,10 +30,10 @@
 
 #define SWAP16(v) ((((v)&0xff00)>>8) +(((v)&0xff)<<8))
 #define SWAP32(v) ((((v)&0xff000000ul)>>24) + (((v)&0xff0000ul)>>8) + (((v)&0xff00ul)<<8) +(((v)&0xfful)<<24))
-#define SWAPuint32_t(v) SWAP32((uint32_t)(v))
+#define SWAPu32(v) SWAP32((uint32_t)(v))
 #define SWAPint32_t(v) SWAP32((int32_t)(v))
 
-#define SWAPuint16_t(v) SWAP16((uint16_t)(v))
+#define SWAPu16(v) SWAP16((uint16_t)(v))
 #define SWAPint16_t(v) SWAP16((int16_t)(v))
 
 #else
@@ -41,8 +41,8 @@
 #define SWAP16(b) (b)
 #define SWAP32(b) (b)
 
-#define SWAPuint16_t(b) (b)
-#define SWAPuint32_t(b) (b)
+#define SWAPu16(b) (b)
+#define SWAPu32(b) (b)
 
 #endif
 

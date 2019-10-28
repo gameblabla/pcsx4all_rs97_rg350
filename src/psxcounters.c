@@ -104,7 +104,7 @@ static uint_fast8_t rcntFreezeLoaded = false;
 
 static inline void setIrq( uint32_t irq )
 {
-	psxHuint32_tref(0x1070) |= SWAPuint32_t(irq);
+	psxHuint32_tref(0x1070) |= SWAPu32(irq);
     	ResetIoCycle();
 }
 

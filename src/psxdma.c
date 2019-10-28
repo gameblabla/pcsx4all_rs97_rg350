@@ -58,7 +58,7 @@ void psxDma4(uint32_t madr, uint32_t bcr, uint32_t chcr) { // SPU
 
 			SPU_writeDMAMem(ptr, words * 2, psxRegs.cycle);
 
-			HW_DMA4_MADR = SWAPuint32_t(madr + words * 4);
+			HW_DMA4_MADR = SWAPu32(madr + words * 4);
 			SPUDMA_INT(words / 2);
 			return;
 
@@ -81,7 +81,7 @@ void psxDma4(uint32_t madr, uint32_t bcr, uint32_t chcr) { // SPU
 			psxCpu->Clear(madr, words);
 #endif
 
-			HW_DMA4_MADR = SWAPuint32_t(madr + words * 4);
+			HW_DMA4_MADR = SWAPu32(madr + words * 4);
 			SPUDMA_INT(words / 2);
 			return;
 
@@ -161,7 +161,7 @@ void psxDma2(uint32_t madr, uint32_t bcr, uint32_t chcr) { // GPU
 			psxCpu->Clear(madr, words);
 			#endif
 
-			HW_DMA2_MADR = SWAPuint32_t(madr + words * 4);
+			HW_DMA2_MADR = SWAPu32(madr + words * 4);
 
 			// already 32-bit word size ((size * 4) / 4)
 			GPUDMA_INT(words / 4);
@@ -182,7 +182,7 @@ void psxDma2(uint32_t madr, uint32_t bcr, uint32_t chcr) { // GPU
 			words = (bcr >> 16) * (bcr & 0xffff);
 			GPU_writeDataMem(ptr, words);
 
-			HW_DMA2_MADR = SWAPuint32_t(madr + words * 4);
+			HW_DMA2_MADR = SWAPu32(madr + words * 4);
 
 			// already 32-bit word size ((size * 4) / 4)
 			GPUDMA_INT(words / 4);
@@ -199,7 +199,7 @@ void psxDma2(uint32_t madr, uint32_t bcr, uint32_t chcr) { // GPU
 
 			// we don't emulate progress, just busy flag and end irq,
 			// so pretend we're already at the last block
-			HW_DMA2_MADR = SWAPuint32_t(0xffffff);
+			HW_DMA2_MADR = SWAPu32(0xffffff);
 
 			// Tekken 3 = use 1.0 only (not 1.5x)
 

@@ -59,7 +59,7 @@
 #define HW_DMA_ICR_IRQ_SENT      (1<<31)
 
 #define DMA_INTERRUPT(n) { \
-	uint32_t icr = SWAPuint32_t(HW_DMA_ICR); \
+	uint32_t icr = SWAPu32(HW_DMA_ICR); \
 	if (icr & (1 << (16 + n))) { \
 		icr |= 1 << (24 + n); \
 		if (icr & HW_DMA_ICR_GLOBAL_ENABLE && !(icr & HW_DMA_ICR_IRQ_SENT)) { \

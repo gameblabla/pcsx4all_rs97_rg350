@@ -73,7 +73,7 @@ extern "C" {
 
 // A generic function SPU plugins can use to set hardware SPU IRQ
 void CALLBACK Trigger_SPU_IRQ(void) {
-	psxHuint32_tref(0x1070) |= SWAPuint32_t(0x200);
+	psxHuint32_tref(0x1070) |= SWAPu32(0x200);
 	// Ensure psxBranchTest() is called soon when IRQ is pending:
 	ResetIoCycle();
 }

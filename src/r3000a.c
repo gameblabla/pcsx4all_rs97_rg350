@@ -118,7 +118,7 @@ void psxException(uint32_t code, uint32_t bd) {
 
 	if (!Config.HLE && (((PSXMuint32_t(psxRegs.CP0.n.EPC) >> 24) & 0xfe) == 0x4a)) {
 		// "hokuto no ken" / "Crash Bandicot 2" ... fix
-		PSXMuint32_tref(psxRegs.CP0.n.EPC)&= SWAPuint32_t(~0x02000000);
+		PSXMuint32_tref(psxRegs.CP0.n.EPC)&= SWAPu32(~0x02000000);
 	}
 
 	if (Config.HLE) {

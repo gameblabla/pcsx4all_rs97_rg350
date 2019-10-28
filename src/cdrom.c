@@ -1571,7 +1571,7 @@ void psxDma3(uint32_t madr, uint32_t bcr, uint32_t chcr) {
 			pTransfer += cdsize;
 
 			if( chcr == 0x11400100 ) {
-				HW_DMA3_MADR = SWAPuint32_t(madr + cdsize);
+				HW_DMA3_MADR = SWAPu32(madr + cdsize);
 				CDRDMA_INT( (cdsize/4) / 4 );
 			}
 			else if( chcr == 0x11000000 ) {

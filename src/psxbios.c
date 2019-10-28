@@ -1073,12 +1073,12 @@ void psxBios_memchr() { // 0x2e
 void psxBios_rand(void) { // 2f
 	uint32_t s = psxMuint32_t(0x9010) * 1103515245 + 12345;
 	v0 = (s >> 16) & 0x7fff;
-	psxMuint32_tref(0x9010) = SWAPuint32_t(s);
+	psxMuint32_tref(0x9010) = SWAPu32(s);
 	pc0 = ra;
 }
 
 void psxBios_srand(void) { // 30
-	psxMuint32_tref(0x9010) = SWAPuint32_t(a0);
+	psxMuint32_tref(0x9010) = SWAPu32(a0);
 	pc0 = ra;
 }
 
@@ -1789,7 +1789,7 @@ void psxBios_StartRCnt(void) { // 04
 	a0&= 0x3;
 	ResetIoCycle();
 	if (a0 != 3) psxHuint32_tref(0x1074)|= SWAP32((uint32_t)((1<<(a0+4))));
-	else psxHuint32_tref(0x1074)|= SWAPuint32_t(0x1);
+	else psxHuint32_tref(0x1074)|= SWAPu32(0x1);
 	v0 = 1; pc0 = ra;
 }
 
@@ -1801,7 +1801,7 @@ void psxBios_StopRCnt(void) { // 05
 	a0&= 0x3;
 	ResetIoCycle();
 	if (a0 != 3) psxHuint32_tref(0x1074)&= SWAP32((uint32_t)(~(1<<(a0+4))));
-	else psxHuint32_tref(0x1074)&= SWAPuint32_t(~0x1);
+	else psxHuint32_tref(0x1074)&= SWAPu32(~0x1);
 	pc0 = ra;
 }
 
@@ -3045,10 +3045,10 @@ void psxBiosInit(void) {
 	ThEV = Event + 32*5;
 
 	ptr = (uint32_t*)&psxM[0x0874]; // b0 table
-	ptr[0] = SWAPuint32_t(0x4c54 - 0x884);
+	ptr[0] = SWAPu32(0x4c54 - 0x884);
 
 	ptr = (uint32_t*)&psxM[0x0674]; // c0 table
-	ptr[6] = SWAPuint32_t(0xc80);
+	ptr[6] = SWAPu32(0xc80);
 
 	memset(SysIntRP, 0, sizeof(SysIntRP));
 	memset(Thread, 0, sizeof(Thread));
@@ -3067,35 +3067,35 @@ void psxBiosInit(void) {
 	memset(FDesc, 0, sizeof(FDesc));
 	card_active_chan = 0;
 
-	psxMuint32_tref(0x0150) = SWAPuint32_t(0x160);
-	psxMuint32_tref(0x0154) = SWAPuint32_t(0x320);
-	psxMuint32_tref(0x0160) = SWAPuint32_t(0x248);
+	psxMuint32_tref(0x0150) = SWAPu32(0x160);
+	psxMuint32_tref(0x0154) = SWAPu32(0x320);
+	psxMuint32_tref(0x0160) = SWAPu32(0x248);
 	strcpy((char*)&psxM[0x248], "bu");
-/*	psxMuint32_tref(0x0ca8) = SWAPuint32_t(0x1f410004);
-	psxMuint32_tref(0x0cf0) = SWAPuint32_t(0x3c020000);
-	psxMuint32_tref(0x0cf4) = SWAPuint32_t(0x2442641c);
-	psxMuint32_tref(0x09e0) = SWAPuint32_t(0x43d0);
-	psxMuint32_tref(0x4d98) = SWAPuint32_t(0x946f000a);
+/*	psxMuint32_tref(0x0ca8) = SWAPu32(0x1f410004);
+	psxMuint32_tref(0x0cf0) = SWAPu32(0x3c020000);
+	psxMuint32_tref(0x0cf4) = SWAPu32(0x2442641c);
+	psxMuint32_tref(0x09e0) = SWAPu32(0x43d0);
+	psxMuint32_tref(0x4d98) = SWAPu32(0x946f000a);
 */
 	// opcode HLE
-	psxRuint32_tref(0x0000) = SWAPuint32_t((0x3b << 26) | 4);
+	psxRuint32_tref(0x0000) = SWAPu32((0x3b << 26) | 4);
 	/* Whatever this does, it actually breaks CTR, even without the uninitiliazed memory patch. 
 	Normally games shouldn't read from address 0 yet they do. See explanation below in details. */
-	//psxMuint32_tref(0x0000) = SWAPuint32_t((0x3b << 26) | 0);
-	psxMuint32_tref(0x00a0) = SWAPuint32_t((0x3b << 26) | 1);
-	psxMuint32_tref(0x00b0) = SWAPuint32_t((0x3b << 26) | 2);
-	psxMuint32_tref(0x00c0) = SWAPuint32_t((0x3b << 26) | 3);
-	psxMuint32_tref(0x4c54) = SWAPuint32_t((0x3b << 26) | 0);
-	psxMuint32_tref(0x8000) = SWAPuint32_t((0x3b << 26) | 5);
-	psxMuint32_tref(0x07a0) = SWAPuint32_t((0x3b << 26) | 0);
-	psxMuint32_tref(0x0884) = SWAPuint32_t((0x3b << 26) | 0);
-	psxMuint32_tref(0x0894) = SWAPuint32_t((0x3b << 26) | 0);
+	//psxMuint32_tref(0x0000) = SWAPu32((0x3b << 26) | 0);
+	psxMuint32_tref(0x00a0) = SWAPu32((0x3b << 26) | 1);
+	psxMuint32_tref(0x00b0) = SWAPu32((0x3b << 26) | 2);
+	psxMuint32_tref(0x00c0) = SWAPu32((0x3b << 26) | 3);
+	psxMuint32_tref(0x4c54) = SWAPu32((0x3b << 26) | 0);
+	psxMuint32_tref(0x8000) = SWAPu32((0x3b << 26) | 5);
+	psxMuint32_tref(0x07a0) = SWAPu32((0x3b << 26) | 0);
+	psxMuint32_tref(0x0884) = SWAPu32((0x3b << 26) | 0);
+	psxMuint32_tref(0x0894) = SWAPu32((0x3b << 26) | 0);
 
 	// memory size 2 MB
-	psxMuint32_tref(0x6c80) = SWAPuint32_t(0x000085c8);
+	psxMuint32_tref(0x6c80) = SWAPu32(0x000085c8);
 
 	// initial RNG seed
-	psxMuint32_tref(0x9010) = SWAPuint32_t(0xac20cc00);
+	psxMuint32_tref(0x9010) = SWAPu32(0xac20cc00);
 
 	// fonts
 	len = 0x80000 - 0x66000;
@@ -3104,7 +3104,7 @@ void psxBiosInit(void) {
 	uncompress((Bytef *)(psxR + 0x69d68), &len, font_889f, sizeof(font_889f));
 
 	// memory size 2 MB
-	psxHuint32_tref(0x1060) = SWAPuint32_t(0x00000b88);
+	psxHuint32_tref(0x1060) = SWAPu32(0x00000b88);
 	
 	/*	Some games like R-Types, CTR, Fade to Black read from adress 0x00000000 due to uninitialized pointers.
 		See Garbage Area at Address 00000000h in Nocash PSX Specfications for more information.
@@ -3113,17 +3113,17 @@ void psxBiosInit(void) {
 		Crash Team Racing will softlock after the Sony logo.
 	*/
 	
-	psxMuint32_tref(0x0000) = SWAPuint32_t(0x00000003);
+	psxMuint32_tref(0x0000) = SWAPu32(0x00000003);
 	/*
 	But overwritten by 00000003h after soon.
-	psxMuint32_tref(0x0000) = SWAPuint32_t(0x00001A3C);
+	psxMuint32_tref(0x0000) = SWAPu32(0x00001A3C);
 	*/
-	psxMuint32_tref(0x0004) = SWAPuint32_t(0x800C5A27);
-	psxMuint32_tref(0x0008) = SWAPuint32_t(0x08000403);
-	psxMuint32_tref(0x000C) = SWAPuint32_t(0x00000000);
+	psxMuint32_tref(0x0004) = SWAPu32(0x800C5A27);
+	psxMuint32_tref(0x0008) = SWAPu32(0x08000403);
+	psxMuint32_tref(0x000C) = SWAPu32(0x00000000);
 	
-	psxMuint32_tref(0x0064) = SWAPuint32_t(0x00000000);
-	psxMuint32_tref(0x0068) = SWAPuint32_t(0xFF000000);
+	psxMuint32_tref(0x0064) = SWAPu32(0x00000000);
+	psxMuint32_tref(0x0068) = SWAPu32(0xFF000000);
 }
 
 void psxBiosShutdown() {
@@ -3299,7 +3299,7 @@ void psxBiosException(void) {
 
 #define bfreezepsxMptr(ptr, type) { \
 	if (Mode == 1) { \
-		if (ptr) psxRuint32_tref(base) = SWAPuint32_t((int8_t *)(ptr) - psxM); \
+		if (ptr) psxRuint32_tref(base) = SWAPu32((int8_t *)(ptr) - psxM); \
 		else psxRuint32_tref(base) = 0; \
 	} else { \
 		if (psxRuint32_t(base) != 0) ptr = (type *)(psxM + psxRuint32_t(base)); \

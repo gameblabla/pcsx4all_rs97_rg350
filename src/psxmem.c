@@ -262,7 +262,7 @@ uint16_t psxMemRead16(uint32_t mem)
 	} else {
 		uint8_t *p = (uint8_t*)(psxMemRLUT[t]);
 		if (p != NULL) {
-			ret = SWAPuint16_t(*(uint16_t*)(p + m));
+			ret = SWAPu16(*(uint16_t*)(p + m));
 		} else {
 			PSXMEM_LOG("%s(): err lh 0x%08x\n", __func__, mem);
 			ret = 0;
@@ -286,7 +286,7 @@ uint32_t psxMemRead32(uint32_t mem)
 	} else {
 		uint8_t *p = (uint8_t*)(psxMemRLUT[t]);
 		if (p != NULL) {
-			ret = SWAPuint32_t(*(uint32_t*)(p + m));
+			ret = SWAPu32(*(uint32_t*)(p + m));
 		} else {
 			if (psxRegs.writeok) { PSXMEM_LOG("%s(): err lw 0x%08x\n", __func__, mem); }
 			ret = 0;
@@ -326,13 +326,13 @@ void psxMemWrite16(uint32_t mem, uint16_t value)
 	uint32_t m = mem & 0xffff;
 	if (t == 0x1f80 || t == 0x9f80 || t == 0xbf80) {
 		if (m < 0x400)
-			psxHuint16_tref(mem) = SWAPuint16_t(value);
+			psxHuint16_tref(mem) = SWAPu16(value);
 		else
 			psxHwWrite16(mem, value);
 	} else {
 		uint8_t *p = (uint8_t*)(psxMemWLUT[t]);
 		if (p != NULL) {
-			*(uint16_t*)(p + m) = SWAPuint16_t(value);
+			*(uint16_t*)(p + m) = SWAPu16(value);
 #ifdef PSXREC
 			psxCpu->Clear((mem & (~3)), 1);
 #endif
@@ -349,13 +349,13 @@ void psxMemWrite32(uint32_t mem, uint32_t value)
 	uint32_t m = mem & 0xffff;
 	if (t == 0x1f80 || t == 0x9f80 || t == 0xbf80) {
 		if (m < 0x400)
-			psxHuint32_tref(mem) = SWAPuint32_t(value);
+			psxHuint32_tref(mem) = SWAPu32(value);
 		else
 			psxHwWrite32(mem, value);
 	} else {
 		uint8_t *p = (uint8_t*)(psxMemWLUT[t]);
 		if (p != NULL) {
-			*(uint32_t*)(p + m) = SWAPuint32_t(value);
+			*(uint32_t*)(p + m) = SWAPu32(value);
 #ifdef PSXREC
 			psxCpu->Clear(mem, 1);
 #endif

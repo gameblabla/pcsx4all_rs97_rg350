@@ -442,7 +442,7 @@ static int PSXGetFileType(FILE *f) {
 		return CPE_EXE;
 
 	coff_hdr = (FILHDR *)mybuf;
-	if (SWAPuint16_t(coff_hdr->f_magic) == 0x0162)
+	if (SWAPu16(coff_hdr->f_magic) == 0x0162)
 		return COFF_EXE;
 
 	// Fall-through:
@@ -522,8 +522,8 @@ int Load(const char *ExePath) {
 								break;
 							}
 
-							section_address = SWAPuint32_t(section_address);
-							section_size = SWAPuint32_t(section_size);
+							section_address = SWAPu32(section_address);
+							section_size = SWAPu32(section_size);
 #ifdef EMU_LOG
 							EMU_LOG("Loading %08X bytes from %08X to %08X\n", section_size, ftell(tmpFile), section_address);
 #endif
@@ -546,7 +546,7 @@ int Load(const char *ExePath) {
 								retval = -1;
 								break;
 							}
-							psxRegs.pc = SWAPuint32_t(new_pc);
+							psxRegs.pc = SWAPu32(new_pc);
 							break;
 						case 0: /* End of file */
 							break;

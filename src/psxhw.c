@@ -294,25 +294,25 @@ uint32_t psxHwRead32(uint32_t add)
 #ifdef PSXHW_LOG
 		case 0x1f8010a0:
 			PSXHW_LOG("DMA2 MADR 32bit read %x\n", psxHuint32_t(0x10a0));
-			return SWAPuint32_t(HW_DMA2_MADR);
+			return SWAPu32(HW_DMA2_MADR);
 		case 0x1f8010a4:
 			PSXHW_LOG("DMA2 BCR 32bit read %x\n", psxHuint32_t(0x10a4));
-			return SWAPuint32_t(HW_DMA2_BCR);
+			return SWAPu32(HW_DMA2_BCR);
 		case 0x1f8010a8:
 			PSXHW_LOG("DMA2 CHCR 32bit read %x\n", psxHuint32_t(0x10a8));
-			return SWAPuint32_t(HW_DMA2_CHCR);
+			return SWAPu32(HW_DMA2_CHCR);
 #endif
 
 #ifdef PSXHW_LOG
 		case 0x1f8010b0:
 			PSXHW_LOG("DMA3 MADR 32bit read %x\n", psxHuint32_t(0x10b0));
-			return SWAPuint32_t(HW_DMA3_MADR);
+			return SWAPu32(HW_DMA3_MADR);
 		case 0x1f8010b4:
 			PSXHW_LOG("DMA3 BCR 32bit read %x\n", psxHuint32_t(0x10b4));
-			return SWAPuint32_t(HW_DMA3_BCR);
+			return SWAPu32(HW_DMA3_BCR);
 		case 0x1f8010b8:
 			PSXHW_LOG("DMA3 CHCR 32bit read %x\n", psxHuint32_t(0x10b8));
-			return SWAPuint32_t(HW_DMA3_CHCR);
+			return SWAPu32(HW_DMA3_CHCR);
 #endif
 
 		// time for rootcounters :)
@@ -476,9 +476,9 @@ void psxHwWrite16(uint32_t add, uint16_t value)
 			value &= 0x7ff;
 
 			//senquack - added Config.SpuIrq option from PCSX Rearmed/Reloaded:
-			if (Config.SpuIrq) psxHuint16_tref(0x1070) |= SWAPuint16_t(0x200);
+			if (Config.SpuIrq) psxHuint16_tref(0x1070) |= SWAPu16(0x200);
 
-			psxHuint16_tref(0x1070) &= SWAPuint16_t(value);
+			psxHuint16_tref(0x1070) &= SWAPu16(value);
 
 			//senquack - When IRQ is pending and unmasked, ensure psxBranchTest()
 			// gets called as soon as possible, so HW IRQ exception gets handled
@@ -494,7 +494,7 @@ void psxHwWrite16(uint32_t add, uint16_t value)
 			//senquack - Strip all but bits 0:10, rest are 0 or garbage in docs
 			value &= 0x7ff;
 
-			psxHuint16_tref(0x1074) = SWAPuint16_t(value);
+			psxHuint16_tref(0x1074) = SWAPu16(value);
 
 			//senquack - When IRQ is pending and unmasked, ensure psxBranchTest()
 			// gets called as soon as possible, so HW IRQ exception gets handled
@@ -566,7 +566,7 @@ void psxHwWrite16(uint32_t add, uint16_t value)
 				return;
 			}
 
-			psxHuint16_tref(add) = SWAPuint16_t(value);
+			psxHuint16_tref(add) = SWAPu16(value);
 #ifdef PSXHW_LOG
 			PSXHW_LOG("*Unknown 16bit write at address %x value %x\n", add, value);
 #endif
@@ -576,10 +576,10 @@ void psxHwWrite16(uint32_t add, uint16_t value)
 }
 
 #define DmaExec(n) { \
-	HW_DMA##n##_CHCR = SWAPuint32_t(value); \
+	HW_DMA##n##_CHCR = SWAPu32(value); \
 \
-	if (SWAPuint32_t(HW_DMA##n##_CHCR) & 0x01000000 && SWAPuint32_t(HW_DMA_PCR) & (8 << (n * 4))) { \
-		psxDma##n(SWAPuint32_t(HW_DMA##n##_MADR), SWAPuint32_t(HW_DMA##n##_BCR), SWAPuint32_t(HW_DMA##n##_CHCR)); \
+	if (SWAPu32(HW_DMA##n##_CHCR) & 0x01000000 && SWAPu32(HW_DMA_PCR) & (8 << (n * 4))) { \
+		psxDma##n(SWAPu32(HW_DMA##n##_MADR), SWAPu32(HW_DMA##n##_BCR), SWAPu32(HW_DMA##n##_CHCR)); \
 	} \
 }
 
@@ -598,7 +598,7 @@ void psxHwWrite32(uint32_t add, uint32_t value)
 #ifdef PSXHW_LOG
 		case 0x1f801060:
 			PSXHW_LOG("RAM size write %x\n", value);
-			psxHuint32_tref(add) = SWAPuint32_t(value);
+			psxHuint32_tref(add) = SWAPu32(value);
 			return; // Ram size
 #endif
 
@@ -610,9 +610,9 @@ void psxHwWrite32(uint32_t add, uint32_t value)
 			value &= 0x7ff;
 
 			//senquack - added Config.SpuIrq option from PCSX Rearmed/Reloaded:
-			if (Config.SpuIrq) psxHuint32_tref(0x1070) |= SWAPuint32_t(0x200);
+			if (Config.SpuIrq) psxHuint32_tref(0x1070) |= SWAPu32(0x200);
 
-			psxHuint32_tref(0x1070) &= SWAPuint32_t(value);
+			psxHuint32_tref(0x1070) &= SWAPu32(value);
 
 			//senquack - When IRQ is pending and unmasked, ensure psxBranchTest()
 			// gets called as soon as possible, so HW IRQ exception gets handled
@@ -627,7 +627,7 @@ void psxHwWrite32(uint32_t add, uint32_t value)
 			//senquack - Strip all but bits 0:10, rest are 0 or garbage in docs
 			value &= 0x7ff;
 
-			psxHuint32_tref(0x1074) = SWAPuint32_t(value);
+			psxHuint32_tref(0x1074) = SWAPu32(value);
 
 			//senquack - When IRQ is pending and unmasked, ensure psxBranchTest()
 			// gets called as soon as possible, so HW IRQ exception gets handled
@@ -639,11 +639,11 @@ void psxHwWrite32(uint32_t add, uint32_t value)
 #ifdef PSXHW_LOG
 		case 0x1f801080:
 			PSXHW_LOG("DMA0 MADR 32bit write %x\n", value);
-			HW_DMA0_MADR = SWAPuint32_t(value); // DMA0 madr
+			HW_DMA0_MADR = SWAPu32(value); // DMA0 madr
 			return;
 		case 0x1f801084:
 			PSXHW_LOG("DMA0 BCR 32bit write %x\n", value);
-			HW_DMA0_BCR  = SWAPuint32_t(value); // DMA0 bcr
+			HW_DMA0_BCR  = SWAPu32(value); // DMA0 bcr
 			return;
 #endif
 		case 0x1f801088:
@@ -656,11 +656,11 @@ void psxHwWrite32(uint32_t add, uint32_t value)
 #ifdef PSXHW_LOG
 		case 0x1f801090:
 			PSXHW_LOG("DMA1 MADR 32bit write %x\n", value);
-			HW_DMA1_MADR = SWAPuint32_t(value); // DMA1 madr
+			HW_DMA1_MADR = SWAPu32(value); // DMA1 madr
 			return;
 		case 0x1f801094:
 			PSXHW_LOG("DMA1 BCR 32bit write %x\n", value);
-			HW_DMA1_BCR  = SWAPuint32_t(value); // DMA1 bcr
+			HW_DMA1_BCR  = SWAPu32(value); // DMA1 bcr
 			return;
 #endif
 		case 0x1f801098:
@@ -673,11 +673,11 @@ void psxHwWrite32(uint32_t add, uint32_t value)
 #ifdef PSXHW_LOG
 		case 0x1f8010a0:
 			PSXHW_LOG("DMA2 MADR 32bit write %x\n", value);
-			HW_DMA2_MADR = SWAPuint32_t(value); // DMA2 madr
+			HW_DMA2_MADR = SWAPu32(value); // DMA2 madr
 			return;
 		case 0x1f8010a4:
 			PSXHW_LOG("DMA2 BCR 32bit write %x\n", value);
-			HW_DMA2_BCR  = SWAPuint32_t(value); // DMA2 bcr
+			HW_DMA2_BCR  = SWAPu32(value); // DMA2 bcr
 			return;
 #endif
 		case 0x1f8010a8:
@@ -690,11 +690,11 @@ void psxHwWrite32(uint32_t add, uint32_t value)
 #ifdef PSXHW_LOG
 		case 0x1f8010b0:
 			PSXHW_LOG("DMA3 MADR 32bit write %x\n", value);
-			HW_DMA3_MADR = SWAPuint32_t(value); // DMA3 madr
+			HW_DMA3_MADR = SWAPu32(value); // DMA3 madr
 			return;
 		case 0x1f8010b4:
 			PSXHW_LOG("DMA3 BCR 32bit write %x\n", value);
-			HW_DMA3_BCR  = SWAPuint32_t(value); // DMA3 bcr
+			HW_DMA3_BCR  = SWAPu32(value); // DMA3 bcr
 			return;
 #endif
 		case 0x1f8010b8:
@@ -708,11 +708,11 @@ void psxHwWrite32(uint32_t add, uint32_t value)
 #ifdef PSXHW_LOG
 		case 0x1f8010c0:
 			PSXHW_LOG("DMA4 MADR 32bit write %x\n", value);
-			HW_DMA4_MADR = SWAPuint32_t(value); // DMA4 madr
+			HW_DMA4_MADR = SWAPu32(value); // DMA4 madr
 			return;
 		case 0x1f8010c4:
 			PSXHW_LOG("DMA4 BCR 32bit write %x\n", value);
-			HW_DMA4_BCR  = SWAPuint32_t(value); // DMA4 bcr
+			HW_DMA4_BCR  = SWAPu32(value); // DMA4 bcr
 			return;
 #endif
 		case 0x1f8010c8:
@@ -725,11 +725,11 @@ void psxHwWrite32(uint32_t add, uint32_t value)
 #ifdef PSXHW_LOG
 		case 0x1f8010e0:
 			PSXHW_LOG("DMA6 MADR 32bit write %x\n", value);
-			HW_DMA6_MADR = SWAPuint32_t(value); // DMA6 bcr
+			HW_DMA6_MADR = SWAPu32(value); // DMA6 bcr
 			return;
 		case 0x1f8010e4:
 			PSXHW_LOG("DMA6 BCR 32bit write %x\n", value);
-			HW_DMA6_BCR  = SWAPuint32_t(value); // DMA6 bcr
+			HW_DMA6_BCR  = SWAPu32(value); // DMA6 bcr
 			return;
 #endif
 		case 0x1f8010e8:
@@ -742,7 +742,7 @@ void psxHwWrite32(uint32_t add, uint32_t value)
 #ifdef PSXHW_LOG
 		case 0x1f8010f0:
 			PSXHW_LOG("DMA PCR 32bit write %x\n", value);
-			HW_DMA_PCR = SWAPuint32_t(value);
+			HW_DMA_PCR = SWAPu32(value);
 			return;
 #endif
 
@@ -752,14 +752,14 @@ void psxHwWrite32(uint32_t add, uint32_t value)
 #endif
 		{
 			uint32_t tmp = value & 0x00ff803f;
-			tmp |= (SWAPuint32_t(HW_DMA_ICR) & ~value) & 0x7f000000;
+			tmp |= (SWAPu32(HW_DMA_ICR) & ~value) & 0x7f000000;
 			if ((tmp & HW_DMA_ICR_GLOBAL_ENABLE && tmp & 0x7f000000)
 			    || tmp & HW_DMA_ICR_BUS_ERROR) {
-				if (!(SWAPuint32_t(HW_DMA_ICR) & HW_DMA_ICR_IRQ_SENT))
+				if (!(SWAPu32(HW_DMA_ICR) & HW_DMA_ICR_IRQ_SENT))
 					psxHuint32_tref(0x1070) |= SWAP32(8);
 				tmp |= HW_DMA_ICR_IRQ_SENT;
 			}
-			HW_DMA_ICR = SWAPuint32_t(tmp);
+			HW_DMA_ICR = SWAPu32(tmp);
 			return;
 		}
 
@@ -849,7 +849,7 @@ void psxHwWrite32(uint32_t add, uint32_t value)
 				return;
 			}
 
-			psxHuint32_tref(add) = SWAPuint32_t(value);
+			psxHuint32_tref(add) = SWAPu32(value);
 #ifdef PSXHW_LOG
 			PSXHW_LOG("*Unknown 32bit write at address %x value %x\n", add, value);
 #endif
