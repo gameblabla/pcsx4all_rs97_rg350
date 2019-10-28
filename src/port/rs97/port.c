@@ -568,9 +568,13 @@ void pad_update()
 	SDL_Event event;
 	Uint8 *keys = SDL_GetKeyState(NULL);
 	uint_fast8_t popup_menu = false;
-
-	int k = 0;
-	while (keymap[k].key) {
+	uint32_t k;
+	
+	if (Config.AnalogArrow == 1) k = 4;
+	else k = 0;
+	
+	while (keymap[k].key) 
+	{
 		if (keys[keymap[k].key]) {
 			pad1_buttons &= ~(1 << keymap[k].bit);
 		} else {
