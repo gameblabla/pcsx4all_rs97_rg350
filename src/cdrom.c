@@ -269,7 +269,7 @@ uint16_t calcCrc(const uint8_t *d, const int len) {
 static void setIrq(void)
 {
 	if (cdr.Stat & cdr.Reg2)
-		psxHuint32_tref(0x1070) |= SWAP32((uint32_t)0x4);
+		psxHu32ref(0x1070) |= SWAP32((uint32_t)0x4);
 
 	// When IRQ status bit gets set, ensure psxBranchTest() gets called as soon
 	//  as possible, so HW IRQ exception gets handled
@@ -1118,7 +1118,7 @@ void cdrReadInterrupt() {
 
 	//senquack - Fix for Brave Fencer Musashi loading-screen freeze
 	// (adapted from PCSX Reloaded)
-	if ((!cdr.ReadRescheduled) && (psxHuint32_tref(0x1070) & psxHuint32_tref(0x1074) & SWAP32((uint32_t)0x4))) {
+	if ((!cdr.ReadRescheduled) && (psxHu32ref(0x1070) & psxHu32ref(0x1074) & SWAP32((uint32_t)0x4))) {
 		// HACK: emulated CPU is often slower than real thing, and
 		// game may be unfinished with prev data read, so reschedule
 		CDREAD_INT(cdread_irq_cycles / 2);
@@ -1282,7 +1282,7 @@ unsigned char cdrRead0(void) {
 	CDR_LOG("cdrRead0() Log: CD0 Read: %x\n", cdr.Ctrl);
 #endif
 
-	return psxHuint8_t(0x1800) = cdr.Ctrl;
+	return psxHu8(0x1800) = cdr.Ctrl;
 }
 
 /*
@@ -1298,16 +1298,16 @@ void cdrWrite0(unsigned char rt) {
 
 unsigned char cdrRead1(void) {
 	if ((cdr.ResultP & 0xf) < cdr.ResultC)
-		psxHuint8_t(0x1801) = cdr.Result[cdr.ResultP & 0xf];
+		psxHu8(0x1801) = cdr.Result[cdr.ResultP & 0xf];
 	else
-		psxHuint8_t(0x1801) = 0;
+		psxHu8(0x1801) = 0;
 	cdr.ResultP++;
 	if (cdr.ResultP == cdr.ResultC)
 		cdr.ResultReady = 0;
 
-	CDR_LOG_IO("cdr r1: %02x\n", psxHuint8_t(0x1801));
+	CDR_LOG_IO("cdr r1: %02x\n", psxHu8(0x1801));
 
-	return psxHuint8_t(0x1801);
+	return psxHu8(0x1801);
 }
 
 void cdrWrite1(unsigned char rt) {
@@ -1428,12 +1428,12 @@ void cdrWrite2(unsigned char rt) {
 
 unsigned char cdrRead3(void) {
 	if (cdr.Ctrl & 0x1)
-		psxHuint8_t(0x1803) = cdr.Stat | 0xE0;
+		psxHu8(0x1803) = cdr.Stat | 0xE0;
 	else
-		psxHuint8_t(0x1803) = cdr.Reg2 | 0xE0;
+		psxHu8(0x1803) = cdr.Reg2 | 0xE0;
 
-	CDR_LOG_IO("cdr r3: %02x\n", psxHuint8_t(0x1803));
-	return psxHuint8_t(0x1803);
+	CDR_LOG_IO("cdr r3: %02x\n", psxHu8(0x1803));
+	return psxHu8(0x1803);
 }
 
 void cdrWrite3(unsigned char rt) {

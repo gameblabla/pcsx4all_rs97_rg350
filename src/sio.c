@@ -390,7 +390,7 @@ void sioInterrupt() {
 	//  pcsx_rearmed: only do IRQ if it's bit has been cleared
 	if (!(psxSio.StatReg & IRQ)) {
 		psxSio.StatReg |= IRQ;
-		psxHuint32_tref(0x1070) |= SWAPu32(0x80);
+		psxHu32ref(0x1070) |= SWAPu32(0x80);
 		// Ensure psxBranchTest() is called soon when IRQ is pending:
 		ResetIoCycle();
 	}

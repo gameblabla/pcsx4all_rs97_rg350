@@ -126,10 +126,10 @@ static uint32_t gpuDmaChainSize(uint32_t addr) {
 		if (CheckForEndlessLoop(addr, lUsedAddr)) break;
 
 		// # 32-bit blocks to transfer
-		size += psxMuint8_t( addr + 3 );
+		size += psxMu8( addr + 3 );
 
 		// next 32-bit pointer
-		addr = psxMuint32_t( addr & ~0x3 ) & 0xffffff;
+		addr = psxMu32( addr & ~0x3 ) & 0xffffff;
 		size += 1;
 	} while (addr != 0xffffff);
 

@@ -55,7 +55,7 @@
 
 void psxHwReset() {
 	//senquack - added Config.SpuIrq option from PCSX Rearmed/Reloaded:
-	if (Config.SpuIrq) psxHuint32_tref(0x1070) |= SWAP32(0x200);
+	if (Config.SpuIrq) psxHu32ref(0x1070) |= SWAP32(0x200);
 
 	memset(psxH, 0, 0x10000);
 
@@ -80,7 +80,7 @@ uint8_t psxHwRead8(uint32_t add)
 		case 0x1f801802: hard = cdrRead2(); break;
 		case 0x1f801803: hard = cdrRead3(); break;
 		default:
-			hard = psxHuint8_t(add); 
+			hard = psxHu8(add); 
 #ifdef PSXHW_LOG
 			PSXHW_LOG("*Unkwnown 8bit read at address %x\n", add);
 #endif
@@ -92,7 +92,7 @@ uint8_t psxHwRead8(uint32_t add)
 	// See note at top of file regarding dynarecs needing added functionality.
 	if ((add & 0x0ff00000) == 0x0fc00000) {
 		// ROM access
-		return psxRuint8_t(add);
+		return psxRu8(add);
 	} else {
 		// A non-32-bit read from cache control port and probably never encountered
 		return 0;
@@ -110,12 +110,12 @@ uint16_t psxHwRead16(uint32_t add)
 	{
 		switch (add) {
 #ifdef PSXHW_LOG
-		case 0x1f801070: PSXHW_LOG("IREG 16bit read %x\n", psxHuint16_t(0x1070));
-			return psxHuint16_t(0x1070);
+		case 0x1f801070: PSXHW_LOG("IREG 16bit read %x\n", psxHu16(0x1070));
+			return psxHu16(0x1070);
 #endif
 #ifdef PSXHW_LOG
-		case 0x1f801074: PSXHW_LOG("IMASK 16bit read %x\n", psxHuint16_t(0x1074));
-			return psxHuint16_t(0x1074);
+		case 0x1f801074: PSXHW_LOG("IMASK 16bit read %x\n", psxHu16(0x1074));
+			return psxHu16(0x1074);
 #endif
 
 		case 0x1f801040:
@@ -217,7 +217,7 @@ uint16_t psxHwRead16(uint32_t add)
 			if (add >= 0x1f801c00 && add < 0x1f801e00) {
 				hard = SPU_readRegister(add);
 			} else {
-				hard = psxHuint16_t(add); 
+				hard = psxHu16(add); 
 #ifdef PSXHW_LOG
 				PSXHW_LOG("*Unkwnown 16bit read at address %x\n", add);
 #endif
@@ -230,7 +230,7 @@ uint16_t psxHwRead16(uint32_t add)
 	// See note at top of file regarding dynarecs needing added functionality.
 	if ((add & 0x0ff00000) == 0x0fc00000) {
 		// ROM access
-		return psxRuint16_t(add);
+		return psxRu16(add);
 	} else {
 		// A non-32-bit read from cache control port and probably never encountered
 		return 0;
@@ -257,16 +257,16 @@ uint32_t psxHwRead32(uint32_t add)
 	//	case 0x1f801050: hard = serial_read32(); break;//serial port
 #ifdef PSXHW_LOG
 		case 0x1f801060:
-			PSXHW_LOG("RAM size read %x\n", psxHuint32_t(0x1060));
-			return psxHuint32_t(0x1060);
+			PSXHW_LOG("RAM size read %x\n", psxHu32(0x1060));
+			return psxHu32(0x1060);
 #endif
 #ifdef PSXHW_LOG
-		case 0x1f801070: PSXHW_LOG("IREG 32bit read %x\n", psxHuint32_t(0x1070));
-			return psxHuint32_t(0x1070);
+		case 0x1f801070: PSXHW_LOG("IREG 32bit read %x\n", psxHu32(0x1070));
+			return psxHu32(0x1070);
 #endif
 #ifdef PSXHW_LOG
-		case 0x1f801074: PSXHW_LOG("IMASK 32bit read %x\n", psxHuint32_t(0x1074));
-			return psxHuint32_t(0x1074);
+		case 0x1f801074: PSXHW_LOG("IMASK 32bit read %x\n", psxHu32(0x1074));
+			return psxHu32(0x1074);
 #endif
 
 		case 0x1f801810:
@@ -293,25 +293,25 @@ uint32_t psxHwRead32(uint32_t add)
 
 #ifdef PSXHW_LOG
 		case 0x1f8010a0:
-			PSXHW_LOG("DMA2 MADR 32bit read %x\n", psxHuint32_t(0x10a0));
+			PSXHW_LOG("DMA2 MADR 32bit read %x\n", psxHu32(0x10a0));
 			return SWAPu32(HW_DMA2_MADR);
 		case 0x1f8010a4:
-			PSXHW_LOG("DMA2 BCR 32bit read %x\n", psxHuint32_t(0x10a4));
+			PSXHW_LOG("DMA2 BCR 32bit read %x\n", psxHu32(0x10a4));
 			return SWAPu32(HW_DMA2_BCR);
 		case 0x1f8010a8:
-			PSXHW_LOG("DMA2 CHCR 32bit read %x\n", psxHuint32_t(0x10a8));
+			PSXHW_LOG("DMA2 CHCR 32bit read %x\n", psxHu32(0x10a8));
 			return SWAPu32(HW_DMA2_CHCR);
 #endif
 
 #ifdef PSXHW_LOG
 		case 0x1f8010b0:
-			PSXHW_LOG("DMA3 MADR 32bit read %x\n", psxHuint32_t(0x10b0));
+			PSXHW_LOG("DMA3 MADR 32bit read %x\n", psxHu32(0x10b0));
 			return SWAPu32(HW_DMA3_MADR);
 		case 0x1f8010b4:
-			PSXHW_LOG("DMA3 BCR 32bit read %x\n", psxHuint32_t(0x10b4));
+			PSXHW_LOG("DMA3 BCR 32bit read %x\n", psxHu32(0x10b4));
 			return SWAPu32(HW_DMA3_BCR);
 		case 0x1f8010b8:
-			PSXHW_LOG("DMA3 CHCR 32bit read %x\n", psxHuint32_t(0x10b8));
+			PSXHW_LOG("DMA3 CHCR 32bit read %x\n", psxHu32(0x10b8));
 			return SWAPu32(HW_DMA3_CHCR);
 #endif
 
@@ -372,7 +372,7 @@ uint32_t psxHwRead32(uint32_t add)
 			return hard;
 
 		default:
-			hard = psxHuint32_t(add); 
+			hard = psxHu32(add); 
 #ifdef PSXHW_LOG
 			PSXHW_LOG("*Unkwnown 32bit read at address %x\n", add);
 #endif
@@ -384,7 +384,7 @@ uint32_t psxHwRead32(uint32_t add)
 	// See note at top of file regarding dynarecs needing added functionality.
 	if ((add & 0x0ff00000) == 0x0fc00000) {
 		// ROM access
-		return psxRuint32_t(add);
+		return psxRu32(add);
 	} else {
 		// Cache control port read - mimic original psxmem.cpp behavior and return 0
 		return 0;
@@ -407,7 +407,7 @@ void psxHwWrite8(uint32_t add, uint8_t value)
 		case 0x1f801803: cdrWrite3(value); break;
 
 		default:
-			psxHuint8_t(add) = value;
+			psxHu8(add) = value;
 #ifdef PSXHW_LOG
 			PSXHW_LOG("*Unknown 8bit write at address %x value %x\n", add, value);
 #endif
@@ -418,7 +418,7 @@ void psxHwWrite8(uint32_t add, uint8_t value)
 		//       even when the port address is known. I won't change this behavior
 		//       because it's unknown what original intent was. -senquack Aug 2017
 
-		psxHuint8_t(add) = value;
+		psxHu8(add) = value;
 	}
 #ifdef PSXHW_LOG
 	PSXHW_LOG("*Known 8bit write at address %x value %x\n", add, value);
@@ -476,13 +476,13 @@ void psxHwWrite16(uint32_t add, uint16_t value)
 			value &= 0x7ff;
 
 			//senquack - added Config.SpuIrq option from PCSX Rearmed/Reloaded:
-			if (Config.SpuIrq) psxHuint16_tref(0x1070) |= SWAPu16(0x200);
+			if (Config.SpuIrq) psxHu16ref(0x1070) |= SWAPu16(0x200);
 
-			psxHuint16_tref(0x1070) &= SWAPu16(value);
+			psxHu16ref(0x1070) &= SWAPu16(value);
 
 			//senquack - When IRQ is pending and unmasked, ensure psxBranchTest()
 			// gets called as soon as possible, so HW IRQ exception gets handled
-			if (psxHuint16_t(0x1070) & psxHuint16_t(0x1074))
+			if (psxHu16(0x1070) & psxHu16(0x1074))
 				ResetIoCycle();
 
 			return;
@@ -494,11 +494,11 @@ void psxHwWrite16(uint32_t add, uint16_t value)
 			//senquack - Strip all but bits 0:10, rest are 0 or garbage in docs
 			value &= 0x7ff;
 
-			psxHuint16_tref(0x1074) = SWAPu16(value);
+			psxHu16ref(0x1074) = SWAPu16(value);
 
 			//senquack - When IRQ is pending and unmasked, ensure psxBranchTest()
 			// gets called as soon as possible, so HW IRQ exception gets handled
-			if (psxHuint16_t(0x1070) & psxHuint16_t(0x1074))
+			if (psxHu16(0x1070) & psxHu16(0x1074))
 				ResetIoCycle();
 
 			return;
@@ -566,7 +566,7 @@ void psxHwWrite16(uint32_t add, uint16_t value)
 				return;
 			}
 
-			psxHuint16_tref(add) = SWAPu16(value);
+			psxHu16ref(add) = SWAPu16(value);
 #ifdef PSXHW_LOG
 			PSXHW_LOG("*Unknown 16bit write at address %x value %x\n", add, value);
 #endif
@@ -598,7 +598,7 @@ void psxHwWrite32(uint32_t add, uint32_t value)
 #ifdef PSXHW_LOG
 		case 0x1f801060:
 			PSXHW_LOG("RAM size write %x\n", value);
-			psxHuint32_tref(add) = SWAPu32(value);
+			psxHu32ref(add) = SWAPu32(value);
 			return; // Ram size
 #endif
 
@@ -610,13 +610,13 @@ void psxHwWrite32(uint32_t add, uint32_t value)
 			value &= 0x7ff;
 
 			//senquack - added Config.SpuIrq option from PCSX Rearmed/Reloaded:
-			if (Config.SpuIrq) psxHuint32_tref(0x1070) |= SWAPu32(0x200);
+			if (Config.SpuIrq) psxHu32ref(0x1070) |= SWAPu32(0x200);
 
-			psxHuint32_tref(0x1070) &= SWAPu32(value);
+			psxHu32ref(0x1070) &= SWAPu32(value);
 
 			//senquack - When IRQ is pending and unmasked, ensure psxBranchTest()
 			// gets called as soon as possible, so HW IRQ exception gets handled
-			if (psxHuint32_t(0x1070) & psxHuint32_t(0x1074))
+			if (psxHu32(0x1070) & psxHu32(0x1074))
 				ResetIoCycle();
 
 			return;
@@ -627,11 +627,11 @@ void psxHwWrite32(uint32_t add, uint32_t value)
 			//senquack - Strip all but bits 0:10, rest are 0 or garbage in docs
 			value &= 0x7ff;
 
-			psxHuint32_tref(0x1074) = SWAPu32(value);
+			psxHu32ref(0x1074) = SWAPu32(value);
 
 			//senquack - When IRQ is pending and unmasked, ensure psxBranchTest()
 			// gets called as soon as possible, so HW IRQ exception gets handled
-			if (psxHuint32_t(0x1070) & psxHuint32_t(0x1074))
+			if (psxHu32(0x1070) & psxHu32(0x1074))
 				ResetIoCycle();
 
 			return;
@@ -756,7 +756,7 @@ void psxHwWrite32(uint32_t add, uint32_t value)
 			if ((tmp & HW_DMA_ICR_GLOBAL_ENABLE && tmp & 0x7f000000)
 			    || tmp & HW_DMA_ICR_BUS_ERROR) {
 				if (!(SWAPu32(HW_DMA_ICR) & HW_DMA_ICR_IRQ_SENT))
-					psxHuint32_tref(0x1070) |= SWAP32(8);
+					psxHu32ref(0x1070) |= SWAP32(8);
 				tmp |= HW_DMA_ICR_IRQ_SENT;
 			}
 			HW_DMA_ICR = SWAPu32(tmp);
@@ -849,7 +849,7 @@ void psxHwWrite32(uint32_t add, uint32_t value)
 				return;
 			}
 
-			psxHuint32_tref(add) = SWAPu32(value);
+			psxHu32ref(add) = SWAPu32(value);
 #ifdef PSXHW_LOG
 			PSXHW_LOG("*Unknown 32bit write at address %x value %x\n", add, value);
 #endif

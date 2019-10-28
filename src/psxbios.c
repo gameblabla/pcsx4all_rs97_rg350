@@ -1071,14 +1071,14 @@ void psxBios_memchr() { // 0x2e
 }
 
 void psxBios_rand(void) { // 2f
-	uint32_t s = psxMuint32_t(0x9010) * 1103515245 + 12345;
+	uint32_t s = psxMu32(0x9010) * 1103515245 + 12345;
 	v0 = (s >> 16) & 0x7fff;
-	psxMuint32_tref(0x9010) = SWAPu32(s);
+	psxMu32ref(0x9010) = SWAPu32(s);
 	pc0 = ra;
 }
 
 void psxBios_srand(void) { // 30
-	psxMuint32_tref(0x9010) = SWAPu32(a0);
+	psxMu32ref(0x9010) = SWAPu32(a0);
 	pc0 = ra;
 }
 
@@ -1386,10 +1386,10 @@ void psxBios_printf(void) { // 3f
 	psp = PSXM(sp);
 	if (psp) {
 		memcpy(save, psp, 4 * 4);
-		psxMuint32_tref(sp) = SWAP32((uint32_t)a0);
-		psxMuint32_tref(sp + 4) = SWAP32((uint32_t)a1);
-		psxMuint32_tref(sp + 8) = SWAP32((uint32_t)a2);
-		psxMuint32_tref(sp + 12) = SWAP32((uint32_t)a3);
+		psxMu32ref(sp) = SWAP32((uint32_t)a0);
+		psxMu32ref(sp + 4) = SWAP32((uint32_t)a1);
+		psxMu32ref(sp + 8) = SWAP32((uint32_t)a2);
+		psxMu32ref(sp + 12) = SWAP32((uint32_t)a3);
 	}
 
 	while (Ra0[i]) {
@@ -1415,21 +1415,21 @@ _start:
 
 				switch (Ra0[i]) {
 					case 'f': case 'F':
-						ptmp+= sprintf(ptmp, tmp2, (float)psxMuint32_t(sp + n * 4)); n++; break;
+						ptmp+= sprintf(ptmp, tmp2, (float)psxMu32(sp + n * 4)); n++; break;
 					case 'a': case 'A':
 					case 'e': case 'E':
 					case 'g': case 'G':
-						ptmp+= sprintf(ptmp, tmp2, (double)psxMuint32_t(sp + n * 4)); n++; break;
+						ptmp+= sprintf(ptmp, tmp2, (double)psxMu32(sp + n * 4)); n++; break;
 					case 'p':
 					case 'i': case 'u':
 					case 'd': case 'D':
 					case 'o': case 'O':
 					case 'x': case 'X':
-						ptmp+= sprintf(ptmp, tmp2, (unsigned int)psxMuint32_t(sp + n * 4)); n++; break;
+						ptmp+= sprintf(ptmp, tmp2, (unsigned int)psxMu32(sp + n * 4)); n++; break;
 					case 'c':
-						ptmp+= sprintf(ptmp, tmp2, (unsigned char)psxMuint32_t(sp + n * 4)); n++; break;
+						ptmp+= sprintf(ptmp, tmp2, (unsigned char)psxMu32(sp + n * 4)); n++; break;
 					case 's':
-						ptmp+= sprintf(ptmp, tmp2, (char*)PSXM(psxMuint32_t(sp + n * 4))); n++; break;
+						ptmp+= sprintf(ptmp, tmp2, (char*)PSXM(psxMu32(sp + n * 4))); n++; break;
 					case '%':
 						*ptmp++ = Ra0[i]; break;
 				}
@@ -1672,7 +1672,7 @@ void psxBios__96_remove(void) { // 72
 }
 
 void psxBios_SetMem(void) { // 9f
-	uint32_t _new = psxHuint32_t(0x1060);
+	uint32_t _new = psxHu32(0x1060);
 
 #ifdef PSXBIOS_LOG
 	PSXBIOS_LOG("psxBios_%s: %x, %x\n", biosA0n[0x9f], a0, a1);
@@ -1680,14 +1680,14 @@ void psxBios_SetMem(void) { // 9f
 
 	switch(a0) {
 		case 2:
-			psxHuint32_tref(0x1060) = SWAP32(_new);
-			psxMuint32_tref(0x060) = a0;
+			psxHu32ref(0x1060) = SWAP32(_new);
+			psxMu32ref(0x060) = a0;
 			//printf("Change effective memory : %d MBytes\n",a0);
 			break;
 
 		case 8:
-			psxHuint32_tref(0x1060) = SWAP32(_new | 0x300);
-			psxMuint32_tref(0x060) = a0;
+			psxHu32ref(0x1060) = SWAP32(_new | 0x300);
+			psxMu32ref(0x060) = a0;
 			//printf("Change effective memory : %d MBytes\n",a0);
 	
 		default:
@@ -1788,8 +1788,8 @@ void psxBios_StartRCnt(void) { // 04
 
 	a0&= 0x3;
 	ResetIoCycle();
-	if (a0 != 3) psxHuint32_tref(0x1074)|= SWAP32((uint32_t)((1<<(a0+4))));
-	else psxHuint32_tref(0x1074)|= SWAPu32(0x1);
+	if (a0 != 3) psxHu32ref(0x1074)|= SWAP32((uint32_t)((1<<(a0+4))));
+	else psxHu32ref(0x1074)|= SWAPu32(0x1);
 	v0 = 1; pc0 = ra;
 }
 
@@ -1800,8 +1800,8 @@ void psxBios_StopRCnt(void) { // 05
 
 	a0&= 0x3;
 	ResetIoCycle();
-	if (a0 != 3) psxHuint32_tref(0x1074)&= SWAP32((uint32_t)(~(1<<(a0+4))));
-	else psxHuint32_tref(0x1074)&= SWAPu32(~0x1);
+	if (a0 != 3) psxHu32ref(0x1074)&= SWAP32((uint32_t)(~(1<<(a0+4))));
+	else psxHu32ref(0x1074)&= SWAPu32(~0x1);
 	pc0 = ra;
 }
 
@@ -3067,35 +3067,35 @@ void psxBiosInit(void) {
 	memset(FDesc, 0, sizeof(FDesc));
 	card_active_chan = 0;
 
-	psxMuint32_tref(0x0150) = SWAPu32(0x160);
-	psxMuint32_tref(0x0154) = SWAPu32(0x320);
-	psxMuint32_tref(0x0160) = SWAPu32(0x248);
+	psxMu32ref(0x0150) = SWAPu32(0x160);
+	psxMu32ref(0x0154) = SWAPu32(0x320);
+	psxMu32ref(0x0160) = SWAPu32(0x248);
 	strcpy((char*)&psxM[0x248], "bu");
-/*	psxMuint32_tref(0x0ca8) = SWAPu32(0x1f410004);
-	psxMuint32_tref(0x0cf0) = SWAPu32(0x3c020000);
-	psxMuint32_tref(0x0cf4) = SWAPu32(0x2442641c);
-	psxMuint32_tref(0x09e0) = SWAPu32(0x43d0);
-	psxMuint32_tref(0x4d98) = SWAPu32(0x946f000a);
+/*	psxMu32ref(0x0ca8) = SWAPu32(0x1f410004);
+	psxMu32ref(0x0cf0) = SWAPu32(0x3c020000);
+	psxMu32ref(0x0cf4) = SWAPu32(0x2442641c);
+	psxMu32ref(0x09e0) = SWAPu32(0x43d0);
+	psxMu32ref(0x4d98) = SWAPu32(0x946f000a);
 */
 	// opcode HLE
-	psxRuint32_tref(0x0000) = SWAPu32((0x3b << 26) | 4);
+	psxRu32ref(0x0000) = SWAPu32((0x3b << 26) | 4);
 	/* Whatever this does, it actually breaks CTR, even without the uninitiliazed memory patch. 
 	Normally games shouldn't read from address 0 yet they do. See explanation below in details. */
-	//psxMuint32_tref(0x0000) = SWAPu32((0x3b << 26) | 0);
-	psxMuint32_tref(0x00a0) = SWAPu32((0x3b << 26) | 1);
-	psxMuint32_tref(0x00b0) = SWAPu32((0x3b << 26) | 2);
-	psxMuint32_tref(0x00c0) = SWAPu32((0x3b << 26) | 3);
-	psxMuint32_tref(0x4c54) = SWAPu32((0x3b << 26) | 0);
-	psxMuint32_tref(0x8000) = SWAPu32((0x3b << 26) | 5);
-	psxMuint32_tref(0x07a0) = SWAPu32((0x3b << 26) | 0);
-	psxMuint32_tref(0x0884) = SWAPu32((0x3b << 26) | 0);
-	psxMuint32_tref(0x0894) = SWAPu32((0x3b << 26) | 0);
+	//psxMu32ref(0x0000) = SWAPu32((0x3b << 26) | 0);
+	psxMu32ref(0x00a0) = SWAPu32((0x3b << 26) | 1);
+	psxMu32ref(0x00b0) = SWAPu32((0x3b << 26) | 2);
+	psxMu32ref(0x00c0) = SWAPu32((0x3b << 26) | 3);
+	psxMu32ref(0x4c54) = SWAPu32((0x3b << 26) | 0);
+	psxMu32ref(0x8000) = SWAPu32((0x3b << 26) | 5);
+	psxMu32ref(0x07a0) = SWAPu32((0x3b << 26) | 0);
+	psxMu32ref(0x0884) = SWAPu32((0x3b << 26) | 0);
+	psxMu32ref(0x0894) = SWAPu32((0x3b << 26) | 0);
 
 	// memory size 2 MB
-	psxMuint32_tref(0x6c80) = SWAPu32(0x000085c8);
+	psxMu32ref(0x6c80) = SWAPu32(0x000085c8);
 
 	// initial RNG seed
-	psxMuint32_tref(0x9010) = SWAPu32(0xac20cc00);
+	psxMu32ref(0x9010) = SWAPu32(0xac20cc00);
 
 	// fonts
 	len = 0x80000 - 0x66000;
@@ -3104,7 +3104,7 @@ void psxBiosInit(void) {
 	uncompress((Bytef *)(psxR + 0x69d68), &len, font_889f, sizeof(font_889f));
 
 	// memory size 2 MB
-	psxHuint32_tref(0x1060) = SWAPu32(0x00000b88);
+	psxHu32ref(0x1060) = SWAPu32(0x00000b88);
 	
 	/*	Some games like R-Types, CTR, Fade to Black read from adress 0x00000000 due to uninitialized pointers.
 		See Garbage Area at Address 00000000h in Nocash PSX Specfications for more information.
@@ -3113,17 +3113,17 @@ void psxBiosInit(void) {
 		Crash Team Racing will softlock after the Sony logo.
 	*/
 	
-	psxMuint32_tref(0x0000) = SWAPu32(0x00000003);
+	psxMu32ref(0x0000) = SWAPu32(0x00000003);
 	/*
 	But overwritten by 00000003h after soon.
-	psxMuint32_tref(0x0000) = SWAPu32(0x00001A3C);
+	psxMu32ref(0x0000) = SWAPu32(0x00001A3C);
 	*/
-	psxMuint32_tref(0x0004) = SWAPu32(0x800C5A27);
-	psxMuint32_tref(0x0008) = SWAPu32(0x08000403);
-	psxMuint32_tref(0x000C) = SWAPu32(0x00000000);
+	psxMu32ref(0x0004) = SWAPu32(0x800C5A27);
+	psxMu32ref(0x0008) = SWAPu32(0x08000403);
+	psxMu32ref(0x000C) = SWAPu32(0x00000000);
 	
-	psxMuint32_tref(0x0064) = SWAPu32(0x00000000);
-	psxMuint32_tref(0x0068) = SWAPu32(0xFF000000);
+	psxMu32ref(0x0064) = SWAPu32(0x00000000);
+	psxMu32ref(0x0068) = SWAPu32(0xFF000000);
 }
 
 void psxBiosShutdown() {
@@ -3191,15 +3191,15 @@ void biosInterrupt(void) {
 			}
 		}
 
-	if (psxHuint32_t(0x1070) & 0x1) { // Vsync
+	if (psxHu32(0x1070) & 0x1) { // Vsync
 		if (RcEV[3][1].status == EvStACTIVE) {
 			softCall(RcEV[3][1].fhandler);
 		}
 	}
 
-	if (psxHuint32_t(0x1070) & 0x70) { // Rcnt 0,1,2
+	if (psxHu32(0x1070) & 0x70) { // Rcnt 0,1,2
 		for (i=0; i<3; i++) {
-			if (psxHuint32_t(0x1070) & (1 << (i+4))) {
+			if (psxHu32(0x1070) & (1 << (i+4))) {
 				if (RcEV[i][1].status == EvStACTIVE) {
 					softCall(RcEV[i][1].fhandler);
 				}
@@ -3218,7 +3218,7 @@ void psxBiosException(void) {
 			interrupt_r26=psxRegs.CP0.n.EPC;
 			SaveRegs();
 
-			sp = psxMuint32_t(0x6c80); // create new stack for interrupt handlers
+			sp = psxMu32(0x6c80); // create new stack for interrupt handlers
 
 			biosInterrupt();
 
@@ -3299,10 +3299,10 @@ void psxBiosException(void) {
 
 #define bfreezepsxMptr(ptr, type) { \
 	if (Mode == 1) { \
-		if (ptr) psxRuint32_tref(base) = SWAPu32((int8_t *)(ptr) - psxM); \
-		else psxRuint32_tref(base) = 0; \
+		if (ptr) psxRu32ref(base) = SWAPu32((int8_t *)(ptr) - psxM); \
+		else psxRu32ref(base) = 0; \
 	} else { \
-		if (psxRuint32_t(base) != 0) ptr = (type *)(psxM + psxRuint32_t(base)); \
+		if (psxRu32(base) != 0) ptr = (type *)(psxM + psxRu32(base)); \
 		else (ptr) = NULL; \
 	} \
 	base += sizeof(uint32_t); \

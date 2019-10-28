@@ -116,9 +116,9 @@ void psxException(uint32_t code, uint32_t bd) {
 	psxRegs.CP0.n.Status = (psxRegs.CP0.n.Status &~0x3f) |
 						  ((psxRegs.CP0.n.Status & 0xf) << 2);
 
-	if (!Config.HLE && (((PSXMuint32_t(psxRegs.CP0.n.EPC) >> 24) & 0xfe) == 0x4a)) {
+	if (!Config.HLE && (((PSXMu32(psxRegs.CP0.n.EPC) >> 24) & 0xfe) == 0x4a)) {
 		// "hokuto no ken" / "Crash Bandicot 2" ... fix
-		PSXMuint32_tref(psxRegs.CP0.n.EPC)&= SWAPu32(~0x02000000);
+		PSXMu32ref(psxRegs.CP0.n.EPC)&= SWAPu32(~0x02000000);
 	}
 
 	if (Config.HLE) {
@@ -145,7 +145,7 @@ void psxBranchTest()
 	                           psxRegs.intCycle[PSXINT_NEXT_EVENT].cycle;
 
 	// Are one or more HW IRQ bits set in both their status and mask registers?
-	if (psxHuint32_t(0x1070) & psxHuint32_t(0x1074)) {
+	if (psxHu32(0x1070) & psxHu32(0x1074)) {
 		// Are both HW IRQ mask bit and IRQ master-enable bit set in CP0 status reg?
 		if ((psxRegs.CP0.n.Status & 0x401) == 0x401) {
 			psxException(0x400, 0);

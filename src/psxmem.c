@@ -232,7 +232,7 @@ uint8_t psxMemRead8(uint32_t mem)
 	uint32_t m = mem & 0xffff;
 	if (t == 0x1f80 || t == 0x9f80 || t == 0xbf80) {
 		if (m < 0x400)
-			ret = psxHuint8_t(mem);
+			ret = psxHu8(mem);
 		else
 			ret = psxHwRead8(mem);
 	} else {
@@ -256,7 +256,7 @@ uint16_t psxMemRead16(uint32_t mem)
 	uint32_t m = mem & 0xffff;
 	if (t == 0x1f80 || t == 0x9f80 || t == 0xbf80) {
 		if (m < 0x400)
-			ret = psxHuint16_t(mem);
+			ret = psxHu16(mem);
 		else
 			ret = psxHwRead16(mem);
 	} else {
@@ -280,7 +280,7 @@ uint32_t psxMemRead32(uint32_t mem)
 	uint32_t m = mem & 0xffff;
 	if (t == 0x1f80 || t == 0x9f80 || t == 0xbf80) {
 		if (m < 0x400)
-			ret = psxHuint32_t(mem);
+			ret = psxHu32(mem);
 		else
 			ret = psxHwRead32(mem);
 	} else {
@@ -303,7 +303,7 @@ void psxMemWrite8(uint32_t mem, uint8_t value)
 	uint32_t m = mem & 0xffff;
 	if (t == 0x1f80 || t == 0x9f80 || t == 0xbf80) {
 		if (m < 0x400)
-			psxHuint8_t(mem) = value;
+			psxHu8(mem) = value;
 		else
 			psxHwWrite8(mem, value);
 	} else {
@@ -326,7 +326,7 @@ void psxMemWrite16(uint32_t mem, uint16_t value)
 	uint32_t m = mem & 0xffff;
 	if (t == 0x1f80 || t == 0x9f80 || t == 0xbf80) {
 		if (m < 0x400)
-			psxHuint16_tref(mem) = SWAPu16(value);
+			psxHu16ref(mem) = SWAPu16(value);
 		else
 			psxHwWrite16(mem, value);
 	} else {
@@ -349,7 +349,7 @@ void psxMemWrite32(uint32_t mem, uint32_t value)
 	uint32_t m = mem & 0xffff;
 	if (t == 0x1f80 || t == 0x9f80 || t == 0xbf80) {
 		if (m < 0x400)
-			psxHuint32_tref(mem) = SWAPu32(value);
+			psxHu32ref(mem) = SWAPu32(value);
 		else
 			psxHwWrite32(mem, value);
 	} else {

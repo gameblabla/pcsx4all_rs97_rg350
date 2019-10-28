@@ -577,11 +577,7 @@ void psxDma1(uint32_t adr, uint32_t bcr, uint32_t chcr) {
 			}
 
 			while(size >= SIZE_OF_16B_BLOCK) {
-				/* This apparently sometimes fixes crash issues in MGS during FMVs */
-				if (psxM > mdec.rl)
-				{
-					mdec.rl = rl2blk(blk, mdec.rl);
-				}
+				mdec.rl = rl2blk(blk, mdec.rl);
 				yuv2rgb15(blk, (uint16_t *)image);
 				image += SIZE_OF_16B_BLOCK;
 				size -= SIZE_OF_16B_BLOCK;

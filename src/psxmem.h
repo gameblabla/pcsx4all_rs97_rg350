@@ -31,10 +31,10 @@
 #define SWAP16(v) ((((v)&0xff00)>>8) +(((v)&0xff)<<8))
 #define SWAP32(v) ((((v)&0xff000000ul)>>24) + (((v)&0xff0000ul)>>8) + (((v)&0xff00ul)<<8) +(((v)&0xfful)<<24))
 #define SWAPu32(v) SWAP32((uint32_t)(v))
-#define SWAPint32_t(v) SWAP32((int32_t)(v))
+#define SWAPs32(v) SWAP32((int32_t)(v))
 
 #define SWAPu16(v) SWAP16((uint16_t)(v))
-#define SWAPint16_t(v) SWAP16((int16_t)(v))
+#define SWAPs16(v) SWAP16((int16_t)(v))
 
 #else
 
@@ -61,71 +61,71 @@ extern uint_fast8_t psxH_allocated;
 extern uint8_t **psxMemWLUT;
 extern uint8_t **psxMemRLUT;
 
-#define psxMint8_t(mem)		psxM[(mem) & 0x1fffff]
-#define psxMint16_t(mem)	(SWAP16(*(int16_t*)&psxM[(mem) & 0x1fffff]))
-#define psxMint32_t(mem)	(SWAP32(*(int32_t*)&psxM[(mem) & 0x1fffff]))
-#define psxMuint8_t(mem)		(*(uint8_t*)&psxM[(mem) & 0x1fffff])
-#define psxMuint16_t(mem)	(SWAP16(*(uint16_t*)&psxM[(mem) & 0x1fffff]))
-#define psxMuint32_t(mem)	(SWAP32(*(uint32_t*)&psxM[(mem) & 0x1fffff]))
+#define psxMs8(mem)		psxM[(mem) & 0x1fffff]
+#define psxMs16(mem)	(SWAP16(*(int16_t*)&psxM[(mem) & 0x1fffff]))
+#define psxMs32(mem)	(SWAP32(*(int32_t*)&psxM[(mem) & 0x1fffff]))
+#define psxMu8(mem)		(*(uint8_t*)&psxM[(mem) & 0x1fffff])
+#define psxMu16(mem)	(SWAP16(*(uint16_t*)&psxM[(mem) & 0x1fffff]))
+#define psxMu32(mem)	(SWAP32(*(uint32_t*)&psxM[(mem) & 0x1fffff]))
 
-#define psxMint8_tref(mem)	psxM[(mem) & 0x1fffff]
-#define psxMint16_tref(mem)	(*(int16_t*)&psxM[(mem) & 0x1fffff])
-#define psxMint32_tref(mem)	(*(int32_t*)&psxM[(mem) & 0x1fffff])
-#define psxMuint8_tref(mem)	(*(uint8_t*) &psxM[(mem) & 0x1fffff])
-#define psxMuint16_tref(mem)	(*(uint16_t*)&psxM[(mem) & 0x1fffff])
-#define psxMuint32_tref(mem)	(*(uint32_t*)&psxM[(mem) & 0x1fffff])
+#define psxMs8ref(mem)	psxM[(mem) & 0x1fffff]
+#define psxMs16ref(mem)	(*(int16_t*)&psxM[(mem) & 0x1fffff])
+#define psxMs32ref(mem)	(*(int32_t*)&psxM[(mem) & 0x1fffff])
+#define psxMu8ref(mem)	(*(uint8_t*) &psxM[(mem) & 0x1fffff])
+#define psxMu16ref(mem)	(*(uint16_t*)&psxM[(mem) & 0x1fffff])
+#define psxMu32ref(mem)	(*(uint32_t*)&psxM[(mem) & 0x1fffff])
 
-#define psxPint8_t(mem)	    psxP[(mem) & 0xffff]
-#define psxPint16_t(mem)	(SWAP16(*(int16_t*)&psxP[(mem) & 0xffff]))
-#define psxPint32_t(mem)	(SWAP32(*(int32_t*)&psxP[(mem) & 0xffff]))
-#define psxPuint8_t(mem)		(*(uint8_t*) &psxP[(mem) & 0xffff])
-#define psxPuint16_t(mem)	(SWAP16(*(uint16_t*)&psxP[(mem) & 0xffff]))
-#define psxPuint32_t(mem)	(SWAP32(*(uint32_t*)&psxP[(mem) & 0xffff]))
+#define psxPs8(mem)	    psxP[(mem) & 0xffff]
+#define psxPs16(mem)	(SWAP16(*(int16_t*)&psxP[(mem) & 0xffff]))
+#define psxPs32(mem)	(SWAP32(*(int32_t*)&psxP[(mem) & 0xffff]))
+#define psxPu8(mem)		(*(uint8_t*) &psxP[(mem) & 0xffff])
+#define psxPu16(mem)	(SWAP16(*(uint16_t*)&psxP[(mem) & 0xffff]))
+#define psxPu32(mem)	(SWAP32(*(uint32_t*)&psxP[(mem) & 0xffff]))
 
-#define psxPint8_tref(mem)	psxP[(mem) & 0xffff]
-#define psxPint16_tref(mem)	(*(int16_t*)&psxP[(mem) & 0xffff])
-#define psxPint32_tref(mem)	(*(int32_t*)&psxP[(mem) & 0xffff])
-#define psxPuint8_tref(mem)	(*(uint8_t*) &psxP[(mem) & 0xffff])
-#define psxPuint16_tref(mem)	(*(uint16_t*)&psxP[(mem) & 0xffff])
-#define psxPuint32_tref(mem)	(*(uint32_t*)&psxP[(mem) & 0xffff])
+#define psxPs8ref(mem)	psxP[(mem) & 0xffff]
+#define psxPs16ref(mem)	(*(int16_t*)&psxP[(mem) & 0xffff])
+#define psxPs32ref(mem)	(*(int32_t*)&psxP[(mem) & 0xffff])
+#define psxPu8ref(mem)	(*(uint8_t*) &psxP[(mem) & 0xffff])
+#define psxPu16ref(mem)	(*(uint16_t*)&psxP[(mem) & 0xffff])
+#define psxPu32ref(mem)	(*(uint32_t*)&psxP[(mem) & 0xffff])
 
-#define psxRint8_t(mem)		psxR[(mem) & 0x7ffff]
-#define psxRint16_t(mem)	(SWAP16(*(int16_t*)&psxR[(mem) & 0x7ffff]))
-#define psxRint32_t(mem)	(SWAP32(*(int32_t*)&psxR[(mem) & 0x7ffff]))
-#define psxRuint8_t(mem)		(*(uint8_t* )&psxR[(mem) & 0x7ffff])
-#define psxRuint16_t(mem)	(SWAP16(*(uint16_t*)&psxR[(mem) & 0x7ffff]))
-#define psxRuint32_t(mem)	(SWAP32(*(uint32_t*)&psxR[(mem) & 0x7ffff]))
+#define psxRs8(mem)		psxR[(mem) & 0x7ffff]
+#define psxRs16(mem)	(SWAP16(*(int16_t*)&psxR[(mem) & 0x7ffff]))
+#define psxRs32(mem)	(SWAP32(*(int32_t*)&psxR[(mem) & 0x7ffff]))
+#define psxRu8(mem)		(*(uint8_t* )&psxR[(mem) & 0x7ffff])
+#define psxRu16(mem)	(SWAP16(*(uint16_t*)&psxR[(mem) & 0x7ffff]))
+#define psxRu32(mem)	(SWAP32(*(uint32_t*)&psxR[(mem) & 0x7ffff]))
 
-#define psxRint8_tref(mem)	psxR[(mem) & 0x7ffff]
-#define psxRint16_tref(mem)	(*(int16_t*)&psxR[(mem) & 0x7ffff])
-#define psxRint32_tref(mem)	(*(int32_t*)&psxR[(mem) & 0x7ffff])
-#define psxRuint8_tref(mem)	(*(uint8_t* )&psxR[(mem) & 0x7ffff])
-#define psxRuint16_tref(mem)	(*(uint16_t*)&psxR[(mem) & 0x7ffff])
-#define psxRuint32_tref(mem)	(*(uint32_t*)&psxR[(mem) & 0x7ffff])
+#define psxRs8ref(mem)	psxR[(mem) & 0x7ffff]
+#define psxRs16ref(mem)	(*(int16_t*)&psxR[(mem) & 0x7ffff])
+#define psxRs32ref(mem)	(*(int32_t*)&psxR[(mem) & 0x7ffff])
+#define psxRu8ref(mem)	(*(uint8_t* )&psxR[(mem) & 0x7ffff])
+#define psxRu16ref(mem)	(*(uint16_t*)&psxR[(mem) & 0x7ffff])
+#define psxRu32ref(mem)	(*(uint32_t*)&psxR[(mem) & 0x7ffff])
 
-#define psxHint8_t(mem)		psxH[(mem) & 0xffff]
-#define psxHint16_t(mem)	(SWAP16(*(int16_t*)&psxH[(mem) & 0xffff]))
-#define psxHint32_t(mem)	(SWAP32(*(int32_t*)&psxH[(mem) & 0xffff]))
-#define psxHuint8_t(mem)		(*(uint8_t*) &psxH[(mem) & 0xffff])
-#define psxHuint16_t(mem)	(SWAP16(*(uint16_t*)&psxH[(mem) & 0xffff]))
-#define psxHuint32_t(mem)	(SWAP32(*(uint32_t*)&psxH[(mem) & 0xffff]))
+#define psxHs8(mem)		psxH[(mem) & 0xffff]
+#define psxHs16(mem)	(SWAP16(*(int16_t*)&psxH[(mem) & 0xffff]))
+#define psxHs32(mem)	(SWAP32(*(int32_t*)&psxH[(mem) & 0xffff]))
+#define psxHu8(mem)		(*(uint8_t*) &psxH[(mem) & 0xffff])
+#define psxHu16(mem)	(SWAP16(*(uint16_t*)&psxH[(mem) & 0xffff]))
+#define psxHu32(mem)	(SWAP32(*(uint32_t*)&psxH[(mem) & 0xffff]))
 
-#define psxHint8_tref(mem)	psxH[(mem) & 0xffff]
-#define psxHint16_tref(mem)	(*(int16_t*)&psxH[(mem) & 0xffff])
-#define psxHint32_tref(mem)	(*(int32_t*)&psxH[(mem) & 0xffff])
-#define psxHuint8_tref(mem)	(*(uint8_t*) &psxH[(mem) & 0xffff])
-#define psxHuint16_tref(mem)	(*(uint16_t*)&psxH[(mem) & 0xffff])
-#define psxHuint32_tref(mem)	(*(uint32_t*)&psxH[(mem) & 0xffff])
+#define psxHs8ref(mem)	psxH[(mem) & 0xffff]
+#define psxHs16ref(mem)	(*(int16_t*)&psxH[(mem) & 0xffff])
+#define psxHs32ref(mem)	(*(int32_t*)&psxH[(mem) & 0xffff])
+#define psxHu8ref(mem)	(*(uint8_t*) &psxH[(mem) & 0xffff])
+#define psxHu16ref(mem)	(*(uint16_t*)&psxH[(mem) & 0xffff])
+#define psxHu32ref(mem)	(*(uint32_t*)&psxH[(mem) & 0xffff])
 
 #define PSXM(mem)		(uint8_t*)(psxMemRLUT[(mem) >> 16] + ((mem) & 0xffff))
-#define PSXMint8_t(mem)		(*(int8_t *)PSXM(mem))
-#define PSXMint16_t(mem)	(SWAP16(*(int16_t*)PSXM(mem)))
-#define PSXMint32_t(mem)	(SWAP32(*(int32_t*)PSXM(mem)))
-#define PSXMuint8_t(mem)		(*(uint8_t *)PSXM(mem))
-#define PSXMuint16_t(mem)	(SWAP16(*(uint16_t*)PSXM(mem)))
-#define PSXMuint32_t(mem)	(SWAP32(*(uint32_t*)PSXM(mem)))
+#define PSXMs8(mem)		(*(int8_t *)PSXM(mem))
+#define PSXMs16(mem)	(SWAP16(*(int16_t*)PSXM(mem)))
+#define PSXMs32(mem)	(SWAP32(*(int32_t*)PSXM(mem)))
+#define PSXMu8(mem)		(*(uint8_t *)PSXM(mem))
+#define PSXMu16(mem)	(SWAP16(*(uint16_t*)PSXM(mem)))
+#define PSXMu32(mem)	(SWAP32(*(uint32_t*)PSXM(mem)))
 
-#define PSXMuint32_tref(mem)	(*(uint32_t*)PSXM(mem))
+#define PSXMu32ref(mem)	(*(uint32_t*)PSXM(mem))
 
 int  psxMemInit(void);
 void psxMemReset(void);

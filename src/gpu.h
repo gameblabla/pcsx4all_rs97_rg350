@@ -33,7 +33,7 @@
 // both must be set for interlace to work
 #define PSXGPU_ILACE_BITS (PSXGPU_ILACE | PSXGPU_DHEIGHT)
 
-#define HW_GPU_STATUS psxHuint32_tref(0x1814)
+#define HW_GPU_STATUS psxHu32ref(0x1814)
 
 // TODO: handle com too
 #define PSXGPU_TIMING_BITS (PSXGPU_LCF | PSXGPU_nBUSY)
