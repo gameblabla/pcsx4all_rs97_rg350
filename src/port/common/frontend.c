@@ -471,7 +471,7 @@ static MENUITEM gui_MainMenuItems[] = {
 };
 
 #define MENU_SIZE ((sizeof(gui_MainMenuItems) / sizeof(MENUITEM)) - 1)
-static MENU gui_MainMenu = { MENU_SIZE, 0, 102, 140, (MENUITEM *)&gui_MainMenuItems };
+static MENU gui_MainMenu = { MENU_SIZE, 0, 102, 140, (MENUITEM *)&gui_MainMenuItems, 0, 0 };
 
 static int gui_state_save(int slot)
 {
@@ -682,7 +682,7 @@ static int gui_StateSave()
 	if (initial_pos < 0)
 		initial_pos = 0;
 
-	MENU gui_StateSaveMenu = { menu_size, initial_pos, 30, 80, (MENUITEM *)&gui_StateSaveItems };
+	MENU gui_StateSaveMenu = { menu_size, initial_pos, 30, 80, (MENUITEM *)&gui_StateSaveItems, 0, 0  };
 
 	int ret = gui_RunMenu(&gui_StateSaveMenu);
 
@@ -874,7 +874,7 @@ static int gui_StateLoad()
 	if (initial_pos < 0)
 		return 0;
 
-	MENU gui_StateLoadMenu = { menu_size, initial_pos, 30, 80, (MENUITEM *)&gui_StateLoadItems };
+	MENU gui_StateLoadMenu = { menu_size, initial_pos, 30, 80, (MENUITEM *)&gui_StateLoadItems, 0, 0  };
 
 	int ret = gui_RunMenu(&gui_StateLoadMenu);
 
@@ -1058,7 +1058,7 @@ static MENUITEM gui_GameMenuItems_WithCheats[] =
 
 #define GMENU_SIZE ((sizeof(gui_GameMenuItems) / sizeof(MENUITEM)) - 1)
 #define GMENUWC_SIZE ((sizeof(gui_GameMenuItems_WithCheats) / sizeof(MENUITEM)) - 1)
-static MENU gui_GameMenu = { GMENU_SIZE, 0, 102, 120, (MENUITEM *)&gui_GameMenuItems };
+static MENU gui_GameMenu = { GMENU_SIZE, 0, 102, 120, (MENUITEM *)&gui_GameMenuItems, 0, 0  };
 
 #ifdef PSXREC
 static int emu_alter(uint32_t keys)
@@ -1389,7 +1389,7 @@ static MENUITEM gui_SettingsItems[] = {
 };
 
 #define SET_SIZE ((sizeof(gui_SettingsItems) / sizeof(MENUITEM)) - 1)
-static MENU gui_SettingsMenu = { SET_SIZE, 0, 32, 102, (MENUITEM *)&gui_SettingsItems };
+static MENU gui_SettingsMenu = { SET_SIZE, 0, 32, 102, (MENUITEM *)&gui_SettingsItems, 0, 0  };
 
 static int fps_alter(uint32_t keys)
 {
@@ -1691,7 +1691,7 @@ static MENUITEM gui_GPUSettingsItems[] = {
 };
 
 #define SET_GPUSIZE ((sizeof(gui_GPUSettingsItems) / sizeof(MENUITEM)) - 1)
-static MENU gui_GPUSettingsMenu = { SET_GPUSIZE, 0, 56, 102, (MENUITEM *)&gui_GPUSettingsItems };
+static MENU gui_GPUSettingsMenu = { SET_GPUSIZE, 0, 56, 102, (MENUITEM *)&gui_GPUSettingsItems, 0, 0  };
 
 static int xa_alter(uint32_t keys)
 {
@@ -1904,7 +1904,7 @@ static MENUITEM gui_SPUSettingsItems[] = {
 };
 
 #define SET_SPUSIZE ((sizeof(gui_SPUSettingsItems) / sizeof(MENUITEM)) - 1)
-static MENU gui_SPUSettingsMenu = { SET_SPUSIZE, 0, 56, 102, (MENUITEM *)&gui_SPUSettingsItems };
+static MENU gui_SPUSettingsMenu = { SET_SPUSIZE, 0, 56, 102, (MENUITEM *)&gui_SPUSettingsItems, 0, 0  };
 
 static int gui_LoadIso()
 {
@@ -1946,7 +1946,7 @@ static int gui_SPUSettings()
 	return 0;
 }
 
-static MENU gui_CheatMenu = { 0, 0, 24, 80, NULL, 15 };
+static MENU gui_CheatMenu = { 0, 0, 24, 80, NULL, 15, 0};
 
 static int cheat_press() {
 	cheat_toggle(gui_CheatMenu.cur);
