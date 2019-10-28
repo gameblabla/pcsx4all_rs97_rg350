@@ -93,7 +93,7 @@ static void delayWrite(int reg, uint32_t bpc) {
 /*	printf("delayWrite at %x!\n", psxRegs.pc);
 
 	printf("%s\n", disR3000AF(psxRegs.code, psxRegs.pc-4));
-	printf("%s\n", disR3000AF(PSXMuint32_t(bpc), bpc));*/
+	printf("%s\n", disR3000AF(PSXMu32(bpc), bpc));*/
 
 	// no changes from normal behavior
 

@@ -170,7 +170,7 @@ extern uint32_t *recMem;
  * See notes in psxMemWrite32_CacheCtrlPort() regarding why it is best
  *  to read code here using PSXM*() macros, i.e. through psxMemRLUT[].
  */
-#define OPCODE_AT(loc) PSXMuint32_t(loc)
+#define OPCODE_AT(loc) PSXMu32(loc)
 
 /* ADR_HI, ADR_LO are the equivalents of MIPS GAS %hi(), %lo()
  * They are always used as a pair, and allow converting an address to an
