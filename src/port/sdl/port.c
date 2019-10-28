@@ -429,6 +429,7 @@ void config_save()
 {
 	FILE *f;
 	char config[MAXPATHLEN];
+	extern uint_fast8_t ishack_enabled;
 
 	sprintf(config, "%s/pcsx4all_ng.cfg", homedir);
 
@@ -437,6 +438,15 @@ void config_save()
 	if (f == NULL) {
 		printf("Failed to open config file: \"%s\" for writing.\n", config);
 		return;
+	}
+	
+	if (ishack_enabled == 1)
+	{
+		Config.VSyncWA = 0;
+		/* Default is DualShock */
+		Config.AnalogMode = 2;
+		Config.MemoryCardHack = 0;
+		Config.RCntFix = 0;
 	}
 
 	fprintf(f, "CONFIG_VERSION %d\n"
@@ -1002,6 +1012,7 @@ int main (int argc, char **argv)
 	Config.AnalogDigital = 0;
 	Config.AnalogArrow = 0;
 	Config.MemoryCardHack = 0;
+	Config.AnalogMode = 2;
 
 	Config.Xa=0; /* 0=XA enabled, 1=XA disabled */
 	Config.Mdec=0; /* 0=Black&White Mdecs Only Disabled, 1=Black&White Mdecs Only Enabled */

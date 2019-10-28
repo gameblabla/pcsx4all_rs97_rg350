@@ -10,6 +10,8 @@
   #include "gpu/gpu_unai/gpu.h"
 #endif
 
+uint_fast8_t ishack_enabled = 0;
+
 const char CNTfix_table[25][10] =
 {
 	/* Vandal Hearts */
@@ -250,10 +252,13 @@ void CheckforCDROMid_applyhacks()
 {
 	uint8_t i;
 	
+	ishack_enabled = 0;
+	
 	/* Apply hack battle fix for Inuyasha - Sengoku Otogi Kassen */
 	if (strncmp(CdromId, "SLPS03503", 9) == 0)
 	{
 		Config.VSyncWA = 1;
+		ishack_enabled = 1;
 		return;
 	}
 	
@@ -263,6 +268,7 @@ void CheckforCDROMid_applyhacks()
 		if (strncmp(CdromId, DualShockOnlyGames[i], 9) == 0)
 		{
 			Config.AnalogMode = 2;
+			ishack_enabled = 1;
 		}
 	}
 	
@@ -290,6 +296,7 @@ void CheckforCDROMid_applyhacks()
 		if (strncmp(CdromId, CNTfix_table[i], 9) == 0)
 		{
 			Config.RCntFix = 1;
+			ishack_enabled = 1;
 		}
 	}
 }
