@@ -40,6 +40,121 @@ struct gpulib_config_t gpulib_config;
 static noinline int do_cmd_buffer(uint32_t *data, int count);
 static void finish_vram_transfer(int is_read);
 
+void gpulib_frameskip_prepare(void);
+void renderer_finish(void);
+long GPU_init(void);
+long GPU_shutdown(void);
+void GPU_writeStatus(uint32_t data);
+void GPU_writeDataMem(uint32_t *mem, int count);
+int do_cmd_buffer(uint32_t *data, int count);
+
+extern int do_cmd_list(unsigned int *list, int list_len, int *last_cmd);
+extern void renderer_sync_ecmds(uint32_t *ecmds);
+extern void renderer_update_caches(int x, int y, int w, int h);
+extern void renderer_flush_queues(void);
+extern void renderer_set_interlace(int enable, int is_odd);
+extern void renderer_set_config(const struct gpulib_config_t *config);
+extern int renderer_init(void);
+extern void renderer_notify_res_change(void);
+
+const unsigned char cmd_lengths[256] =
+{
+	0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	3, 3, 3, 3, 6, 6, 6, 6, 4, 4, 4, 4, 8, 8, 8, 8, // 20
+	5, 5, 5, 5, 8, 8, 8, 8, 7, 7, 7, 7, 11, 11, 11, 11,
+	2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, // 40
+	3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4,
+	2, 2, 2, 2, 3, 3, 3, 3, 1, 1, 1, 1, 0, 0, 0, 0, // 60
+	1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2,
+	3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 80
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // a0
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // c0
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // e0
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+
+static noinline int decide_frameskip_allow(uint32_t cmd_e3)
+{
+  // no frameskip if it decides to draw to display area,
+  // but not for interlace since it'll most likely always do that
+  uint32_t x = cmd_e3 & 0x3ff;
+  uint32_t y = (cmd_e3 >> 10) & 0x3ff;
+  gpu.frameskip.allow = gpu.status.interlace ||
+    (uint32_t)(x - gpu.screen.x) >= (uint32_t)gpu.screen.w ||
+    (uint32_t)(y - gpu.screen.y) >= (uint32_t)gpu.screen.h;
+  return gpu.frameskip.allow;
+}
+
+static noinline int do_cmd_list_skip(uint32_t *data, int count, int *last_cmd)
+{
+  int cmd = 0, pos = 0, len, dummy, v;
+  int skip = 1;
+
+  gpu.frameskip.pending_fill[0] = 0;
+
+  while (pos < count && skip) {
+    uint32_t *list = data + pos;
+    cmd = list[0] >> 24;
+    len = 1 + cmd_lengths[cmd];
+
+    switch (cmd) {
+      case 0x02:
+        if ((int)(list[2] & 0x3ff) > gpu.screen.w || (int)((list[2] >> 16) & 0x1ff) > gpu.screen.h)
+          // clearing something large, don't skip
+          do_cmd_list(list, 3, &dummy);
+        else
+          memcpy(gpu.frameskip.pending_fill, list, 3 * 4);
+        break;
+      case 0x24 ... 0x27:
+      case 0x2c ... 0x2f:
+      case 0x34 ... 0x37:
+      case 0x3c ... 0x3f:
+        gpu.ex_regs[1] &= ~0x1ff;
+        gpu.ex_regs[1] |= list[4 + ((cmd >> 4) & 1)] & 0x1ff;
+        break;
+      case 0x48 ... 0x4F:
+        for (v = 3; pos + v < count; v++)
+        {
+          if ((list[v] & 0xf000f000) == 0x50005000)
+            break;
+        }
+        len += v - 3;
+        break;
+      case 0x58 ... 0x5F:
+        for (v = 4; pos + v < count; v += 2)
+        {
+          if ((list[v] & 0xf000f000) == 0x50005000)
+            break;
+        }
+        len += v - 4;
+        break;
+      default:
+        if (cmd == 0xe3)
+          skip = decide_frameskip_allow(list[0]);
+        if ((cmd & 0xf8) == 0xe0)
+          gpu.ex_regs[cmd & 7] = list[0];
+        break;
+    }
+
+    if (pos + len > count) {
+      cmd = -1;
+      break; // incomplete cmd
+    }
+    if (0xa0 <= cmd && cmd <= 0xdf)
+      break; // image i/o
+
+    pos += len;
+  }
+
+  renderer_sync_ecmds(gpu.ex_regs);
+  *last_cmd = cmd;
+  return pos;
+}
+
 static noinline void do_cmd_reset(void)
 {
   if (unlikely(gpu.cmd_len > 0))
@@ -123,18 +238,6 @@ static noinline void decide_frameskip(void)
     do_cmd_list(gpu.frameskip.pending_fill, 3, &dummy);
     gpu.frameskip.pending_fill[0] = 0;
   }
-}
-
-static noinline int decide_frameskip_allow(uint32_t cmd_e3)
-{
-  // no frameskip if it decides to draw to display area,
-  // but not for interlace since it'll most likely always do that
-  uint32_t x = cmd_e3 & 0x3ff;
-  uint32_t y = (cmd_e3 >> 10) & 0x3ff;
-  gpu.frameskip.allow = gpu.status.interlace ||
-    (uint32_t)(x - gpu.screen.x) >= (uint32_t)gpu.screen.w ||
-    (uint32_t)(y - gpu.screen.y) >= (uint32_t)gpu.screen.h;
-  return gpu.frameskip.allow;
 }
 
 static noinline void get_gpu_info(uint32_t data)
@@ -327,26 +430,6 @@ void GPU_writeStatus(uint32_t data)
 #endif
 }
 
-const unsigned char cmd_lengths[256] =
-{
-	0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	3, 3, 3, 3, 6, 6, 6, 6, 4, 4, 4, 4, 8, 8, 8, 8, // 20
-	5, 5, 5, 5, 8, 8, 8, 8, 7, 7, 7, 7, 11, 11, 11, 11,
-	2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, // 40
-	3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4,
-	2, 2, 2, 2, 3, 3, 3, 3, 1, 1, 1, 1, 0, 0, 0, 0, // 60
-	1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2,
-	3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 80
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // a0
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // c0
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // e0
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-};
-
 #define VRAM_MEM_XY(x, y) &gpu.vram[(y) * 1024 + (x)]
 
 static inline void do_vram_line(int x, int y, uint16_t *mem, int l, int is_read)
@@ -440,72 +523,6 @@ static void finish_vram_transfer(int is_read)
   else
     renderer_update_caches(gpu.dma_start.x, gpu.dma_start.y,
                            gpu.dma_start.w, gpu.dma_start.h);
-}
-
-static noinline int do_cmd_list_skip(uint32_t *data, int count, int *last_cmd)
-{
-  int cmd = 0, pos = 0, len, dummy, v;
-  int skip = 1;
-
-  gpu.frameskip.pending_fill[0] = 0;
-
-  while (pos < count && skip) {
-    uint32_t *list = data + pos;
-    cmd = list[0] >> 24;
-    len = 1 + cmd_lengths[cmd];
-
-    switch (cmd) {
-      case 0x02:
-        if ((int)(list[2] & 0x3ff) > gpu.screen.w || (int)((list[2] >> 16) & 0x1ff) > gpu.screen.h)
-          // clearing something large, don't skip
-          do_cmd_list(list, 3, &dummy);
-        else
-          memcpy(gpu.frameskip.pending_fill, list, 3 * 4);
-        break;
-      case 0x24 ... 0x27:
-      case 0x2c ... 0x2f:
-      case 0x34 ... 0x37:
-      case 0x3c ... 0x3f:
-        gpu.ex_regs[1] &= ~0x1ff;
-        gpu.ex_regs[1] |= list[4 + ((cmd >> 4) & 1)] & 0x1ff;
-        break;
-      case 0x48 ... 0x4F:
-        for (v = 3; pos + v < count; v++)
-        {
-          if ((list[v] & 0xf000f000) == 0x50005000)
-            break;
-        }
-        len += v - 3;
-        break;
-      case 0x58 ... 0x5F:
-        for (v = 4; pos + v < count; v += 2)
-        {
-          if ((list[v] & 0xf000f000) == 0x50005000)
-            break;
-        }
-        len += v - 4;
-        break;
-      default:
-        if (cmd == 0xe3)
-          skip = decide_frameskip_allow(list[0]);
-        if ((cmd & 0xf8) == 0xe0)
-          gpu.ex_regs[cmd & 7] = list[0];
-        break;
-    }
-
-    if (pos + len > count) {
-      cmd = -1;
-      break; // incomplete cmd
-    }
-    if (0xa0 <= cmd && cmd <= 0xdf)
-      break; // image i/o
-
-    pos += len;
-  }
-
-  renderer_sync_ecmds(gpu.ex_regs);
-  *last_cmd = cmd;
-  return pos;
 }
 
 static noinline int do_cmd_buffer(uint32_t *data, int count)
