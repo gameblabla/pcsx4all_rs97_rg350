@@ -56,7 +56,7 @@ CFLAGS := $(C_ARCH)  $(OPTS) -DTIME_IN_MSEC \
 # Convert plugin names to uppercase and make them CFLAG defines
 CFLAGS += -D$(shell echo $(GPU) | tr a-z A-Z)
 CFLAGS += -D$(shell echo $(SPU) | tr a-z A-Z)
-CFLAGS += -DUSE_BGR15 -DGCW_ZERO -DRUMBLE -DRG350 -DSHMEM_MIRRORING
+CFLAGS +=  -DGCW_ZERO -DRUMBLE -DRG350 -DSHMEM_MIRRORING
 
 ifdef RECOMPILER
 CFLAGS += -DPSXREC -D$(RECOMPILER)

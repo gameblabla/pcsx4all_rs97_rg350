@@ -1,5 +1,5 @@
 TARGET = pcsx4all
-PORT   = rs97
+PORT   = sdl
 
 # If V=1 was passed to 'make', don't hide commands:
 ifeq ($(V),1)
@@ -33,9 +33,9 @@ SDL_LIBS    := $(shell $(SDL_CONFIG) --libs)
 LDFLAGS = $(SDL_LIBS) -lSDL_mixer -lSDL_image -lpthread -lz -lshake
 
 # We want the GCW Zero handheld's keybindings (for dev testing purposes)
-C_ARCH = -march=native -DGCW_ZERO -DNOJOYSTICK_AVAILABLE -DNO_HWSCALE
+C_ARCH = -march=native -DGCW_ZERO
 
-CFLAGS = $(C_ARCH) -ggdb3 -O2 \
+CFLAGS = $(C_ARCH) -ggdb3 -O0 \
 	-Wall -Wunused -Wpointer-arith \
 	-Wno-sign-compare -Wno-cast-align \
 	-Isrc -Isrc/spu/$(SPU) -D$(SPU) -Isrc/gpu/$(GPU) \
@@ -49,7 +49,7 @@ CFLAGS = $(C_ARCH) -ggdb3 -O2 \
 # Convert plugin names to uppercase and make them CFLAG defines
 CFLAGS += -D$(shell echo $(GPU) | tr a-z A-Z)
 CFLAGS += -D$(shell echo $(SPU) | tr a-z A-Z)
-CFLAGS += -std=gnu99
+CFLAGS +=  -DGCW_ZERO -DRUMBLE -DRG350 -DSHMEM_MIRRORING
 
 OBJDIRS = \
 	obj obj/gpu obj/gpu/$(GPU) obj/spu obj/spu/$(SPU) \
@@ -149,11 +149,11 @@ $(TARGET): $(OBJS)
 
 obj/%.o: src/%.c
 	@echo Compiling $<...
-	$(HIDECMD)$(CC) $(CFLAGS) -c $< -o $@
+	$(HIDECMD)$(CC) -std=gnu99 $(CFLAGS) -c $< -o $@
 
 obj/%.o: src/%.cpp
 	@echo Compiling $<...
-	$(HIDECMD)$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(HIDECMD)$(CXX) -std=gnu++03 $(CXXFLAGS) -c $< -o $@
 
 obj/%.o: src/%.s
 	@echo Compiling $<...
