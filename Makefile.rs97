@@ -22,8 +22,10 @@ SDL_CONFIG := $(SYSROOT)/usr/bin/sdl-config
 SDL_CFLAGS := $(shell $(SDL_CONFIG) --cflags)
 SDL_LIBS   := $(shell $(SDL_CONFIG) --libs)
 
+#-fprofile-generate=/home/retrofw/profile
+
 C_ARCH = -mips32 -DDYNAREC_SKIP_DCACHE_FLUSH -DTMPFS_MIRRORING -DTMPFS_DIR=\"/tmp\" -DRS97
-OPTS = -Ofast -mno-fp-exceptions -mframe-header-opt -mno-check-zero-division -fno-signed-zeros -fno-trapping-math -mno-interlink-compressed -fno-caller-saves -flto
+OPTS = -Ofast -mno-fp-exceptions -mframe-header-opt -mno-check-zero-division -fno-signed-zeros -fno-trapping-math -mno-interlink-compressed -fno-caller-saves -flto=8
 
 CFLAGS = $(C_ARCH) -fno-common -mno-abicalls -fno-PIC -fdata-sections -ffunction-sections $(OPTS) -DGCW_ZERO \
 	-Wall -Wunused -Wpointer-arith \
@@ -39,7 +41,7 @@ CFLAGS = $(C_ARCH) -fno-common -mno-abicalls -fno-PIC -fdata-sections -ffunction
 CFLAGS += -D$(shell echo $(GPU) | tr a-z A-Z)
 CFLAGS += -D$(shell echo $(SPU) | tr a-z A-Z)
 
-CFLAGS += -DUSE_MEMCPY32 -DNOJOYSTICK_AVAILABLE -DNO_HWSCALE
+CFLAGS += -DUSE_MEMCPY32 -DNOJOYSTICK_AVAILABLE
 
 ifdef RECOMPILER
 CFLAGS += -DPSXREC -D$(RECOMPILER)
@@ -47,7 +49,7 @@ endif
 
 CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti -nostdinc++ 
 
-LDFLAGS = -nodefaultlibs -lc -lgcc -lSDL -lz -Wl,--as-needed -Wl,--gc-sections -flto -s
+LDFLAGS = -nodefaultlibs -lc -lgcc -lgcov -lSDL -lz -Wl,--as-needed -Wl,--gc-sections -flto -s
 
 OBJDIRS = obj obj/gpu obj/gpu/$(GPU) obj/spu obj/spu/$(SPU) \
 	  obj/recompiler obj/recompiler/$(RECOMPILER) \

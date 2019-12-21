@@ -35,11 +35,6 @@
 #error "RS-97 has no rumble, please disable -DRUMBLE"
 #endif
 
-#if !defined(NO_HWSCALE)
-#error "RS-97 has no hardware scaler, please pass -DNO_HWSCALE"
-#endif
-
-
 enum {
 	DKEY_SELECT = 0,
 	DKEY_L3,
@@ -612,7 +607,7 @@ void pad_update()
 		}
 	}
 	
-	if (keys[SDLK_END] && keys[SDLK_TAB])
+	if ((keys[SDLK_END] && keys[SDLK_TAB]) || (keys[SDLK_TAB] && keys[SDLK_BACKSPACE] && keys[SDLK_RETURN]))
 	{
 		popup_menu = true;
 	}
@@ -832,8 +827,68 @@ with mingw build. */
 
 void update_window_size(int w, int h, uint_fast8_t ntsc_fix)
 {
-	return;
+	if (Config.VideoScaling != 0) return;
+#ifdef SDL_TRIPLEBUF
+	int flags = SDL_TRIPLEBUF;
+#else
+	int flags = SDL_DOUBLEBUF;
+#endif
+    flags |= SDL_HWSURFACE
+#if defined(GCW_ZERO) && defined(USE_BGR15)
+        | SDL_SWIZZLEBGR
+#endif
+        ;
+	SCREEN_WIDTH = w;
+	if (gpu_unai_config_ext.ntsc_fix && ntsc_fix) {
+		switch (h) {
+		case 240:
+		case 256: h -= 16; break;
+		case 480: h -= 32; break;
+		}
+	}
+	SCREEN_HEIGHT = h;
+
+	if (screen && SDL_MUSTLOCK(screen))
+		SDL_UnlockSurface(screen);
+
+	screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT,
+#if !defined(GCW_ZERO) || !defined(USE_BGR15)
+			16,
+#else
+			15,
+#endif
+			flags);
+	if (!screen) {
+		puts("SDL_SetVideoMode error");
+		exit(0);
+	}
+
+	if (SDL_MUSTLOCK(screen))
+		SDL_LockSurface(screen);
+
+	SCREEN = (Uint16 *)screen->pixels;
+
+#if !defined(GCW_ZERO) && defined(USE_BGR15)
+	screen->format->Rshift = 0;
+	screen->format->Gshift = 5;
+	screen->format->Bshift = 10;
+	screen->format->Rmask = 0x1Fu;
+	screen->format->Gmask = 0x1Fu<<5u;
+	screen->format->Bmask = 0x1Fu<<10u;
+	screen->format->Amask = 0;
+	screen->format->Ashift = 0;
+	screen->format_version++;
+#endif
+
+	video_clear();
+	video_flip();
+	video_clear();
+#ifdef SDL_TRIPLEBUF
+	video_flip();
+	video_clear();
+#endif
 }
+
 
 int main (int argc, char **argv)
 {
@@ -1296,6 +1351,7 @@ int main (int argc, char **argv)
 
 	SDL_WM_SetCaption("pcsx4all - SDL Version", "pcsx4all");
 
+	if (Config.VideoScaling == 1) {
 #ifdef SDL_TRIPLEBUF
 	int flags = SDL_TRIPLEBUF;
 #else
@@ -1303,29 +1359,34 @@ int main (int argc, char **argv)
 #endif
     flags |= SDL_HWSURFACE
 #if defined(GCW_ZERO) && defined(USE_BGR15)
-	| SDL_SWIZZLEBGR
+        | SDL_SWIZZLEBGR
 #endif
         ;
-	SCREEN_WIDTH = 320;
-	SCREEN_HEIGHT = 240;
+		SCREEN_WIDTH = 320;
+		SCREEN_HEIGHT = 240;
 
-	if (screen && SDL_MUSTLOCK(screen))
-		SDL_UnlockSurface(screen);
+		if (screen && SDL_MUSTLOCK(screen))
+			SDL_UnlockSurface(screen);
 
-	screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT,
+		screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT,
 #if !defined(GCW_ZERO) || !defined(USE_BGR15)
-		16,
+			16,
 #else
-		15,
+			15,
 #endif
-	flags);
-	if (!screen) {
-		puts("NO Set VideoMode 320x240x16");
-		exit(0);
-	}
+		flags);
+		if (!screen) {
+			puts("NO Set VideoMode 320x240x16");
+			exit(0);
+		}
 
-	if (SDL_MUSTLOCK(screen))
-		SDL_LockSurface(screen);
+		if (SDL_MUSTLOCK(screen))
+			SDL_LockSurface(screen);
+
+		SCREEN = (Uint16 *) screen->pixels;
+	} else {
+		update_window_size(320, 240, false);
+	}
 
 	SCREEN = (Uint16 *) screen->pixels;
 

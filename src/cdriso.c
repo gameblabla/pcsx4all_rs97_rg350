@@ -1326,7 +1326,7 @@ static int cdread_compressed(FILE *f, unsigned int base, void *dest, int sector)
 
 	if (fread(is_compressed ? compr_img->buff_compressed : compr_img->buff_raw[0],
 				1, size, cdHandle) != size) {
-		printf("read error for block %d at %lx: ", block, start_byte);
+		printf("read error for block %d at %llx: ", block, start_byte);
 		perror(NULL);
 		return -1;
 	}
