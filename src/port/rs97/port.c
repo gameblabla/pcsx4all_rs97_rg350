@@ -69,14 +69,17 @@ void update_window_size(int w, int h, uint_fast8_t ntsc_fix);
 
 static void pcsx4all_exit(void)
 {
-	// unload cheats
-	cheat_unload();
 
 	// Store config to file
 	config_save();
+	
+	// unload cheats
+	cheat_unload();
 
 	if (SDL_MUSTLOCK(screen))
 		SDL_UnlockSurface(screen);
+		
+	if (screen) SDL_FreeSurface(screen);
 
 	SDL_Quit();
 
@@ -598,7 +601,10 @@ void pad_update()
 		case SDL_KEYDOWN:
 			switch (event.key.keysym.sym) 
 			{
-			case SDLK_v: { Config.ShowFps=!Config.ShowFps; } break;
+				case SDLK_v: { Config.ShowFps=!Config.ShowFps; } break;
+				case SDLK_END:
+					popup_menu = true;
+				break;
 				default: break;
 			}
 			break;
@@ -607,23 +613,20 @@ void pad_update()
 		}
 	}
 	
-	if ((keys[SDLK_END] && keys[SDLK_TAB]) || (keys[SDLK_TAB] && keys[SDLK_BACKSPACE] && keys[SDLK_RETURN]))
+	if (keys[SDLK_ESCAPE])
 	{
-		popup_menu = true;
-	}
-
-	if (keys[SDLK_ESCAPE] && keys[SDLK_TAB])
-	{
-		pad1_buttons |= (1 << DKEY_SELECT);
-		pad1_buttons &= ~(1 << DKEY_L2);
+		if (keys[SDLK_TAB])
+		{
+			pad1_buttons |= (1 << DKEY_SELECT);
+			pad1_buttons &= ~(1 << DKEY_L2);
+		}
+		else if (keys[SDLK_BACKSPACE])
+		{
+			pad1_buttons |= (1 << DKEY_SELECT);
+			pad1_buttons &= ~(1 << DKEY_R2);
+		}
 	}
 		
-	if (keys[SDLK_ESCAPE] && keys[SDLK_BACKSPACE])
-	{
-		pad1_buttons |= (1 << DKEY_SELECT);
-		pad1_buttons &= ~(1 << DKEY_R2);
-	}
-
 	if (Config.AnalogArrow == 1)
 	{
 		if (keys[SDLK_UP])
@@ -656,47 +659,37 @@ void pad_update()
 			player_controller[0].joy_left_ax0 = 127;
 		}
 		
-		if (keys[SDLK_END])
+		if (keys[SDLK_ESCAPE])
 		{
-			if (keys[SDLK_BACKSPACE])
-			{
-				pad1_buttons &= ~(1 << DKEY_L3);
-			}
-			else if ((pad1_buttons & (1 << DKEY_L3)))
-			{
-				pad1_buttons |= (1 << DKEY_L3);
+				if (keys[SDLK_SPACE])
+				{
+					player_controller[0].joy_right_ax1 = 0;
+					pad1_buttons |= (1 << DKEY_TRIANGLE);
+				}
+				else if (keys[SDLK_LALT])
+				{
+					player_controller[0].joy_right_ax1 = 255;
+					pad1_buttons |= (1 << DKEY_CROSS);
+				}
+				else
+				{
+					player_controller[0].joy_right_ax1 = 127;
+				}
 				
-			}
-			
-			if (keys[SDLK_SPACE])
-			{
-				player_controller[0].joy_right_ax1 = 0;
-				pad1_buttons |= (1 << DKEY_TRIANGLE);
-			}
-			else if (keys[SDLK_LALT])
-			{
-				player_controller[0].joy_right_ax1 = 255;
-				pad1_buttons |= (1 << DKEY_CROSS);
-			}
-			else
-			{
-				player_controller[0].joy_right_ax1 = 127;
-			}
-			
-			if (keys[SDLK_LSHIFT])
-			{
-				player_controller[0].joy_right_ax0 = 0;
-				pad1_buttons |= (1 << DKEY_SQUARE);
-			}
-			else if (keys[SDLK_LCTRL])
-			{
-				player_controller[0].joy_right_ax0 = 255;
-				pad1_buttons |= (1 << DKEY_SQUARE);
-			}
-			else
-			{
-				player_controller[0].joy_right_ax0 = 127;
-			}
+				if (keys[SDLK_LSHIFT])
+				{
+					player_controller[0].joy_right_ax0 = 0;
+					pad1_buttons |= (1 << DKEY_SQUARE);
+				}
+				else if (keys[SDLK_LCTRL])
+				{
+					player_controller[0].joy_right_ax0 = 255;
+					pad1_buttons |= (1 << DKEY_SQUARE);
+				}
+				else
+				{
+					player_controller[0].joy_right_ax0 = 127;
+				}
 		}
 		else
 		{
