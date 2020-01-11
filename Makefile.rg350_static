@@ -34,13 +34,10 @@ SDL_LIBS    := $(shell $(SDL_CONFIG) --libs)
 
 
 C_ARCH = -mips32r2
+C_ARCH  += -DMMAP_TO_ADDRESS_ZERO
 
-
-#C_ARCH  += -DMMAP_TO_ADDRESS_ZERO
-#LDFLAGS += -Wl,-Ttext-segment=0x40000000
-
-OPTS = -Ofast -mno-fp-exceptions -mframe-header-opt -mno-check-zero-division -fno-signed-zeros -fno-trapping-math -mno-interlink-compressed
-OPTS += -fno-caller-saves -flto -fno-common -mno-abicalls -fno-PIC -fdata-sections -ffunction-sections
+OPTS = -O2 -fno-math-errno -mno-fp-exceptions -mframe-header-opt -mno-check-zero-division -fno-signed-zeros -fno-trapping-math -mno-interlink-compressed
+OPTS += -fno-caller-saves -flto -fuse-linker-plugin -fno-common -mno-abicalls -fno-PIC -fdata-sections -ffunction-sections -fno-common -fsingle-precision-constant
 
 CFLAGS := $(C_ARCH)  $(OPTS) -DTIME_IN_MSEC \
 	-Wall -Wunused -Wpointer-arith \
@@ -56,7 +53,7 @@ CFLAGS := $(C_ARCH)  $(OPTS) -DTIME_IN_MSEC \
 # Convert plugin names to uppercase and make them CFLAG defines
 CFLAGS += -D$(shell echo $(GPU) | tr a-z A-Z)
 CFLAGS += -D$(shell echo $(SPU) | tr a-z A-Z)
-CFLAGS +=  -DGCW_ZERO -DRUMBLE -DRG350 -DSHMEM_MIRRORING
+CFLAGS +=  -DUSE_BGR15 -DGCW_ZERO -DRUMBLE -DRG350 -DSHMEM_MIRRORING
 
 ifdef RECOMPILER
 CFLAGS += -DPSXREC -D$(RECOMPILER)
@@ -64,7 +61,8 @@ endif
 
 CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti -nostdinc++ 
 
-LDFLAGS = -nodefaultlibs -lc -lgcc -lSDL -lasound -lz -lshake -Wl,--as-needed -Wl,--gc-sections -flto -s
+LDFLAGS = -nodefaultlibs -lc -lgcc -lSDL -lasound -lz -lshake -Wl,--as-needed -Wl,--gc-sections -flto -s -no-pie
+LDFLAGS += -Wl,-Ttext-segment=0x40000000
 
 OBJDIRS = obj obj/gpu obj/gpu/$(GPU) obj/spu obj/spu/$(SPU) \
 	  obj/recompiler obj/recompiler/$(RECOMPILER) \
@@ -124,8 +122,8 @@ OBJS += obj/plugin_lib/perfmon.o
 # Use a non-default SPU update frequency for these slower devices
 #  to avoid audio dropouts. 0: once-per-frame (default)   5: 32-times-per-frame
 #
-#  On faster GCW Zero platform, update 2 times per frame
-CFLAGS += -DSPU_UPDATE_FREQ_DEFAULT=1
+#  On faster GCW Zero platform, update 4 times per frame
+CFLAGS += -DSPU_UPDATE_FREQ_DEFAULT=2
 ##########
 
 ##########
@@ -204,7 +202,7 @@ obj/%.o: src/%.c
 
 obj/%.o: src/%.cpp
 	@echo Compiling $<...
-	$(HIDECMD)$(CXX) -std=gnu++03 $(CXXFLAGS) -c $< -o $@
+	$(HIDECMD)$(CXX) -std=gnu++14 $(CXXFLAGS) -c $< -o $@
 
 obj/%.o: src/%.s
 	@echo Compiling $<...
