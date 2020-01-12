@@ -34,7 +34,7 @@ SDL_LIBS    := $(shell $(SDL_CONFIG) --libs)
 
 
 C_ARCH = -mips32r2
-C_ARCH  += -DMMAP_TO_ADDRESS_ZERO
+#C_ARCH  += -DMMAP_TO_ADDRESS_ZERO
 
 OPTS = -O2 -fno-math-errno -mno-fp-exceptions -mframe-header-opt -mno-check-zero-division -fno-signed-zeros -fno-trapping-math -mno-interlink-compressed
 OPTS += -fno-caller-saves -flto -fuse-linker-plugin -fno-common -mno-abicalls -fno-PIC -fdata-sections -ffunction-sections -fno-common -fsingle-precision-constant
