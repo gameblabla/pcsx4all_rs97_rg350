@@ -23,9 +23,9 @@ RECOMPILER = mips
 
 RM     = rm -f
 MD     = mkdir
-CC     = mipsel-linux-gcc
-CXX    = mipsel-linux-g++
-LD     = mipsel-linux-g++
+CC     = /opt/gcw0-toolchain/bin/mipsel-linux-gcc
+CXX    = /opt/gcw0-toolchain/bin/mipsel-linux-g++
+LD     = /opt/gcw0-toolchain/bin/mipsel-linux-g++
 
 SYSROOT     := $(shell $(CC) --print-sysroot)
 SDL_CONFIG  := $(SYSROOT)/usr/bin/sdl-config
@@ -33,8 +33,9 @@ SDL_CFLAGS  := $(shell $(SDL_CONFIG) --cflags)
 SDL_LIBS    := $(shell $(SDL_CONFIG) --libs)
 
 LDFLAGS := $(SDL_LIBS) -lSDL_mixer -lSDL_image -lrt -lz -lshake
+LDFLAGS		+= -Wl,-zcommon-page-size=2097152 -Wl,-zmax-page-size=2097152 -lhugetlbfs
 
-C_ARCH = -mips32r2 -DGCW_ZERO -DRUMBLE -DRG350 -DSHMEM_MIRRORING
+C_ARCH = -mno-memcpy -mips32r2 -DGCW_ZERO -DRUMBLE -DRG350 -DSHMEM_MIRRORING
 
 ifeq ($(DEV),1)
 	# If DEV=1 is passed to 'make', don't mmap anything to virtual address 0.
@@ -59,7 +60,7 @@ else
 	C_ARCH  += -mno-check-zero-division
 endif
 
-CFLAGS := $(C_ARCH) -mplt -mno-shared -ggdb3 -Ofast -fexpensive-optimizations -flto -DTIME_IN_MSEC \
+CFLAGS := $(C_ARCH) -mplt -mno-shared -Ofast -fexpensive-optimizations -flto -DTIME_IN_MSEC \
 	-Wall -Wunused -Wpointer-arith \
 	-Wno-sign-compare -Wno-cast-align \
 	-Isrc -Isrc/spu/$(SPU) -D$(SPU) -Isrc/gpu/$(GPU) \
@@ -199,6 +200,7 @@ CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions
 $(TARGET): $(OBJS)
 	@echo Linking $(TARGET)...
 	$(HIDECMD)$(LD) $(OBJS) $(LDFLAGS) -o $@
+	hugeedit --text --data $(TARGET)
 	@echo
 ifeq ($(DEV),1)
 	@echo "-> WARNING: This is a development build.                                  "
