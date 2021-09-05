@@ -13,6 +13,7 @@ endif
 USE_GPULIB ?= 1
 SUPPORT_CHD ?= 1
 HAVE_RUMBLE ?= 1
+PROFILE = APPLY
 
 #GPU   = gpu_dfxvideo
 #GPU   = gpu_drhell
@@ -60,6 +61,15 @@ else
 	LDFLAGS += -flto
 	# Furthermore, div-by-zero checks are disabled (helps software rendering)
 	C_ARCH  += -mno-check-zero-division
+endif
+
+ifeq ($(PROFILE),YES)
+	C_ARCH  += -fprofile-generate=/usr/local/home/pcsx_gcda
+	LDFLAGS += -lgcov
+endif
+
+ifeq ($(PROFILE),APPLY)
+	C_ARCH  += -fprofile-use=$(PWD)
 endif
 
 CFLAGS := $(C_ARCH) -mplt -mno-shared -Ofast -fexpensive-optimizations -flto -DTIME_IN_MSEC \
@@ -220,7 +230,7 @@ CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions
 
 $(TARGET): $(OBJS)
 	@echo Linking $(TARGET)...
-	$(HIDECMD)$(LD) $(OBJS) $(LDFLAGS) -o $@
+	$(HIDECMD)$(CXX) $(OBJS) -o $@ $(CXXFLAGS) $(LDFLAGS)
 	/opt/gcw0-toolchain/bin/hugeedit --text --data $(TARGET)
 	@echo
 ifeq ($(DEV),1)
