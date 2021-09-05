@@ -478,10 +478,12 @@ static void AddIrqQueue(unsigned short irq, unsigned long ecycle)
 
 static void cdrPlayInterrupt_Autopause()
 {
+#ifdef REAL_CDDA
 	uint32_t abs_lev_max = 0;
 	uint8_t abs_lev_chselect;
 	uint32_t i;
 	int16_t read_buf[CD_FRAMESIZE_RAW/2];
+#endif
 	if ((cdr.Mode & MODE_AUTOPAUSE) && cdr.TrackChanged) {
 		CDR_LOG( "CDDA STOP\n" );
 
@@ -497,11 +499,14 @@ static void cdrPlayInterrupt_Autopause()
 		StopCdda();
 	}
 	else if (cdr.Mode & MODE_REPORT) {
+		#ifdef REAL_CDDA
 		CDR_readCDDA(cdr.SetSectorPlay[0], cdr.SetSectorPlay[1], cdr.SetSectorPlay[2], (uint8_t *)read_buf);
+		#endif
 		cdr.Result[0] = cdr.StatP;
 		cdr.Result[1] = cdr.subq.Track;
 		cdr.Result[2] = cdr.subq.Index;
 
+		#ifdef REAL_CDDA
 		abs_lev_chselect = cdr.subq.Absolute[1] & 0x01;
 
 		/* 8 is used in PCSX Rearmed but it seems that 588 is required here for Fantastic Pinball */
@@ -511,6 +516,7 @@ static void cdrPlayInterrupt_Autopause()
 		}
 		abs_lev_max = MIN_VALUE(abs_lev_max, 32767);
 		abs_lev_max |= abs_lev_chselect << 15;
+		#endif
 
 		if (cdr.subq.Absolute[2] & 0x10) {
 			cdr.Result[3] = cdr.subq.Relative[0];
@@ -523,8 +529,13 @@ static void cdrPlayInterrupt_Autopause()
 			cdr.Result[5] = cdr.subq.Absolute[2];
 		}
 
+		#ifdef REAL_CDDA
 		cdr.Result[6] = abs_lev_max >> 0;
 		cdr.Result[7] = abs_lev_max >> 8;
+		#else
+		cdr.Result[6] = 255;
+		cdr.Result[7] = 255;
+		#endif
 
 		// Rayman: Logo freeze (resultready + dataready)
 		cdr.ResultReady = 1;
