@@ -8,7 +8,7 @@ echo ${OPK_NAME}
 cat > default."$1".desktop <<EOF
 [Desktop Entry]
 Name=Pcsx4all
-Comment=Sony PSX emulator
+Comment=PS1 emulator (Gameblabla version)
 Exec=pcsx4all -iso %f
 Terminal=false
 Type=Application
