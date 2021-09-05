@@ -10,7 +10,8 @@ endif
 
 # Using 'gpulib' adapted from PCSX Rearmed is default, specify
 #  USE_GPULIB=0 as param to 'make' when building to disable it.
-USE_GPULIB ?= 1
+USE_GPULIB  ?= 1
+SUPPORT_CHD ?= 1
 
 #GPU   = gpu_dfxvideo
 #GPU   = gpu_drhell
@@ -30,7 +31,7 @@ SDL_CONFIG  := $(SYSROOT)/usr/bin/sdl-config
 SDL_CFLAGS  := $(shell $(SDL_CONFIG) --cflags)
 SDL_LIBS    := $(shell $(SDL_CONFIG) --libs)
 
-LDFLAGS = $(SDL_LIBS) -lSDL_mixer -lSDL_image -lpthread -lz -lshake
+LDFLAGS = $(SDL_LIBS) -lSDL_mixer -lSDL_image -lpthread -lz
 
 # We want the GCW Zero handheld's keybindings (for dev testing purposes)
 C_ARCH = -march=native -DGCW_ZERO
@@ -49,7 +50,7 @@ CFLAGS = $(C_ARCH) -ggdb3 -O0 \
 # Convert plugin names to uppercase and make them CFLAG defines
 CFLAGS += -D$(shell echo $(GPU) | tr a-z A-Z)
 CFLAGS += -D$(shell echo $(SPU) | tr a-z A-Z)
-CFLAGS +=  -DGCW_ZERO -DRUMBLE -DRG350 -DSHMEM_MIRRORING
+CFLAGS +=  -DGCW_ZERO -DRG350 -DSHMEM_MIRRORING
 
 OBJDIRS = \
 	obj obj/gpu obj/gpu/$(GPU) obj/spu obj/spu/$(SPU) \
@@ -69,6 +70,18 @@ OBJS = \
 	obj/sio.o obj/pad.o \
 	obj/external_lib/ioapi.o obj/external_lib/unzip.o \
 	obj/port/common/frontend.o obj/port/common/cdrom_hacks.o
+
+ifeq ($(SUPPORT_CHD),1)
+OBJDIRS += obj/libchdr obj/libchdr/deps/lzma-19.00/src obj/libchdr/src
+CFLAGS += -DHAVE_CHD -D_7ZIP_ST -Isrc/libchdr/include/libchdr -Isrc/libchdr/include/dr_libs -Isrc/libchdr/include -Isrc/libchdr/deps/lzma-19.00/include
+OBJS += obj/libchdr/src/libchdr_bitstream.o
+OBJS += obj/libchdr/src/libchdr_cdrom.o
+OBJS += obj/libchdr/src/libchdr_chd.o
+OBJS += obj/libchdr/src/libchdr_flac.o
+OBJS += obj/libchdr/src/libchdr_huffman.o
+OBJS += obj/libchdr/deps/lzma-19.00/src/Alloc.o obj/libchdr/deps/lzma-19.00/src/Bra86.o obj/libchdr/deps/lzma-19.00/src/BraIA64.o obj/libchdr/deps/lzma-19.00/src/CpuArch.o obj/libchdr/deps/lzma-19.00/src/Delta.o
+OBJS += obj/libchdr/deps/lzma-19.00/src/LzFind.o obj/libchdr/deps/lzma-19.00/src/Lzma86Dec.o obj/libchdr/deps/lzma-19.00/src/LzmaDec.o obj/libchdr/deps/lzma-19.00/src/LzmaEnc.o obj/libchdr/deps/lzma-19.00/src/Sort.o
+endif
 
 ######################################################################
 #  GPULIB from PCSX Rearmed:
@@ -164,7 +177,7 @@ obj/%.o: src/%.S
 	$(HIDECMD)$(CXX) $(CFLAGS) -c $< -o $@
 
 $(sort $(OBJDIRS)):
-	$(HIDECMD)$(MD) $@
+	$(HIDECMD)$(MD) -p $@
 
 maketree: $(sort $(OBJDIRS))
 
