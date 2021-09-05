@@ -12,11 +12,11 @@
 #include <sys/types.h>
 #include <assert.h>
 
-#ifndef PATH_MAX
-#define PATH_MAX 2048
+#ifndef MAXPATHLEN
+#define MAXPATHLEN 256
 #endif
 
-extern char cheatsdir[PATH_MAX];
+extern char cheatsdir[MAXPATHLEN];
 
 struct ps1_controller {
 	uint8_t id;

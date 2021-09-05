@@ -48,7 +48,7 @@ enum  {
 };
 
 #define _KEY_BACK   (KEY_SELECT|KEY_B)
-extern char sstatesdir[PATH_MAX];
+extern char sstatesdir[MAXPATHLEN];
 static int saveslot = -1;
 static uint16_t* sshot_img; // Ptr to active image in savestate menu
 static int sshot_img_num;   // Which slot above image is loaded for
@@ -189,7 +189,7 @@ static const char *wildcards[] = {
 	// TODO: adapt PCSX Rearmed's cdrcimg.c plugin to get these
 	//"z", "bz", "znx",
 
-	"bin", "img", "mdf", "iso", "cue",
+	"bin", "img", "mdf", "iso", "cue", "chd",
 	"pbp", "cbn", NULL
 };
 

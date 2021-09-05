@@ -10,10 +10,12 @@
   #include "gpu/gpu_unai/gpu.h"
 #endif
 
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
+
 uint_fast8_t ishack_enabled = 0;
 uint_fast8_t default_analog = 0;
 
-const char CNTfix_table[25][10] =
+static const char CNTfix_table[25][10] =
 {
 	/* Vandal Hearts */
 	{"SCPS45183"},
@@ -45,7 +47,7 @@ const char CNTfix_table[25][10] =
 	{"SLPS02779"},
 };
 
-const char MemorycardHack[8][10] =
+cstatic onst char MemorycardHack[8][10] =
 {
 	/* Lifeforce Tenka, also known as Codename Tenka */
 	{"SLES00613"},
@@ -57,7 +59,7 @@ const char MemorycardHack[8][10] =
 	{"SCUS94409"}
 };
 
-const char DualShockOnlyGames[16][10] =
+static const char DualShockOnlyGames[16][10] =
 {
 	/* Ape Escape */
 	{"SCES01564"},
@@ -82,7 +84,7 @@ const char DualShockOnlyGames[16][10] =
 };
 
 /* Flightstick/Dual Analog games */
-const char DualAnalogGames[93][10] =
+static const char DualAnalogGames[93][10] =
 {
 	/* Ace Combat 2 */
 	{"SLUS00404"},
@@ -255,7 +257,7 @@ void CheckforCDROMid_applyhacks()
 	
 	ishack_enabled = 0;
 	/* Force DualShock mode for some games (Ape Escape, RE Dual shock edition) */
-	for(i=0;i<16;i++)
+	for(i=0;i<ARRAY_SIZE(DualShockOnlyGames);i++)
 	{
 		if (strncmp(CdromId, DualShockOnlyGames[i], 9) == 0)
 		{
@@ -267,7 +269,7 @@ void CheckforCDROMid_applyhacks()
 	/* Don't enable this for consoles like the RS-97 that only has a D-PAD */
 	#if !defined(NOJOYSTICK_AVAILABLE)
 	/* Force Flightstick/DualAnalog mode on games that don't support the DualShock */
-	for(i=0;i<93;i++)
+	for(i=0;i<ARRAY_SIZE(DualAnalogGames);i++)
 	{
 		if (strncmp(CdromId, DualAnalogGames[i], 9) == 0)
 		{
@@ -276,16 +278,8 @@ void CheckforCDROMid_applyhacks()
 	}
 	#endif
 	
-	/* Apply hack battle fix for Inuyasha - Sengoku Otogi Kassen */
-	if (strncmp(CdromId, "SLPS03503", 9) == 0)
-	{
-		Config.VSyncWA = 1;
-		ishack_enabled = 1;
-		return;
-	}
-	
 	/* Apply Memory card hack for Codename Tenka for going past the screen asking to remove MC */
-	for(i=0;i<sizeof(MemorycardHack);i++)
+	for(i=0;i<ARRAY_SIZE(MemorycardHack);i++)
 	{
 		if (strncmp(CdromId, MemorycardHack[i], 9) == 0)
 		{
@@ -294,7 +288,7 @@ void CheckforCDROMid_applyhacks()
 	}
 	
 	/* Apply hackfix for Parasite Eve 2, Vandal Hearts I/II */
-	for(i=0;i<sizeof(CNTfix_table);i++)
+	for(i=0;i<ARRAY_SIZE(CNTfix_table);i++)
 	{
 		if (strncmp(CdromId, CNTfix_table[i], 9) == 0)
 		{

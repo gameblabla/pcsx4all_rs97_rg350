@@ -12,7 +12,7 @@
 #include "cdrom_hacks.h"
 #include <SDL.h>
 
-/* PATH_MAX inclusion */
+/* MAXPATHLEN inclusion */
 #ifdef __MINGW32__
 #include <limits.h>
 #include <gpu/gpulib/gpu.h>
@@ -135,17 +135,17 @@ static char McdPath1[MAXPATHLEN] = "";
 static char McdPath2[MAXPATHLEN] = "";
 static char BiosFile[MAXPATHLEN] = "";
 
-static char home[PATH_MAX/2];
-static char homedir[PATH_MAX/2];
-static char memcardsdir[PATH_MAX];
-static char biosdir[PATH_MAX];
-static char patchesdir[PATH_MAX];
-char sstatesdir[PATH_MAX];
-char cheatsdir[PATH_MAX];
+static char home[MAXPATHLEN/2];
+static char homedir[MAXPATHLEN/2];
+static char memcardsdir[MAXPATHLEN];
+static char biosdir[MAXPATHLEN];
+static char patchesdir[MAXPATHLEN];
+char sstatesdir[MAXPATHLEN];
+char cheatsdir[MAXPATHLEN];
 
 #ifdef __WIN32__
 	#define MKDIR(A) mkdir(A)
-	#define HomeDirectory getcwd(buf, PATH_MAX)
+	#define HomeDirectory getcwd(buf, MAXPATHLEN)
 #else
 	#define MKDIR(A) if (access(A, F_OK ) != -1) mkdir(A, 0755)
 	#define HomeDirectory getenv("HOME")
@@ -156,8 +156,8 @@ static void setup_paths()
 #ifndef __WIN32__
 	snprintf(home, sizeof(home), "%s", getenv("HOME"));
 #else
-	static char buf[PATH_MAX];
-	snprintf(home, sizeof(home), "%s", getcwd(buf, PATH_MAX));
+	static char buf[MAXPATHLEN];
+	snprintf(home, sizeof(home), "%s", getcwd(buf, MAXPATHLEN));
 #endif
 
 	snprintf(homedir, sizeof(homedir), "%s/.pcsx4all", home);
