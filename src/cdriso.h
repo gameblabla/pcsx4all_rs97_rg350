@@ -28,5 +28,6 @@ int cdrIsoActive(void);
 extern void (CALLBACK *cdrIsoMultidiskCallback)(void);
 extern unsigned int cdrIsoMultidiskCount;
 extern unsigned int cdrIsoMultidiskSelect;
+extern long CDR_readCDDA(unsigned char m, unsigned char s, unsigned char f, unsigned char *buffer);
 
 #endif
