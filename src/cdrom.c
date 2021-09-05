@@ -622,10 +622,6 @@ void cdrInterrupt()
 	cdr.Irq = 0;
 
 	switch (Irq) {
-		case CdlSync:
-			// TOOD: sometimes/always return error?
-			break;
-
 		case CdlNop:
 			if (cdr.DriveState != DRIVESTATE_LID_OPEN)
 				cdr.StatP &= ~STATUS_SHELLOPEN;
@@ -1021,6 +1017,7 @@ void cdrInterrupt()
 			start_rotating = 1;
 			break;
 
+		case CdlSync:
 		default:
 			CDR_LOG_I("Invalid command: %02x\n", Irq);
 			error = ERROR_INVALIDCMD;
