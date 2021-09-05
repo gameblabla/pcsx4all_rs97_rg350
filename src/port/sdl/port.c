@@ -32,12 +32,26 @@
 #endif
 
 #ifdef RUMBLE
-#include <shake.h>
-Shake_Device *device;
-Shake_Effect effect_big;
-Shake_Effect effect_small;
-int id_shake_small;
-int id_shake_big;
+#include "libShake/include/shake.h"
+
+/* Weak rumble is either off or on */
+#define RUMBLE_WEAK_MAGNITUDE SHAKE_RUMBLE_WEAK_MAGNITUDE_MAX
+
+/* Strong rumble is internally in the range [0,255] */
+#define RUMBLE_STRONG_MAGNITUDE_FACTOR (SHAKE_RUMBLE_STRONG_MAGNITUDE_MAX / 255)
+
+typedef struct
+{
+	Shake_Device *device;
+	Shake_Effect effect;
+	int id;
+	uint8_t low;
+	uint8_t high;
+	uint8_t active;
+	uint8_t initialised;
+} joypad_rumble_t;
+
+static joypad_rumble_t joypad_rumble = {0};
 #endif
 
 enum {
@@ -117,11 +131,16 @@ static void pcsx4all_exit(void)
 	SDL_Quit();
 
 #ifdef RUMBLE
-	Shake_Stop(device, id_shake_small);
-	Shake_Stop(device, id_shake_big);
-	Shake_EraseEffect(device, id_shake_small);
-	Shake_EraseEffect(device, id_shake_big);
-	Shake_Close(device);
+	if (joypad_rumble.device)
+	{
+		if (joypad_rumble.active)
+			Shake_Stop(joypad_rumble.device, joypad_rumble.id);
+
+		Shake_EraseEffect(joypad_rumble.device, joypad_rumble.id);
+
+		Shake_Close(joypad_rumble.device);
+		memset(&joypad_rumble, 0, sizeof(joypad_rumble_t));
+	}
 	Shake_Quit();
 #endif
 
@@ -135,8 +154,7 @@ static char McdPath1[MAXPATHLEN] = "";
 static char McdPath2[MAXPATHLEN] = "";
 static char BiosFile[MAXPATHLEN] = "";
 
-static char home[MAXPATHLEN/2];
-static char homedir[MAXPATHLEN/2];
+static char homedir[MAXPATHLEN];
 static char memcardsdir[MAXPATHLEN];
 static char biosdir[MAXPATHLEN];
 static char patchesdir[MAXPATHLEN];
@@ -147,20 +165,18 @@ char cheatsdir[MAXPATHLEN];
 	#define MKDIR(A) mkdir(A)
 	#define HomeDirectory getcwd(buf, MAXPATHLEN)
 #else
-	#define MKDIR(A) if (access(A, F_OK ) != -1) mkdir(A, 0755)
+	#define MKDIR(A) if (access(A, F_OK ) == -1) { mkdir(A, 0755); }
 	#define HomeDirectory getenv("HOME")
 #endif
 
 static void setup_paths()
 {
 #ifndef __WIN32__
-	snprintf(home, sizeof(home), "%s", getenv("HOME"));
+	snprintf(homedir, sizeof(homedir), "%s/.pcsx4all", getenv("HOME"));
 #else
 	static char buf[MAXPATHLEN];
-	snprintf(home, sizeof(home), "%s", getcwd(buf, MAXPATHLEN));
+	snprintf(homedir, sizeof(homedir), "%s", getcwd(buf, MAXPATHLEN));
 #endif
-
-	snprintf(homedir, sizeof(homedir), "%s/.pcsx4all", home);
 	
 	/* 
 	 * If folder does not exists then create it 
@@ -191,7 +207,11 @@ void probe_lastdir()
 
 	if (!dir) {
 		// Fallback to home directory.
-		strncpy(Config.LastDir, home, MAXPATHLEN);
+#ifndef __WIN32__
+		strncpy(Config.LastDir, getenv("HOME"), MAXPATHLEN);
+#else
+		strncpy(Config.LastDir, homedir, MAXPATHLEN);
+#endif
 		Config.LastDir[MAXPATHLEN-1] = '\0';
 	} else {
 		closedir(dir);
@@ -868,8 +888,8 @@ const char *GetMemcardPath(int slot) {
 }
 
 void update_memcards(int load_mcd) {
-	sprintf(McdPath1, "%s/mcd%03d.mcr", memcardsdir, (int) Config.McdSlot1);
-	sprintf(McdPath2, "%s/mcd%03d.mcr", memcardsdir, (int) Config.McdSlot2);
+	snprintf(McdPath1, sizeof(McdPath1), "%s/mcd%03d.mcr", memcardsdir, Config.McdSlot1);
+	snprintf(McdPath2, sizeof(McdPath2), "%s/mcd%03d.mcr", memcardsdir, Config.McdSlot2);
 	if (load_mcd & 1)
 		LoadMcd(MCD1, McdPath1); //Memcard 1
 	if (load_mcd & 2)
@@ -901,32 +921,166 @@ with mingw build. */
 #undef main
 #endif
 
-void Rumble_Init() {
 #ifdef RUMBLE
+int set_rumble_gain(unsigned gain)
+{
+	if (!joypad_rumble.device) {
+		return 0;
+	}
+
+	if (Shake_SetGain(joypad_rumble.device, (int)gain) != SHAKE_OK) {
+		return 0;
+	}
+
+	return 1;
+}
+
+void Rumble_Init() {
+	uint8_t effect_uploaded = 0;
+
+	if (joypad_rumble.initialised)
+	{
+		printf("ERROR: Rumble already initialized !\n");
+		return;
+	}
+
+	memset(&joypad_rumble, 0, sizeof(joypad_rumble_t));
 	Shake_Init();
 
-	if (Shake_NumOfDevices() > 0) {
-		device = Shake_Open(0);
+	/* If gain is zero, no need to initialise device */
+	if (Config.RumbleGain == 0)
+		goto error;
 
-		Shake_InitEffect(&effect_small, SHAKE_EFFECT_RUMBLE);
-		effect_small.u.rumble.strongMagnitude = SHAKE_RUMBLE_STRONG_MAGNITUDE_MAX * 0.85f;
-		effect_small.u.rumble.weakMagnitude = SHAKE_RUMBLE_WEAK_MAGNITUDE_MAX;
-		effect_small.length = 17;
-		effect_small.delay = 0;
+	if (Shake_NumOfDevices() < 1)
+		goto error;
 
-		Shake_InitEffect(&effect_big, SHAKE_EFFECT_RUMBLE);
-		effect_big.u.rumble.strongMagnitude = SHAKE_RUMBLE_STRONG_MAGNITUDE_MAX;
-		effect_big.u.rumble.weakMagnitude = SHAKE_RUMBLE_WEAK_MAGNITUDE_MAX;
-		effect_big.length = 17;
-		effect_big.delay = 0;
+	/* Open shake device */
+	joypad_rumble.device = Shake_Open(0);
 
-		id_shake_small = Shake_UploadEffect(device, &effect_small);
-		id_shake_big = Shake_UploadEffect(device, &effect_big);
+	if (!joypad_rumble.device)
+		goto error;
 
-		
+	/* Check whether shake device has the
+	 * required feature set */
+	if (!Shake_QueryEffectSupport(joypad_rumble.device, SHAKE_EFFECT_RUMBLE) ||
+		 !Shake_QueryGainSupport(joypad_rumble.device))
+		goto error;
+
+	/* Initialise rumble effect */
+	if (Shake_InitEffect(&joypad_rumble.effect, SHAKE_EFFECT_RUMBLE) != SHAKE_OK)
+		goto error;
+
+	joypad_rumble.effect.u.rumble.weakMagnitude   = 0;
+	joypad_rumble.effect.u.rumble.strongMagnitude = 0;
+	joypad_rumble.effect.length                   = 0; /* Infinite */
+	joypad_rumble.effect.delay                    = 0;
+	joypad_rumble.id                              = Shake_UploadEffect(
+			joypad_rumble.device, &joypad_rumble.effect);
+
+	if (joypad_rumble.id == SHAKE_ERROR)
+		goto error;
+	effect_uploaded = 1;
+
+	/* Set gain */
+	if (!set_rumble_gain(Config.RumbleGain))
+		goto error;
+
+	printf("Rumble initialized !\n");
+	joypad_rumble.initialised = 1;
+	return;
+
+error:
+	printf("Rumble effects disabled...\n");
+	joypad_rumble.initialised = 1;
+
+	if (joypad_rumble.device)
+	{
+		if (effect_uploaded)
+			Shake_EraseEffect(joypad_rumble.device, joypad_rumble.id);
+
+		Shake_Close(joypad_rumble.device);
+		joypad_rumble.device = NULL;
 	}
-#endif
 }
+
+int trigger_rumble(uint8_t low, uint8_t high)
+{
+	if (!joypad_rumble.device) {
+		return 0;
+	}
+
+	/* If total strength is zero, halt rumble effect */
+	if ((low == 0) && (high == 0)) {
+		if (joypad_rumble.active) {
+			if (Shake_Stop(joypad_rumble.device, joypad_rumble.id) == SHAKE_OK) {
+				joypad_rumble.active = false;
+				return 1;
+			} else {
+				return 0;
+			}
+		}
+
+		return 1;
+	}
+
+	/* If strength has changed, update effect */
+	if ((low != joypad_rumble.low) || (high != joypad_rumble.high)) {
+		int id;
+
+		/* Workaround for an inexplicable bug:
+		 * - We are supposed to be able to change rumble
+		 *   strength dynamically, without stopping a
+		 *   currently running effect
+		 * - This works in most cases, but:
+		 * - If the effect is currently running with
+		 *   *both* low and high at a non-zero value and
+		 *   we change one of them to a zero value (or vice
+		 *   versa), then the next Shake_Stop() will fail
+		 *   without error, causing the rumble effect to
+		 *   continue indefinitely
+		 * - We therefore have to manually stop the running
+		 *   effect in this case, before uploading the new
+		 *   settings... :( */
+		if (joypad_rumble.active && ((low && high) != (joypad_rumble.low && joypad_rumble.high))) {
+			if (Shake_Stop(joypad_rumble.device, joypad_rumble.id) == SHAKE_OK) {
+				joypad_rumble.active = false;
+			} else {
+				return 0;
+			}
+		}
+
+		joypad_rumble.effect.id                       = joypad_rumble.id;
+		joypad_rumble.effect.u.rumble.weakMagnitude   = low ? RUMBLE_WEAK_MAGNITUDE : 0x0;
+		joypad_rumble.effect.u.rumble.strongMagnitude = (uint16_t)high * RUMBLE_STRONG_MAGNITUDE_FACTOR;
+		id                                            = Shake_UploadEffect(
+				joypad_rumble.device, &joypad_rumble.effect);
+
+		if (id == SHAKE_ERROR) {
+			return 0;
+		}
+
+		joypad_rumble.id                              = id;
+		joypad_rumble.low                             = low;
+		joypad_rumble.high                            = high;
+	}
+
+	/* If effect is currently idle, activate it */
+	if (!joypad_rumble.active) {
+		if (Shake_Play(joypad_rumble.device, joypad_rumble.id) == SHAKE_OK) {
+			joypad_rumble.active = true;
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+#else
+int set_rumble_gain(unsigned gain) {};
+void Rumble_Init() {}
+int trigger_rumble(uint8_t low, uint8_t high) {}
+#endif
 
 void update_window_size(int w, int h, uint_fast8_t ntsc_fix)
 {
@@ -1048,7 +1202,11 @@ int main (int argc, char **argv)
 	Config.FrameSkip = FRAMESKIP_OFF;
 
 	//zear - Added option to store the last visited directory.
-	strncpy(Config.LastDir, home, MAXPATHLEN); /* Defaults to home directory. */
+#ifndef __WIN32__
+	strncpy(Config.LastDir, getenv("HOME"), MAXPATHLEN);
+#else
+	strncpy(Config.LastDir, homedir, MAXPATHLEN);
+#endif
 	Config.LastDir[MAXPATHLEN-1] = '\0';
 
 	// senquack - added spu_pcsxrearmed plugin:

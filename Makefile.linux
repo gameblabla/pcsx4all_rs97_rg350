@@ -12,6 +12,7 @@ endif
 #  USE_GPULIB=0 as param to 'make' when building to disable it.
 USE_GPULIB  ?= 1
 SUPPORT_CHD ?= 1
+HAVE_RUMBLE ?= 1
 
 #GPU   = gpu_dfxvideo
 #GPU   = gpu_drhell
@@ -81,6 +82,13 @@ OBJS += obj/libchdr/src/libchdr_flac.o
 OBJS += obj/libchdr/src/libchdr_huffman.o
 OBJS += obj/libchdr/deps/lzma-19.00/src/Alloc.o obj/libchdr/deps/lzma-19.00/src/Bra86.o obj/libchdr/deps/lzma-19.00/src/BraIA64.o obj/libchdr/deps/lzma-19.00/src/CpuArch.o obj/libchdr/deps/lzma-19.00/src/Delta.o
 OBJS += obj/libchdr/deps/lzma-19.00/src/LzFind.o obj/libchdr/deps/lzma-19.00/src/Lzma86Dec.o obj/libchdr/deps/lzma-19.00/src/LzmaDec.o obj/libchdr/deps/lzma-19.00/src/LzmaEnc.o obj/libchdr/deps/lzma-19.00/src/Sort.o
+endif
+
+ifeq ($(HAVE_RUMBLE),1)
+CFLAGS += -DRUMBLE -Isrc/libShake/include
+OBJDIRS += obj/libShake/src/common obj/libShake/src/linux
+OBJS += obj/libShake/src/common/error.o obj/libShake/src/common/helpers.o
+OBJS += obj/libShake/src/common/presets.o obj/libShake/src/linux/shake.o
 endif
 
 ######################################################################

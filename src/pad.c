@@ -27,15 +27,6 @@
  *   original by Gameblabla, JamesOFarrel and code based on dfinput for Dual analog/shock.
 */
 
-#ifdef RUMBLE
-#include <shake.h>
-extern Shake_Device *device;
-extern Shake_Effect effect_small;
-extern Shake_Effect effect_big;
-extern int id_shake_small;
-extern int id_shake_big;
-#endif
-
 uint8_t CurPad = 0, CurCmd = 0;
 uint8_t pad_detect_pad[2] = {0, 0};
 
@@ -101,6 +92,7 @@ static uint8_t unk4d[8] = {0xFF, 0x5A, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 unsigned char PAD1_poll(unsigned char value) {
 	static uint8_t buf[8] = {0xFF, 0x5A, 0xFF, 0xFF, 0x80, 0x80, 0x80, 0x80};
 	uint8_t analogpad = 0;
+	uint_fast8_t changed = 0;
 
 	if (g.CurByte1 == 0) {
 		uint16_t n;
@@ -205,52 +197,34 @@ unsigned char PAD1_poll(unsigned char value) {
 	if (player_controller[0].pad_controllertype == 1) {
 		switch (CurCmd) {
 		case CMD_READ_DATA_AND_VIBRATE:
-				if (g.CurByte1 == player_controller[0].Vib[0]) {
+				if (g.CurByte1 == player_controller[0].Vib[0] &&
+					 player_controller[0].VibF[0] != value) {
 					player_controller[0].VibF[0] = value;
-#ifdef RUMBLE
-
-					if (player_controller[0].VibF[0] != 0) {
-						Shake_Play(device, id_shake_small);
-					}
-#endif
-					
+					changed = 1;
 				}
 
-				if (g.CurByte1 == player_controller[0].Vib[1]) {
+				if (g.CurByte1 == player_controller[0].Vib[1] &&
+					 player_controller[0].VibF[1] != value) {
 					player_controller[0].VibF[1] = value;
+					changed = 1;
+				}
 
-#ifdef RUMBLE
-					if (player_controller[0].VibF[1] != 0) {
-						if (value >= 0xf0)
-							Shake_Play(device, id_shake_big);						
-						else
-							Shake_Play(device, id_shake_small);
-					}
-#endif
-					
+				if (changed) {
+					trigger_rumble(player_controller[0].VibF[0],
+							player_controller[0].VibF[1]);
 				}
 			break;
 		case CMD_VIBRATION_TOGGLE:
-			if (g.CurByte1 >= 2 && g.CurByte1 < g.CmdLen1) {
-				if (g.CurByte1 == player_controller[0].Vib[0]) {
+			for (uint8_t i = 0; i < 2; i++) {
+				if (player_controller[0].Vib[i] == g.CurByte1)
 					buf[g.CurByte1] = 0;
+			}
+			if (value < 2) {
+				player_controller[0].Vib[value] = g.CurByte1;
+				if ((player_controller[0].id & 0x0f) < (g.CurByte1 - 1) / 2) {
+					player_controller[0].id = (player_controller[0].id & 0xf0) + (g.CurByte1 - 1) / 2;
 				}
-				if (g.CurByte1 == player_controller[0].Vib[1]) {
-					buf[g.CurByte1] = 1;
-				}
-
-				if (value == 0) {
-					player_controller[0].Vib[0] = g.CurByte1;
-					if ((player_controller[0].id & 0x0f) < (g.CurByte1 - 1) / 2) {
-						player_controller[0].id = (player_controller[0].id & 0xf0) + (g.CurByte1 - 1) / 2;
-					}
-				} else if (value == 1) {
-					player_controller[0].Vib[1] = g.CurByte1;
-					if ((player_controller[0].id & 0x0f) < (g.CurByte1 - 1) / 2) {
-						player_controller[0].id = (player_controller[0].id & 0xf0) + (g.CurByte1 - 1) / 2;
-					}
-				}
-			}		
+			}	
 			break;
 		}
 	}

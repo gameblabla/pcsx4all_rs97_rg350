@@ -128,6 +128,7 @@ typedef struct {
 	uint_fast8_t SlowBoot; /* 0=skip bios logo sequence on boot  1=show sequence (does not apply to HLE) */
 	uint_fast8_t AnalogArrow; /* 0=disable 1=use L-stick as D-pad arrow key */
 	uint8_t AnalogMode;   /* 0-Digital 1-DualAnalog 2-DualShock */
+	uint8_t RumbleGain;   /* [0,100]-Rumble effect strength */
 	uint_fast8_t RCntFix; /* 1=Parasite Eve 2, Vandal Hearts 1/2 Fix */
 	uint_fast8_t VSyncWA; /* 1=InuYasha Sengoku Battle Fix */
 	uint8_t Cpu; /* 0=recompiler, 1=interpreter */

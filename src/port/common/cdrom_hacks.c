@@ -47,7 +47,7 @@ static const char CNTfix_table[25][10] =
 	{"SLPS02779"},
 };
 
-cstatic onst char MemorycardHack[8][10] =
+static const char MemorycardHack[8][10] =
 {
 	/* Lifeforce Tenka, also known as Codename Tenka */
 	{"SLES00613"},

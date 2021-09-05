@@ -65,6 +65,10 @@ void update_memcards(int load_mcd);
 const char *bios_file_get();
 void check_spec_bios();
 
+void Rumble_Init();
+int trigger_rumble(uint8_t low, uint8_t high);
+int set_rumble_gain(unsigned gain);
+
 int SelectGame();
 int GameMenu();
 

@@ -1260,6 +1260,37 @@ static char* Analog_Mode_show()
 	return buf;
 }
 
+#ifdef RUMBLE
+static int RumbleGain_alter(uint32_t keys)
+{
+	unsigned last_rumble_gain = Config.RumbleGain;
+	if (keys & KEY_RIGHT) {
+		if (Config.RumbleGain <= 95) {
+			Config.RumbleGain += 5;
+		} else {
+			Config.RumbleGain = 100;
+		}
+	} else if (keys & KEY_LEFT) {
+		if (Config.RumbleGain >= 5) {
+			Config.RumbleGain -= 5;
+		} else {
+			Config.RumbleGain = 0;
+		}
+	}
+	if (Config.RumbleGain != last_rumble_gain) {
+		set_rumble_gain(Config.RumbleGain);
+	}
+	return 0;
+}
+
+static char* RumbleGain_show()
+{
+	static char buf[16] = "\0";
+	sprintf(buf, "%d%%", Config.RumbleGain);
+	return buf;
+}
+#endif
+
 static char *RCntFix_show()
 {
 	static char buf[16] = "\0";
@@ -1374,7 +1405,9 @@ static MENUITEM gui_SettingsItems[] = {
 	{(char *)"HLE emulated BIOS  ", NULL, &bios_alter, &bios_show, NULL},
 	{(char *)"Set BIOS file      ", &bios_set, NULL, &bios_file_show, NULL},
 	{(char *)"Skip BIOS logos    ", NULL, &SlowBoot_alter, &SlowBoot_show, &SlowBoot_hint},
-	
+#ifdef RUMBLE
+	{(char *)"Rumble Strength    ", NULL, &RumbleGain_alter, &RumbleGain_show, NULL},
+#endif
 #ifndef NOJOYSTICK_AVAILABLE
 	{(char *)"Sticks > Dpad/Butns", NULL, &AnalogDigital_alter, &AnalogDigital_show, &AnalogDigital_hint},
 #endif

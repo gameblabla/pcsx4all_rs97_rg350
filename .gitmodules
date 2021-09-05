@@ -1,3 +1,6 @@
 [submodule "src/libchdr"]
 	path = src/libchdr
 	url = https://github.com/rtissera/libchdr.git
+[submodule "src/libShake"]
+	path = src/libShake
+	url = https://github.com/jdgleaver/libShake.git
