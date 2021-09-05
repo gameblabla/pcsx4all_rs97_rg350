@@ -38,6 +38,9 @@
 
 #define SUB_FRAMESIZE			96
 
+#define MIN_VALUE(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
+#define MAX_VALUE(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
+
 typedef struct {
 	unsigned char OCUP;
 	unsigned char Reg1Mode;
@@ -56,7 +59,8 @@ typedef struct {
 		unsigned char Absolute[3];
 	} subq;
 	unsigned char TrackChanged;
-	unsigned char pad1[3];
+	unsigned char m_locationChanged;
+	unsigned char pad1[2];
 	unsigned int  freeze_ver;
 
 	unsigned char Prev[4];
