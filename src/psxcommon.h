@@ -133,8 +133,8 @@ typedef struct {
 	uint_fast8_t VSyncWA; /* 1=InuYasha Sengoku Battle Fix */
 	uint8_t Cpu; /* 0=recompiler, 1=interpreter */
 	uint8_t PsxType; /* 0=ntsc, 1=pal */
-    uint8_t McdSlot1; /* mcd slot 1, mcd%03u.mcr */
-    uint8_t McdSlot2; /* mcd slot 2, mcd%03u.mcr */
+	int8_t McdSlot1; /* mcd slot 1, -1=empty, 0=CdromId.1.mcr, otherwise mcd%03u.mcr */
+	int8_t McdSlot2; /* mcd slot 2, -1=empty, 0=CdromId.2.mcr, otherwise mcd%03u.mcr */
 
 	//senquack - added Config.SpuIrq option from PCSX Rearmed/Reloaded:
 	uint_fast8_t SpuIrq; /* 1=SPU IRQ always enabled (needed for audio in some games) */
@@ -161,15 +161,6 @@ typedef struct {
 	// Options for performance monitor
 	uint_fast8_t PerfmonConsoleOutput;
 	uint_fast8_t PerfmonDetailedStats;
-	
-	/* CodeName Takeda requires the player to remove one of the memory cards.
-	 * However, the use of such hack for going around this can actually break the behaviour of some games
-	 * like Digimon World. (which thinks a save is available, when it's in fact not)
-	 * But since this game does need it, let's add a setting for it.
-	 * In the future, we could simply allow the user to remove it themselves but an auto-hack
-	 * more preferable in this case. (Because it would be less conveniant)
-	*/
-	uint8_t      MemoryCardHack; 
 	
 	uint_fast8_t AnalogDigital; /* 0=disable 1=use Map sticks to DPAD/Buttons */
 

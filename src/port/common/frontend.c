@@ -1160,7 +1160,7 @@ static char *SlowBoot_show()
 
 static void SlowBoot_hint()
 {
-	port_printf(7 * 8, 10 * 8, "Skip BIOS logos at startup");
+	port_printf(7 * 8, 10 * 7, "Skip BIOS logos at startup");
 }
 
 static int SlowBoot_alter(uint32_t keys)
@@ -1188,8 +1188,8 @@ static int AnalogDigital_alter(uint32_t keys)
 
 static void AnalogDigital_hint()
 {
-	port_printf(6 * 8, 10 * 7, "Sticks -> Dpad/Buttons");
-	port_printf(6 * 8, 10 * 8, "Maps Sticks to DPAD/Buttons");
+	port_printf(6 * 8, 10 * 6, "Sticks -> Dpad/Buttons");
+	port_printf(6 * 8, 10 * 7, "Maps Sticks to DPAD/Buttons");
 }
 
 static char* AnalogDigital_show()
@@ -1214,8 +1214,8 @@ static int AnalogArrow_alter(uint32_t keys)
 
 static void AnalogArrow_hint()
 {
-	port_printf(6 * 8, 10 * 7, "DPAD -> Left Stick");
-	port_printf(6 * 8, 10 * 8, "Maps Dpad to Left stick");
+	port_printf(6 * 8, 10 * 6, "DPAD -> Left Stick");
+	port_printf(6 * 8, 10 * 7, "Maps Dpad to Left stick");
 }
 
 static char* AnalogArrow_show()
@@ -1240,7 +1240,7 @@ static int Analog_Mode_alter(uint32_t keys)
 
 static void Analog_Mode_hint()
 {
-	port_printf(6 * 8, 10 * 8, "Analog Mode");
+	port_printf(6 * 8, 10 * 7, "Analog Mode");
 }
 
 static char* Analog_Mode_show()
@@ -1300,7 +1300,7 @@ static char *RCntFix_show()
 
 static void RCntFix_hint()
 {
-	port_printf(2 * 8 - 4, 10 * 8, "Parasite Eve 2, Vandal Hearts 1/2 Fix");
+	port_printf(2 * 8 - 4, 10 * 7, "Parasite Eve 2, Vandal Hearts 1/2 Fix");
 }
 
 static int VSyncWA_alter(uint32_t keys)
@@ -1316,7 +1316,7 @@ static int VSyncWA_alter(uint32_t keys)
 
 static void VSyncWA_hint()
 {
-	port_printf(6 * 8, 10 * 8, "InuYasha Sengoku Battle Fix");
+	port_printf(6 * 8, 10 * 7, "InuYasha Sengoku Battle Fix");
 }
 
 static char *VSyncWA_show()
@@ -1331,12 +1331,12 @@ static int McdSlot1_alter(uint32_t keys)
 	int slot = Config.McdSlot1;
 	if (keys & KEY_RIGHT)
 	{
-		if (++slot > 15) slot = 1;
+		if (++slot > 16) slot = -1;
 	}
 	else
 	if (keys & KEY_LEFT)
 	{
-		if (--slot < 1) slot = 15;
+		if (--slot < -1) slot = 16;
 	}
 	Config.McdSlot1 = slot;
 	update_memcards(1);
@@ -1345,8 +1345,18 @@ static int McdSlot1_alter(uint32_t keys)
 
 static char *McdSlot1_show()
 {
-	static char buf[16] = "\0";
-	sprintf(buf, "mcd%03d.mcr", (int)Config.McdSlot1);
+	static char buf[32] = "\0";
+	if (Config.McdSlot1 == -1) {
+		strcpy(buf, "empty");
+	} else if (Config.McdSlot1 == 0) {
+		if (string_is_empty(CdromId)) {
+			strcpy(buf, "per-disk");
+		} else {
+			sprintf(buf, "%s.1", CdromId);
+		}
+	} else {
+		sprintf(buf, "mcd%03d.mcr", (int)Config.McdSlot1);
+	}
 	return buf;
 }
 
@@ -1355,12 +1365,12 @@ static int McdSlot2_alter(uint32_t keys)
 	int slot = Config.McdSlot2;
 	if (keys & KEY_RIGHT)
 	{
-		if (++slot > 16) slot = 1;
+		if (++slot > 16) slot = -1;
 	}
 	else
 	if (keys & KEY_LEFT)
 	{
-		if (--slot < 1) slot = 16;
+		if (--slot < -1) slot = 16;
 	}
 	Config.McdSlot2 = slot;
 	update_memcards(2);
@@ -1369,8 +1379,18 @@ static int McdSlot2_alter(uint32_t keys)
 
 static char *McdSlot2_show()
 {
-	static char buf[16] = "\0";
-	sprintf(buf, "mcd%03d.mcr", (int)Config.McdSlot2);
+	static char buf[32] = "\0";
+	if (Config.McdSlot2 == -1) {
+		strcpy(buf, "empty");
+	} else if (Config.McdSlot2 == 0) {
+		if (string_is_empty(CdromId)) {
+			strcpy(buf, "per-disk");
+		} else {
+			sprintf(buf, "%s.2", CdromId);
+		}
+	} else {
+		sprintf(buf, "mcd%03d.mcr", (int)Config.McdSlot2);
+	}
 	return buf;
 }
 
@@ -1422,7 +1442,7 @@ static MENUITEM gui_SettingsItems[] = {
 };
 
 #define SET_SIZE ((sizeof(gui_SettingsItems) / sizeof(MENUITEM)) - 1)
-static MENU gui_SettingsMenu = { SET_SIZE, 0, 32, 102, (MENUITEM *)&gui_SettingsItems, 0, 0  };
+static MENU gui_SettingsMenu = { SET_SIZE, 0, 32, 82, (MENUITEM *)&gui_SettingsItems, 0, 0  };
 
 static int fps_alter(uint32_t keys)
 {

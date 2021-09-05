@@ -283,7 +283,7 @@ void CheckforCDROMid_applyhacks()
 	{
 		if (strncmp(CdromId, MemorycardHack[i], 9) == 0)
 		{
-			Config.MemoryCardHack = 1;
+			//Config.MemoryCardHack = 1;
 		}
 	}
 	

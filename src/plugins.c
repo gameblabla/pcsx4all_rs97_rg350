@@ -36,8 +36,12 @@ int LoadPlugins(void) {
 
 	ReleasePlugins();
 
-	LoadMcd(MCD1, (char*)GetMemcardPath(1)); //Memcard 1
-	LoadMcd(MCD2, (char*)GetMemcardPath(2)); //Memcard 2
+	/* If we are using per-disk memory cards, defer
+	 * loading until after the disk ID has been determined */
+	if ((Config.McdSlot1 != 0) && (Config.McdSlot2 != 0)) {
+		LoadMcd(MCD1, GetMemcardPath(1)); //Memcard 1
+		LoadMcd(MCD2, GetMemcardPath(2)); //Memcard 2
+	}
 
 	ret = CDR_init();
 	if (ret < 0) { printf ("Error initializing CD-ROM plugin: %d\n", ret); return -1; }

@@ -221,7 +221,7 @@ CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions
 $(TARGET): $(OBJS)
 	@echo Linking $(TARGET)...
 	$(HIDECMD)$(LD) $(OBJS) $(LDFLAGS) -o $@
-	hugeedit --text --data $(TARGET)
+	/opt/gcw0-toolchain/bin/hugeedit --text --data $(TARGET)
 	@echo
 ifeq ($(DEV),1)
 	@echo "-> WARNING: This is a development build.                                  "

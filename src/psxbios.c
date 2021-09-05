@@ -1708,12 +1708,24 @@ void psxBios__card_info(void) { // ab
 	switch (card_active_chan) 
 	{
 	case 0x00: case 0x01: case 0x02: case 0x03:
-		ret = GetMemcardPath(1)[0] ? 0x2 : 0x8;
+		if (Config.McdSlot1 == -1)
+		{
+			ret = 0x8;
+		}
+		else
+		{
+			ret = 0x2;
+		}
 		break;
 	case 0x10: case 0x11: case 0x12: case 0x13:
-		ret = GetMemcardPath(2)[0] ? 0x2 : 0x8;
-		/* Required for Tenka */
-		if (Config.MemoryCardHack == 1) ret = 0x8;
+		if (Config.McdSlot2 == -1)
+		{
+			ret = 0x8;
+		}
+		else
+		{
+			ret = 0x2;
+		}
 		break;
 	default:
 #ifdef PSXBIOS_LOG

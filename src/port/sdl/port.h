@@ -43,6 +43,11 @@ static inline int fsync(int f) { return 0; }
 
 #define	CONFIG_VERSION	0
 
+INLINE int string_is_empty(const char *data)
+{
+	return (!data || (*data == '\0')) ? 1 : 0;
+}
+
 unsigned get_ticks(void);
 void wait_ticks(unsigned s);
 void pad_update(void);
@@ -57,6 +62,8 @@ void port_printf(int x, int y, const char *text);
 
 extern unsigned short *SCREEN;
 extern int SCREEN_WIDTH, SCREEN_HEIGHT;
+
+char *GetMemcardPath(int slot);
 
 int state_load(int slot);
 int state_save(int slot);

@@ -465,7 +465,6 @@ void config_save()
 		Config.VSyncWA = 0;
 		/* Default is DualShock */
 		Config.AnalogMode = 2;
-		Config.MemoryCardHack = 0;
 		Config.RCntFix = 0;
 	}
 
@@ -877,23 +876,57 @@ void video_clear(void)
 	memset(screen->pixels, 0, screen->pitch*screen->h);
 }
 
-const char *GetMemcardPath(int slot) {
+char *GetMemcardPath(int slot) {
 	switch(slot) {
 	case 1:
-		return McdPath1;
+		if (Config.McdSlot1 == -1) {
+			return NULL;
+		} else {
+			return McdPath1;
+		}
 	case 2:
-		return McdPath2;
+		if (Config.McdSlot2 == -1) {
+			return NULL;
+		} else {
+			return McdPath2;
+		}
 	}
 	return NULL;
 }
 
+
 void update_memcards(int load_mcd) {
-	snprintf(McdPath1, sizeof(McdPath1), "%s/mcd%03d.mcr", memcardsdir, Config.McdSlot1);
-	snprintf(McdPath2, sizeof(McdPath2), "%s/mcd%03d.mcr", memcardsdir, Config.McdSlot2);
+
+	if (Config.McdSlot1 == -1) {
+		McdPath1[0] = '\0';
+	} else if (Config.McdSlot1 == 0) {
+		if (string_is_empty(CdromId)) {
+			/* Fallback */
+			sprintf(McdPath1, "%s/%s", memcardsdir, "card1.mcd");
+		} else {
+			sprintf(McdPath1, "%s/%s.1.mcr", memcardsdir, CdromId);
+		}
+	} else {
+		sprintf(McdPath1, "%s/mcd%03d.mcr", memcardsdir, (int)Config.McdSlot1);
+	}
+
+	if (Config.McdSlot2 == -1) {
+		McdPath2[0] = '\0';
+	} else if (Config.McdSlot2 == 0) {
+		if (string_is_empty(CdromId)) {
+			/* Fallback */
+			sprintf(McdPath2, "%s/%s", memcardsdir, "card2.mcd");
+		} else {
+			sprintf(McdPath2, "%s/%s.2.mcr", memcardsdir, CdromId);
+		}
+	} else {
+		sprintf(McdPath2, "%s/mcd%03d.mcr", memcardsdir, (int)Config.McdSlot2);
+	}
+
 	if (load_mcd & 1)
-		LoadMcd(MCD1, McdPath1); //Memcard 1
+		LoadMcd(MCD1, GetMemcardPath(1)); //Memcard 1
 	if (load_mcd & 2)
-		LoadMcd(MCD2, McdPath2); //Memcard 2
+		LoadMcd(MCD2, GetMemcardPath(2)); //Memcard 2
 }
 
 const char *bios_file_get() {
@@ -1157,7 +1190,7 @@ int main (int argc, char **argv)
 
 	// PCSX
 	Config.McdSlot1 = 1;
-	Config.McdSlot2 = 2;
+	Config.McdSlot2 = -1;
 	update_memcards(0);
 	strcpy(Config.PatchesDir, patchesdir);
 	strcpy(Config.BiosDir, biosdir);
@@ -1165,7 +1198,6 @@ int main (int argc, char **argv)
 	
 	Config.AnalogDigital = 0;
 	Config.AnalogArrow = 0;
-	Config.MemoryCardHack = 0;
 	Config.AnalogMode = 2;
 
 	Config.Xa=0; /* 0=XA enabled, 1=XA disabled */
@@ -1595,8 +1627,6 @@ int main (int argc, char **argv)
 #endif //!SPU_NULL
 	}
 
-	update_memcards(0);
-	strcpy(BiosFile, Config.Bios);
 
 	if (param_parse_error) {
 		printf("Failed to parse command-line parameters, exiting.\n");
@@ -1665,6 +1695,16 @@ int main (int argc, char **argv)
 		printf("Failed loading plugins.\n");
 		exit(1);
 	}
+	
+	/* If we are using per-disk memory cards, load
+	 * them now */
+	if ((Config.McdSlot1 == 0) || (Config.McdSlot2 == 0)) {
+		update_memcards(0);
+		LoadMcd(MCD1, GetMemcardPath(1)); //Memcard 1
+		LoadMcd(MCD2, GetMemcardPath(2)); //Memcard 2
+	}
+
+	strcpy(BiosFile, Config.Bios);
 	Rumble_Init();
 
 	pcsx4all_initted = true;
