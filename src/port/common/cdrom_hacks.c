@@ -47,18 +47,6 @@ static const char CNTfix_table[25][10] =
 	{"SLPS02779"},
 };
 
-static const char MemorycardHack[8][10] =
-{
-	/* Lifeforce Tenka, also known as Codename Tenka */
-	{"SLES00613"},
-	{"SLED00690"},
-	{"SLES00614"},
-	{"SLES00615"},
-	{"SLES00616"},
-	{"SLES00617"},
-	{"SCUS94409"}
-};
-
 static const char DualShockOnlyGames[16][10] =
 {
 	/* Ape Escape */
@@ -277,16 +265,7 @@ void CheckforCDROMid_applyhacks()
 		}
 	}
 	#endif
-	
-	/* Apply Memory card hack for Codename Tenka for going past the screen asking to remove MC */
-	for(i=0;i<ARRAY_SIZE(MemorycardHack);i++)
-	{
-		if (strncmp(CdromId, MemorycardHack[i], 9) == 0)
-		{
-			//Config.MemoryCardHack = 1;
-		}
-	}
-	
+
 	/* Apply hackfix for Parasite Eve 2, Vandal Hearts I/II */
 	for(i=0;i<ARRAY_SIZE(CNTfix_table);i++)
 	{
