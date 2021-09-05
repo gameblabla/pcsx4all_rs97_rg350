@@ -25,6 +25,6 @@
 #include "r3000a.h"
 #include "plugins.h"
 
-extern void (*psxHLEt[256])(void);
+extern const void (*psxHLEt[8])();
 
 #endif /* __PSXHLE_H__ */

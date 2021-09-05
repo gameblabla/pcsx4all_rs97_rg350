@@ -893,10 +893,18 @@ static void recBREAK() { }
  */
 static void recHLE()
 {
+	extern void psxNULL();
 	regClearJump();
 
 	LI32(TEMP_1, pc);
-	JAL(((uint32_t)psxHLEt[psxRegs.code & 0x7]));
+	
+	uint32_t hleCode = psxRegs.code & 0x03ffffff;
+	if (hleCode >= (sizeof(psxHLEt) / sizeof(psxHLEt[0])))
+		JAL(((int)psxNULL));
+	else
+		JAL(((uint32_t)psxHLEt[psxRegs.code & 0x7]));
+	
+	
 	SW(TEMP_1, PERM_REG_1, off(pc));        // <BD> BD slot of JAL() above
 
 	// If new PC is unknown, cannot use 'fastpath' return
