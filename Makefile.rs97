@@ -1,6 +1,5 @@
 TARGET = pcsx4all
-PORT   = rs97
-RS97   = 1
+PORT   = sdl
 
 # Using 'gpulib' adapted from PCSX Rearmed is default, specify
 # USE_GPULIB=0 as param to 'make' when building to disable it.
@@ -23,7 +22,7 @@ SDL_CFLAGS := $(shell $(SDL_CONFIG) --cflags)
 SDL_LIBS   := $(shell $(SDL_CONFIG) --libs)
 
 
-C_ARCH = -mips32 -DDYNAREC_SKIP_DCACHE_FLUSH -DTMPFS_MIRRORING -DTMPFS_DIR=\"/tmp\" -DRS97
+C_ARCH = -mips32 -DDYNAREC_SKIP_DCACHE_FLUSH -DTMPFS_MIRRORING -DTMPFS_DIR=\"/tmp\"
 OPTS = -O2 -mno-fp-exceptions -mframe-header-opt -mno-check-zero-division -fno-signed-zeros -fno-trapping-math -mno-interlink-compressed -fno-caller-saves -flto=8
 
 CFLAGS = $(C_ARCH) -fno-common -mno-abicalls -fno-PIC -fdata-sections -ffunction-sections $(OPTS) -DGCW_ZERO \
