@@ -22,6 +22,11 @@
 #ifndef GPU_UNAI_GPU_H
 #define GPU_UNAI_GPU_H
 
+#ifndef USE_GPULIB
+extern uint32_t new_width;
+extern uint32_t new_height;
+#endif
+
 struct gpu_unai_config_t {
 	uint8_t pixel_skip:1;     // If 1, allows skipping rendering pixels that
 	                          //  would not be visible when a high horizontal

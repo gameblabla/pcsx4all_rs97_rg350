@@ -81,37 +81,9 @@ int SCREEN_WIDTH = 640, SCREEN_HEIGHT = 480;
 
 static uint_fast8_t pcsx4all_initted = false;
 static uint_fast8_t emu_running = false;
-
-#ifdef GCW_ZERO
-static uint_fast8_t last_keep_aspect = false;
-#endif
-
 void config_load();
 void config_save();
 void update_window_size(int w, int h, uint_fast8_t ntsc_fix);
-
-static const char *KEEP_ASPECT_FILENAME = "/sys/devices/platform/jz-lcd.0/keep_aspect_ratio";
-
-#ifdef GCW_ZERO
-
-static inline uint_fast8_t get_keep_aspect_ratio() {
-	FILE *f = fopen(KEEP_ASPECT_FILENAME, "rb");
-	if (!f) return false;
-	char c;
-	fread(&c, 1, 1, f);
-	fclose(f);
-	return c == 'Y';
-}
-
-static inline void set_keep_aspect_ratio(uint_fast8_t n) {
-	FILE *f = fopen(KEEP_ASPECT_FILENAME, "wb");
-	if (!f) return;
-	char c = n ? 'Y' : 'N';
-	fwrite(&c, 1, 1, f);
-	fclose(f);
-}
-
-#endif
 
 static void pcsx4all_exit(void)
 {
@@ -120,10 +92,6 @@ static void pcsx4all_exit(void)
 
 	// Store config to file
 	config_save();
-
-#ifdef GCW_ZERO
-	set_keep_aspect_ratio(last_keep_aspect);
-#endif
 
 	if (SDL_MUSTLOCK(screen))
 		SDL_UnlockSurface(screen);
@@ -229,20 +197,12 @@ void config_load()
 	char line[MAXPATHLEN + 8 + 1];
 	int lineNum = 0;
 
-#ifdef GCW_ZERO
-	last_keep_aspect = get_keep_aspect_ratio();
-#endif
-
-	sprintf(config, "%s/pcsx4all_ng.cfg", homedir);
+	sprintf(config, "%s/pcsx4all_gb.cfg", homedir);
 	f = fopen(config, "r");
 
 	if (f == NULL) {
-		sprintf(config, "%s/pcsx4all.cfg", homedir);
-		f = fopen(config, "r");
-		if (f == NULL) {
-			printf("Failed to open config file: \"%s\" for reading.\n", config);
-			return;
-		}
+		printf("Failed to open config file: \"%s\" for reading.\n", config);
+		return;
 	}
 
 	while (fgets(line, sizeof(line), f)) {
@@ -434,12 +394,6 @@ void config_load()
 			gpu_unai_config_ext.ntsc_fix = value;
 		}
 #endif
-#ifdef GCW_ZERO
-		else if (!strcmp(line, "keep_aspect_ratio")) {
-			sscanf(arg, "%d", &value);
-			set_keep_aspect_ratio(value != 0);
-		}
-#endif
 	}
 
 	fclose(f);
@@ -451,7 +405,7 @@ void config_save()
 	char config[MAXPATHLEN];
 	extern uint_fast8_t ishack_enabled;
 
-	sprintf(config, "%s/pcsx4all_ng.cfg", homedir);
+	sprintf(config, "%s/pcsx4all_gb.cfg", homedir);
 
 	f = fopen(config, "w");
 
@@ -524,11 +478,6 @@ void config_save()
 		   gpu_unai_config_ext.blending,
 		   gpu_unai_config_ext.dithering,
 		   gpu_unai_config_ext.ntsc_fix);
-#endif
-
-#ifdef GCW_ZERO
-	fprintf(f, "keep_aspect_ratio %d\n",
-		   get_keep_aspect_ratio() ? 1 : 0);
 #endif
 
 	if (Config.LastDir[0]) {
@@ -1110,13 +1059,40 @@ int trigger_rumble(uint8_t low, uint8_t high)
 	return 1;
 }
 #else
-int set_rumble_gain(unsigned gain) {};
+int set_rumble_gain(unsigned gain) { return 0; };
 void Rumble_Init() {}
-int trigger_rumble(uint8_t low, uint8_t high) {}
+int trigger_rumble(uint8_t low, uint8_t high) { return 0; }
 #endif
 
 void update_window_size(int w, int h, uint_fast8_t ntsc_fix)
 {
+#ifdef NO_HWSCALE
+	if (screen) return;
+
+	SCREEN_WIDTH = 320;
+	SCREEN_HEIGHT = 240;
+	Config.VideoScaling = 1;
+#ifdef SDL_TRIPLEBUF
+	int flags = SDL_TRIPLEBUF;
+#else
+	int flags = SDL_DOUBLEBUF;
+#endif
+    flags |= SDL_HWSURFACE
+#if defined(GCW_ZERO) && defined(USE_BGR15)
+        | SDL_SWIZZLEBGR
+#endif
+        ;
+	screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT,
+#if !defined(GCW_ZERO) || !defined(USE_BGR15)
+			16,
+#else
+			15,
+#endif
+			flags);
+	SCREEN = (Uint16 *)screen->pixels;
+	return;
+#else
+
 	if (Config.VideoScaling != 0) return;
 #ifdef SDL_TRIPLEBUF
 	int flags = SDL_TRIPLEBUF;
@@ -1176,6 +1152,7 @@ void update_window_size(int w, int h, uint_fast8_t ntsc_fix)
 #ifdef SDL_TRIPLEBUF
 	video_flip();
 	video_clear();
+#endif
 #endif
 }
 

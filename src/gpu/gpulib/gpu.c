@@ -416,7 +416,9 @@ void GPU_writeStatus(uint32_t data)
       gpu.screen.vres = vres[(gpu.status.reg >> 19) & 3];
       update_width();
       update_height();
+      #ifndef NO_HWSCALE
       update_window_size(gpu.screen.hres, gpu.screen.vres, Config.PsxType == PSX_TYPE_NTSC);
+      #endif
       renderer_notify_res_change();
       break;
     default:

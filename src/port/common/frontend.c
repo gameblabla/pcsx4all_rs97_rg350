@@ -17,7 +17,7 @@
 
 #include <SDL.h>
 
-/* PATH_MAX inclusion */
+/* MAXPATHLEN inclusion */
 #ifdef __MINGW32__
 #include <limits.h>
 #endif
@@ -144,7 +144,7 @@ void sort_dir(struct dir_item *list, int num_items)
 	qsort((void *)list,num_items,sizeof(struct dir_item),(int (*)(const void*, const void*))compare_names);
 }
 
-static char gamepath[PATH_MAX] = "./";
+static char gamepath[MAXPATHLEN] = "./";
 static struct dir_item filereq_dir_items[1024] = { { 0, 0 }, };
 
 #define MENU_X		8
@@ -160,10 +160,10 @@ static inline void ChDir(char *dir)
 
 static inline char *GetCwd(void)
 {
-	char *unused = getcwd(gamepath, PATH_MAX);
+	char *unused = getcwd(gamepath, MAXPATHLEN);
 	(void)unused;
 #ifdef __WIN32__
-		for (int i = 0; i < PATH_MAX; i++) {
+		for (int i = 0; i < MAXPATHLEN; i++) {
 			if (gamepath[i] == 0)
 				break;
 			if (gamepath[i] == '\\')
@@ -1001,7 +1001,7 @@ static int gui_swap_cd(void)
 			printf("CD swap selected image %d of %d in multi-CD\n", cdrIsoMultidiskSelect+1, cdrIsoMultidiskCount);
 		}
 	} else {
-		static char isoname[PATH_MAX];
+		static char isoname[MAXPATHLEN];
 		const char *name = FileReq(Config.LastDir, NULL, isoname);
 		if (name == NULL)
 			return 0;
@@ -1120,7 +1120,7 @@ static char *bios_show()
 
 static int bios_set()
 {
-	static char biosname[PATH_MAX];
+	static char biosname[MAXPATHLEN];
 	const char *name = FileReq(Config.BiosDir, NULL, biosname);
 
 	if (name) {
@@ -1961,7 +1961,7 @@ static MENU gui_SPUSettingsMenu = { SET_SPUSIZE, 0, 56, 102, (MENUITEM *)&gui_SP
 
 static int gui_LoadIso()
 {
-	static char isoname[PATH_MAX];
+	static char isoname[MAXPATHLEN];
 	const char *name = FileReq(Config.LastDir, NULL, isoname);
 
 	if (name) {
@@ -2043,7 +2043,7 @@ static int gui_Quit()
 
 static void ShowMenuItem(int x, int y, MENUITEM *mi)
 {
-	static char string[PATH_MAX];
+	static char string[MAXPATHLEN];
 
 	if (mi->name) {
 		if (mi->showval) {

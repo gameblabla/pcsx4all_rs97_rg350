@@ -27,6 +27,11 @@
 
 #define GPU_INLINE static inline __attribute__((always_inline))
 
+#ifndef USE_GPULIB
+uint32_t new_width = 640;
+uint32_t new_height = 480;
+#endif
+
 #ifdef TIME_IN_MSEC
 #define TPS 1000
 #else
@@ -488,7 +493,7 @@ INLINE void GPU_NoSkip(void)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void  GPU_writeStatus(uint32_t data)
+void GPU_writeStatus(uint32_t data)
 {
 	#ifdef ENABLE_GPU_LOG_SUPPORT
 		fprintf(stdout,"GPU_writeStatus(%d,%d)\n",data>>24,data & 0xff);
@@ -561,8 +566,13 @@ void  GPU_writeStatus(uint32_t data)
 						VerticalResolution[(gpu_unai.GPU_GP1 >> 19) & 3],(gpu_unai.GPU_GP1&0x00200000?24:15),(IS_PAL?1:0));
 			#endif
 			// Video mode change
+			#ifndef USE_GPULIB
+			new_width = HorizontalResolution[(gpu_unai.GPU_GP1 >> 16) & 7];
+			new_height = VerticalResolution[(gpu_unai.GPU_GP1 >> 19) & 3];
+			#else
 			uint32_t new_width = HorizontalResolution[(gpu_unai.GPU_GP1 >> 16) & 7];
 			uint32_t new_height = VerticalResolution[(gpu_unai.GPU_GP1 >> 19) & 3];
+			#endif
 
 			if (gpu_unai.DisplayArea[2] != new_width || gpu_unai.DisplayArea[3] != new_height)
 			{

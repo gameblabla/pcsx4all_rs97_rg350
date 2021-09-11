@@ -54,19 +54,19 @@ typedef struct {
 
 /// GPU functions
 
-long GPU_init(void);
-long GPU_shutdown(void);
-void GPU_writeStatus(uint32_t);
-void GPU_writeData(uint32_t);
-void GPU_writeDataMem(uint32_t *, int);
-uint32_t GPU_readStatus(void);
-uint32_t GPU_readData(void);
-void GPU_readDataMem(uint32_t *, int);
-long GPU_dmaChain(uint32_t *,uint32_t);
-void GPU_updateLace(void);
-long GPU_freeze(uint32_t, GPUFreeze_t *);
-void GPU_requestScreenRedraw(void);
-void GPU_getScreenInfo(GPUScreenInfo_t *sinfo);
+extern long GPU_init(void);
+extern long GPU_shutdown(void);
+extern void GPU_writeStatus(uint32_t data);
+extern void GPU_writeData(uint32_t data);
+extern void GPU_writeDataMem(uint32_t *, int);
+extern uint32_t GPU_readStatus(void);
+extern uint32_t GPU_readData(void);
+extern void GPU_readDataMem(uint32_t *, int);
+extern long GPU_dmaChain(uint32_t *,uint32_t);
+extern void GPU_updateLace(void);
+extern long GPU_freeze(uint32_t, GPUFreeze_t *);
+extern void GPU_requestScreenRedraw(void);
+extern void GPU_getScreenInfo(GPUScreenInfo_t *sinfo);
 
 #ifdef USE_GPULIB
 void GPU_vBlank(int is_vblank, int lcf);
