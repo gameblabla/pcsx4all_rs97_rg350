@@ -633,7 +633,7 @@ void pad_update()
 			switch (event.key.keysym.sym) 
 			{
 			case SDLK_HOME:
-			case SDLK_F10:
+			case SDLK_END:
 				popup_menu = true;
 				break;
 			case SDLK_v: { Config.ShowFps=!Config.ShowFps; } break;
@@ -705,6 +705,7 @@ void pad_update()
 		}
 	}
 
+#ifndef NOJOYSTICK_AVAILABLE
 	if (Config.AnalogDigital == 1)
 	{
 		if ((analog1 & ANALOG_UP)) {
@@ -731,8 +732,79 @@ void pad_update()
 			pad1_buttons &= ~(1 << DKEY_RIGHT);
 		}
 	}
-	else if (Config.AnalogArrow == 1) 
+	else
+#endif
+	if (Config.AnalogArrow == 1) 
 	{
+#ifdef NOJOYSTICK_AVAILABLE
+		if (keys[SDLK_UP])
+		{
+			player_controller[0].joy_left_ax1 = 0;
+			pad1_buttons |= (1 << DKEY_UP);
+		}
+		else if (keys[SDLK_DOWN])
+		{
+			player_controller[0].joy_left_ax1 = 255;
+			pad1_buttons |= (1 << DKEY_DOWN);
+		}
+		else
+		{
+			player_controller[0].joy_left_ax1 = 127;
+		}
+		
+		if (keys[SDLK_LEFT])
+		{
+			player_controller[0].joy_left_ax0 = 0;
+			pad1_buttons |= (1 << DKEY_LEFT);
+		}
+		else if (keys[SDLK_RIGHT])
+		{
+			player_controller[0].joy_left_ax0 = 255;
+			pad1_buttons |= (1 << DKEY_RIGHT);
+		}
+		else
+		{
+			player_controller[0].joy_left_ax0 = 127;
+		}
+		
+		if (keys[SDLK_ESCAPE])
+		{
+				if (keys[SDLK_SPACE])
+				{
+					player_controller[0].joy_right_ax1 = 0;
+					pad1_buttons |= (1 << DKEY_TRIANGLE);
+				}
+				else if (keys[SDLK_LALT])
+				{
+					player_controller[0].joy_right_ax1 = 255;
+					pad1_buttons |= (1 << DKEY_CROSS);
+				}
+				else
+				{
+					player_controller[0].joy_right_ax1 = 127;
+				}
+				
+				if (keys[SDLK_LSHIFT])
+				{
+					player_controller[0].joy_right_ax0 = 0;
+					pad1_buttons |= (1 << DKEY_SQUARE);
+				}
+				else if (keys[SDLK_LCTRL])
+				{
+					player_controller[0].joy_right_ax0 = 255;
+					pad1_buttons |= (1 << DKEY_SQUARE);
+				}
+				else
+				{
+					player_controller[0].joy_right_ax0 = 127;
+				}
+		}
+		else
+		{
+			player_controller[0].joy_right_ax1 = 127;
+			player_controller[0].joy_right_ax0 = 127;
+		}	
+#else
 		if ((pad1_buttons & (1 << DKEY_UP)) && (analog1 & ANALOG_UP)) {
 			pad1_buttons &= ~(1 << DKEY_UP);
 		}
@@ -745,6 +817,7 @@ void pad_update()
 		if ((pad1_buttons & (1 << DKEY_RIGHT)) && (analog1 & ANALOG_RIGHT)) {
 			pad1_buttons &= ~(1 << DKEY_RIGHT);
 		}
+#endif
 	}
 
 	// popup main menu
@@ -756,11 +829,15 @@ void pad_update()
 
 		emu_running = false;
 		pl_pause();    // Tell plugin_lib we're pausing emu
+#ifndef NO_HWSCALE
 		update_window_size(320, 240, false);
+#endif
 		GameMenu();
 		emu_running = true;
 		pad1_buttons |= (1 << DKEY_SELECT) | (1 << DKEY_START) | (1 << DKEY_CROSS);
+#ifndef NO_HWSCALE
 		update_window_size(gpu.screen.hres, gpu.screen.vres, Config.PsxType == PSX_TYPE_NTSC);
+#endif
 		if (Config.VideoScaling == 1) {
 			video_clear();
 			video_flip();
