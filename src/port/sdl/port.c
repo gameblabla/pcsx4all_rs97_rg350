@@ -1750,14 +1750,7 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 	
-	/* If we are using per-disk memory cards, load
-	 * them now */
-	if ((Config.McdSlot1 == 0) || (Config.McdSlot2 == 0)) {
-		update_memcards(0);
-		LoadMcd(MCD1, GetMemcardPath(1)); //Memcard 1
-		LoadMcd(MCD2, GetMemcardPath(2)); //Memcard 2
-	}
-
+	update_memcards(0);
 	strcpy(BiosFile, Config.Bios);
 	Rumble_Init();
 
@@ -1790,6 +1783,12 @@ int main (int argc, char **argv)
 
 	CheckforCDROMid_applyhacks();
 
+	/* If we are using per-disk memory cards, load them now */
+	if ((Config.McdSlot1 == 0) || (Config.McdSlot2 == 0)) {
+		update_memcards(0);
+		LoadMcd(MCD1, GetMemcardPath(1)); //Memcard 1
+		LoadMcd(MCD2, GetMemcardPath(2)); //Memcard 2
+	}
 	joy_init();
 
 	if (filename[0] != '\0') {

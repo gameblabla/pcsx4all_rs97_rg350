@@ -4,6 +4,7 @@ PORT   = sdl
 # Using 'gpulib' adapted from PCSX Rearmed is default, specify
 # USE_GPULIB=0 as param to 'make' when building to disable it.
 USE_GPULIB ?= 1
+SUPPORT_CHD ?= 1
 
 GPU  = gpu_unai
 SPU  = spu_pcsxrearmed
@@ -47,7 +48,7 @@ endif
 
 CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti -nostdinc++ 
 
-LDFLAGS = -nodefaultlibs -lc -lgcc -lSDL -lz -Wl,--as-needed -Wl,--gc-sections -flto -s
+LDFLAGS = -nodefaultlibs -lc -lgcc -lSDL -lasound -lz -Wl,--as-needed -Wl,--gc-sections -flto -s
 
 OBJDIRS = obj obj/gpu obj/gpu/$(GPU) obj/spu obj/spu/$(SPU) \
 	  obj/recompiler obj/recompiler/$(RECOMPILER) \
