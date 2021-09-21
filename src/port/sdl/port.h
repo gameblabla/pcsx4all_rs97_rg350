@@ -41,7 +41,7 @@ extern struct ps1_controller player_controller[2];
 static inline int fsync(int f) { return 0; }
 #endif
 
-#define	CONFIG_VERSION	0
+#define	CONFIG_VERSION	1
 
 INLINE int string_is_empty(const char *data)
 {

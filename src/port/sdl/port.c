@@ -263,6 +263,13 @@ void config_load()
 		} else if (!strcmp(line, "AnalogDigital")) {
 			sscanf(arg, "%d", &value);
 			Config.AnalogDigital = value;
+#ifdef RUMBLE
+		} else if (!strcmp(line, "RumbleGain")) {
+			sscanf(arg, "%d", &value);
+			if (value < 0 || value > 100)
+				value = 100;
+			Config.RumbleGain = value;
+#endif
 		} else if (!strcmp(line, "RCntFix")) {
 			sscanf(arg, "%d", &value);
 			Config.RCntFix = value;
@@ -431,6 +438,9 @@ void config_save()
 		   "SlowBoot %d\n"
 		   "AnalogArrow %d\n"
 		   "Analog_Mode %d\n"
+#ifdef RUMBLE
+		   "RumbleGain %d\n"
+#endif
 		   "RCntFix %d\n"
 		   "VSyncWA %d\n"
 		   "Cpu %d\n"
@@ -448,6 +458,9 @@ void config_save()
 		   "AnalogDigital %d\n",
 		   CONFIG_VERSION, Config.Xa, Config.Mdec, Config.PsxAuto, Config.Cdda,
 		   Config.HLE, Config.SlowBoot, Config.AnalogArrow, Config.AnalogMode,
+#ifdef RUMBLE
+		   Config.RumbleGain,
+#endif
 		   Config.RCntFix, Config.VSyncWA, Config.Cpu, Config.PsxType,
 		   Config.McdSlot1, Config.McdSlot2, Config.SpuIrq, Config.SyncAudio,
 		   Config.SpuUpdateFreq, Config.ForcedXAUpdates, Config.ShowFps,
@@ -1253,6 +1266,10 @@ int main (int argc, char **argv)
 	Config.AnalogDigital = 0;
 	Config.AnalogArrow = 0;
 	Config.AnalogMode = 2;
+
+#ifdef RUMBLE
+	Config.RumbleGain = 100; /* [0,100]-Rumble effect strength */
+#endif
 
 	Config.Xa=0; /* 0=XA enabled, 1=XA disabled */
 	Config.Mdec=0; /* 0=Black&White Mdecs Only Disabled, 1=Black&White Mdecs Only Enabled */
