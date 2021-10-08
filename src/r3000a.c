@@ -126,6 +126,23 @@ void psxException(uint32_t code, uint32_t bd) {
 	}
 }
 
+void GTE_AddCycles( int amount )
+{
+	psxRegs.cycle           += amount;
+	psxRegs.GteUnitCycles   -= amount;
+}
+
+void GTE_UnitStall( uint32_t newStall )
+{
+	if( newStall == 0 ) return;		// not a GTE instruction?
+	if( psxRegs.GteUnitCycles > 0 )
+	{
+		psxRegs.cycle += psxRegs.GteUnitCycles;
+		//SysPrintf("Psx GTE Stall for %d cycles.\n", psxRegs.GteUnitCycles );
+	}
+	psxRegs.GteUnitCycles = newStall;
+}
+
 void psxBranchTest()
 {
 	//senquack - Do not rearrange the math here! Events' sCycle val can end up
@@ -158,6 +175,9 @@ void psxBranchTest()
 		//  psxBranchTest() is called again as soon as possible so that any
 		//  pending HW IRQs are handled.
 	}
+	
+	if( psxRegs.GteUnitCycles < 0 )
+		psxRegs.GteUnitCycles = 0;
 }
 
 void psxExecuteBios() {

@@ -22,6 +22,8 @@
 #include "gte.h"
 #include "psxmem.h"
 
+uint32_t GteStall;
+
 // MIPS platforms have hardware divider, faster than 64KB LUT + UNR algo
 #if defined(__mips__)
 #define GTE_USE_NATIVE_DIVIDE
@@ -369,11 +371,13 @@ void gtecalcCTC2(uint32_t value, int reg) {
 }
 
 void gteMFC2(void) {
+	GteStall = 1;
 	if (!_Rt_) return;
 	psxRegs.GPR.r[_Rt_] = gtecalcMFC2(_Rd_);
 }
 
 void gteCFC2(void) {
+	GteStall = 1;
 	if (!_Rt_) return;
 	psxRegs.GPR.r[_Rt_] = psxRegs.CP2C.r[_Rd_];
 }
@@ -393,6 +397,7 @@ void gteLWC2(void) {
 }
 
 void gteSWC2(void) {
+	//GteStall = 1;
 	psxMemWrite32(_oB_, gtecalcMFC2(_Rt_));
 }
 
@@ -402,6 +407,7 @@ void gteRTPS(void) {
 #ifdef GTE_LOG
 	GTE_LOG("GTE RTPS\n");
 #endif
+	GteStall = 15;
 	gteFLAG = 0;
 
 	gteMAC1 = A1((((int64_t)gteTRX << 12) + (gteR11 * gteVX0) + (gteR12 * gteVY0) + (gteR13 * gteVZ0)) >> 12);
@@ -437,6 +443,7 @@ void gteRTPT(void) {
 #ifdef GTE_LOG
 	GTE_LOG("GTE RTPT\n");
 #endif
+	GteStall = 23;
 	gteFLAG = 0;
 
 	gteSZ0 = gteSZ3;
@@ -476,6 +483,7 @@ void gteMVMVA(uint32_t gteop) {
 #ifdef GTE_LOG
 	GTE_LOG("GTE MVMVA\n");
 #endif
+	GteStall = 8;
 	gteFLAG = 0;
 
 	gteMAC1 = A1((((int64_t)CV1(cv) << 12) + (MX11(mx) * vx) + (MX12(mx) * vy) + (MX13(mx) * vz)) >> shift);
@@ -491,6 +499,7 @@ void gteNCLIP(void) {
 #ifdef GTE_LOG
 	GTE_LOG("GTE NCLIP\n");
 #endif
+	GteStall = 8;
 	gteFLAG = 0;
 
 	gteMAC0 = F((int64_t)gteSX0 * (gteSY1 - gteSY2) +
@@ -502,6 +511,7 @@ void gteAVSZ3(void) {
 #ifdef GTE_LOG
 	GTE_LOG("GTE AVSZ3\n");
 #endif
+	GteStall = 5;
 	gteFLAG = 0;
 
 	gteMAC0 = F((int64_t)gteZSF3 * (gteSZ1 + gteSZ2 + gteSZ3));
@@ -512,6 +522,7 @@ void gteAVSZ4(void) {
 #ifdef GTE_LOG
 	GTE_LOG("GTE AVSZ4\n");
 #endif
+	GteStall = 6;
 	gteFLAG = 0;
 
 	gteMAC0 = F((int64_t)gteZSF4 * (gteSZ0 + gteSZ1 + gteSZ2 + gteSZ3));
@@ -526,6 +537,7 @@ void gteSQR(uint32_t gteop) {
 #ifdef GTE_LOG
 	GTE_LOG("GTE SQR\n");
 #endif
+	GteStall = 5;
 	gteFLAG = 0;
 
 	gteMAC1 = (gteIR1 * gteIR1) >> shift;
@@ -540,6 +552,7 @@ void gteNCCS(void) {
 #ifdef GTE_LOG
 	GTE_LOG("GTE NCCS\n");
 #endif
+	GteStall = 17;
 	gteFLAG = 0;
 
 	gteMAC1 = ((int64_t)(gteL11 * gteVX0) + (gteL12 * gteVY0) + (gteL13 * gteVZ0)) >> 12;
@@ -576,6 +589,7 @@ void gteNCCT(void) {
 #ifdef GTE_LOG
 	GTE_LOG("GTE NCCT\n");
 #endif
+	GteStall = 39;
 	gteFLAG = 0;
 
 	for (v = 0; v < 3; v++) {
@@ -614,6 +628,7 @@ void gteNCDS(void) {
 #ifdef GTE_LOG
 	GTE_LOG("GTE NCDS\n");
 #endif
+	GteStall = 19;
 	gteFLAG = 0;
 
 	gteMAC1 = ((int64_t)(gteL11 * gteVX0) + (gteL12 * gteVY0) + (gteL13 * gteVZ0)) >> 12;
@@ -650,6 +665,7 @@ void gteNCDT(void) {
 #ifdef GTE_LOG
 	GTE_LOG("GTE NCDT\n");
 #endif
+	GteStall = 44;
 	gteFLAG = 0;
 
 	for (v = 0; v < 3; v++) {
@@ -692,6 +708,7 @@ void gteOP(uint32_t gteop) {
 #ifdef GTE_LOG
 	GTE_LOG("GTE OP\n");
 #endif
+	GteStall = 6;
 	gteFLAG = 0;
 
 	gteMAC1 = ((gteR22 * gteIR3) - (gteR33 * gteIR2)) >> shift;
@@ -713,6 +730,7 @@ void gteDCPL(uint32_t gteop) {
 #ifdef GTE_LOG
 	GTE_LOG("GTE DCPL\n");
 #endif
+	GteStall = 8;
 	gteFLAG = 0;
 
 	gteMAC1 = RIR1 + ((gteIR0 * limB1(A1U((int64_t)gteRFC - RIR1), 0)) >> 12);
@@ -738,6 +756,7 @@ void gteGPF(uint32_t gteop) {
 #ifdef GTE_LOG
 	GTE_LOG("GTE GPF\n");
 #endif
+	GteStall = 5;
 	gteFLAG = 0;
 
 	gteMAC1 = (gteIR0 * gteIR1) >> shift;
@@ -762,6 +781,7 @@ void gteGPL(uint32_t gteop) {
 #ifdef GTE_LOG
 	GTE_LOG("GTE GPL\n");
 #endif
+	GteStall = 5;
 	gteFLAG = 0;
 
 	gteMAC1 = A1((((int64_t)gteMAC1 << shift) + (gteIR0 * gteIR1)) >> shift);
@@ -786,6 +806,7 @@ void gteDPCS(uint32_t gteop) {
 #ifdef GTE_LOG
 	GTE_LOG("GTE DPCS\n");
 #endif
+	GteStall = 8;
 	gteFLAG = 0;
 
 	gteMAC1 = ((gteR << 16) + (gteIR0 * limB1(A1U(((int64_t)gteRFC - (gteR << 4)) << (12 - shift)), 0))) >> 12;
@@ -809,6 +830,7 @@ void gteDPCT(void) {
 #ifdef GTE_LOG
 	GTE_LOG("GTE DPCT\n");
 #endif
+	GteStall = 17;
 	gteFLAG = 0;
 
 	for (v = 0; v < 3; v++) {
@@ -832,6 +854,7 @@ void gteNCS(void) {
 #ifdef GTE_LOG
 	GTE_LOG("GTE NCS\n");
 #endif
+	GteStall = 14;
 	gteFLAG = 0;
 
 	gteMAC1 = ((int64_t)(gteL11 * gteVX0) + (gteL12 * gteVY0) + (gteL13 * gteVZ0)) >> 12;
@@ -862,6 +885,7 @@ void gteNCT(void) {
 #ifdef GTE_LOG
 	GTE_LOG("GTE NCT\n");
 #endif
+	GteStall = 30;
 	gteFLAG = 0;
 
 	for (v = 0; v < 3; v++) {
@@ -893,6 +917,7 @@ void gteCC(void) {
 #ifdef GTE_LOG
 	GTE_LOG("GTE CC\n");
 #endif
+	GteStall = 11;
 	gteFLAG = 0;
 
 	gteMAC1 = A1((((int64_t)gteRBK << 12) + (gteLR1 * gteIR1) + (gteLR2 * gteIR2) + (gteLR3 * gteIR3)) >> 12);
@@ -924,6 +949,7 @@ void gteINTPL(uint32_t gteop) {
 #ifdef GTE_LOG
 	GTE_LOG("GTE INTPL\n");
 #endif
+	GteStall = 8;
 	gteFLAG = 0;
 
 	gteMAC1 = ((gteIR1 << 12) + (gteIR0 * limB1(A1U((int64_t)gteRFC - gteIR1), 0))) >> shift;
@@ -944,6 +970,7 @@ void gteCDP(void) {
 #ifdef GTE_LOG
 	GTE_LOG("GTE CDP\n");
 #endif
+	GteStall = 13;
 	gteFLAG = 0;
 
 	gteMAC1 = A1((((int64_t)gteRBK << 12) + (gteLR1 * gteIR1) + (gteLR2 * gteIR2) + (gteLR3 * gteIR3)) >> 12);

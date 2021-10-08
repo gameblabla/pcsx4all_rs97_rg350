@@ -24,6 +24,8 @@
 #include "psxcommon.h"
 #include "r3000a.h"
 
+extern uint32_t GteStall;
+
 void gteMFC2(void);
 void gteCFC2(void);
 void gteMTC2(void);

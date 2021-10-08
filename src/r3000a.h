@@ -176,6 +176,8 @@ typedef struct {
 
 	void *reserved;
 	int writeok;
+	
+	int32_t GteUnitCycles;
 } psxRegisters;
 
 extern psxRegisters psxRegs;
@@ -261,5 +263,9 @@ void psxExecuteBios(void);
 int  psxTestLoadDelay(int reg, uint32_t tmp);
 void psxDelayTest(int reg, uint32_t bpc);
 void psxTestSWInts(void);
+
+void GTE_AddCycles( int amount );
+void GTE_UnitStall( uint32_t newStall );
+
 
 #endif /* __R3000A_H__ */

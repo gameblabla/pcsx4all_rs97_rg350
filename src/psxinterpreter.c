@@ -25,6 +25,7 @@
 #include "r3000a.h"
 #include "gte.h"
 #include "psxhle.h"
+#include "psxevents.h"
 
 static int branch = 0;
 static int branch2 = 0;
@@ -444,7 +445,7 @@ static void doBranch(uint32_t tar) {
 	debugI();
 
 	psxRegs.pc += 4;
-	psxRegs.cycle += BIAS;
+	GTE_AddCycles(1);
 
 	// check for load delay
 	tmp = psxRegs.code >> 26;
@@ -980,6 +981,8 @@ static void intShutdown(void) {
 
 // interpreter execution
 void execI(void) {
+	
+	GteStall = 0;
 	uint32_t *code = (uint32_t *)PSXM(psxRegs.pc);
 	psxRegs.code = ((code == NULL) ? 0 : SWAP32(*code));
 
@@ -989,8 +992,11 @@ void execI(void) {
 
 	psxRegs.pc += 4;
 	psxRegs.cycle += BIAS;
+	GTE_AddCycles(1);
 
 	psxBSC[psxRegs.code >> 26]();
+	
+	GTE_UnitStall(GteStall);
 }
 
 R3000Acpu psxInt = {
